@@ -1,4 +1,4 @@
-use nalgebra::{Matrix4, Point3, Rotation3, Perspective3};
+use nalgebra::{Matrix3x4, Matrix4, Point3, Point4, Rotation3, Perspective3};
 
 use crate::constants::{ASPECT_RATIO, FOV, NEAR_PLANE, FAR_PLANE, SCREEN_WIDTH, SCREEN_HEIGHT};
 
@@ -103,6 +103,27 @@ pub fn is_vertex_outside_frustum(ndc : &Point3<f32>) -> bool {
     let z_out_of_range = ndc.z < -1.0 || ndc.z > 1.0;
 
     x_out_of_range || y_out_of_range || z_out_of_range
+}
+
+pub fn transform_triangle_to_camera_coords(triangle: &Triangle3, camera_transform: &Matrix3x4<f32>) 
+        -> (Point3<f32>, Point3<f32>, Point3<f32>) {
+    let world_v0 = triangle.geometry[0];
+    let world_v1 = triangle.geometry[1];
+    let world_v2 = triangle.geometry[2];
+
+    let camera_v0: Point3<f32> = (camera_transform * world_v0.to_homogeneous()).xyz().into();
+    let camera_v1: Point3<f32> = (camera_transform * world_v1.to_homogeneous()).xyz().into();
+    let camera_v2: Point3<f32> = (camera_transform * world_v2.to_homogeneous()).xyz().into();
+
+    (camera_v0, camera_v1, camera_v2)
+}
+
+pub fn camera_coordinates_to_clip_space(camera_vertex: &Point3<f32>, projection_matrix: &Matrix4<f32>) -> Point4<f32> {
+    (projection_matrix * camera_vertex.to_homogeneous()).into()
+}
+
+pub fn clips_space_to_ndc(clip_space_vertex: &Point4<f32>) -> Point3<f32> {
+    clip_space_vertex.xyz() / clip_space_vertex.w
 }
 
 pub fn ndc_to_screen(ndc : &Point3<f32>) -> Point3<f32> {

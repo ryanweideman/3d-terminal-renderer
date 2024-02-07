@@ -3,7 +3,7 @@ mod geometry;
 mod graphics;
 mod utils;
 
-use nalgebra::{Vector3, Matrix3x4, Point2, Point3, Point4, Rotation3, Unit};
+use nalgebra::{Vector3, Matrix3x4, Point2, Point3, Rotation3, Unit};
 use std::{time};
 
 use constants::{SCREEN_WIDTH, SCREEN_HEIGHT};
@@ -62,7 +62,7 @@ fn main() {
 
         let rotation3 = Rotation3::from_axis_angle(&rotation_axis, theta);
         let cube = Cube {
-            origin : Point3::new(0.0, 0.0, -3.0),
+            origin : Point3::new(0.0, 0.0, -2.5),
             rotation : rotation3
         };
 
@@ -70,26 +70,16 @@ fn main() {
 
         for triangle in &geometry {
             // world cords -> camera coords -> ndc -> screen coords
+            let (camera_v0, camera_v1, camera_v2) = geometry::transform_triangle_to_camera_coords(&triangle, &camera_transform);
 
-            // Get world cordaintes 
-            let world_v0 = triangle.geometry[0];
-            let world_v1 = triangle.geometry[1];
-            let world_v2 = triangle.geometry[2];
-        
-            // Transform world coordinates to camera coordinates
-            let camera_v0 : Point3<f32> = (camera_transform * world_v0.to_homogeneous()).into();
-            let camera_v1 : Point3<f32> = (camera_transform * world_v1.to_homogeneous()).into();
-            let camera_v2 : Point3<f32> = (camera_transform * world_v2.to_homogeneous()).into();
-        
-            // Transform camera coordinates to clip space coordinates
-            let clip_space_v0 : Point4<f32> = (projection_matrix * camera_v0.to_homogeneous()).into();
-            let clip_space_v1 : Point4<f32> = (projection_matrix * camera_v1.to_homogeneous()).into();
-            let clip_space_v2 : Point4<f32> = (projection_matrix * camera_v2.to_homogeneous()).into();
+            let clip_space_v0 = geometry::camera_coordinates_to_clip_space(&camera_v0, &projection_matrix);
+            let clip_space_v1 = geometry::camera_coordinates_to_clip_space(&camera_v1, &projection_matrix);
+            let clip_space_v2 = geometry::camera_coordinates_to_clip_space(&camera_v2, &projection_matrix);
 
             // Transform from clip space coordinates to normlized device coordinates
-            let ndc_v0 : Point3<f32> = clip_space_v0.xyz() / clip_space_v0.w;
-            let ndc_v1 : Point3<f32> = clip_space_v1.xyz() / clip_space_v1.w;
-            let ndc_v2 : Point3<f32> = clip_space_v2.xyz() / clip_space_v2.w;
+            let ndc_v0 = geometry::clips_space_to_ndc(&clip_space_v0);
+            let ndc_v1 = geometry::clips_space_to_ndc(&clip_space_v1);
+            let ndc_v2 = geometry::clips_space_to_ndc(&clip_space_v2);
 
             // Transform from normalized device coordinates to screen coordinates
             let screen_v0 = geometry::ndc_to_screen(&ndc_v0);
@@ -139,23 +129,20 @@ fn main() {
                     let camera_point_light : Point3<f32> = (camera_transform * point_light.origin.to_homogeneous()).into();
                     let light_norm = (camera_point_light - point_camera_space).normalize();
 
-                    
                     let dot = utils::round_up_to_nearest_increment(
                         light_norm.dot(&triangle_norm).max(0.0), 
                         0.2);
 
-                    let mut r = triangle.color.r;
-                    if r != 0 {
-                        r = utils::scale_range((r as f32) * dot, 0.0, 255.0, 95.0, 255.0) as u8;
-                    }
-                    let mut g = triangle.color.g;
-                    if g != 0 {
-                        g = utils::scale_range((g as f32) * dot, 0.0, 255.0, 95.0, 255.0) as u8;
-                    }
-                    let mut b = triangle.color.b;
-                    if b != 0 {
-                        b = utils::scale_range((b as f32) * dot, 0.0, 255.0, 95.0, 255.0) as u8;
-                    }
+                    let correct_color = |input: u8| -> u8 {
+                        if input == 0 {
+                            return input;
+                        } 
+                        utils::scale_range((input as f32) * dot, 0.0, 255.0, 95.0, 255.0) as u8
+                    };
+
+                    let r = correct_color(triangle.color.r);
+                    let g = correct_color(triangle.color.g);
+                    let b = correct_color(triangle.color.b);
 
                     screen_buffer[y][x] = graphics::rgb_to_ansi256(r, g, b);
                     z_buffer[y][x] = z;
