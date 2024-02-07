@@ -6,7 +6,7 @@ mod utils;
 use nalgebra::{Vector3, Matrix3x4, Point2, Point3, Rotation3, Unit};
 use std::{time};
 
-use constants::{SCREEN_WIDTH, SCREEN_HEIGHT};
+use constants::{SCREEN_WIDTH, SCREEN_HEIGHT, TARGET_FPS};
 use geometry::{Triangle3, PointLight, Cube};
 
 fn main() {
@@ -20,7 +20,7 @@ fn main() {
     graphics::hide_cursor();
 
     let mut start_time = time::Instant::now();
-    let delay_duration = time::Duration::from_millis(34);
+    let delay_duration = time::Duration::from_millis((1000.0 / TARGET_FPS) as u64);
     let ansi_background_color = graphics::rgb_to_ansi256(100, 100, 100);
 
     // Assume camera is fixed at origin, for now

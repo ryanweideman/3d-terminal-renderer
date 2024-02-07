@@ -61,6 +61,7 @@ pub fn output_screen_buffer(screen_buffer : &[[u16; SCREEN_WIDTH] ; SCREEN_HEIGH
         }
         print!("\n  ");
     }
+    std::io::stdout().flush().unwrap();
 }
 
 pub fn interpolate_attributes_at_pixel(
