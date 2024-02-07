@@ -3,48 +3,34 @@ mod geometry;
 mod graphics;
 mod utils;
 
+use nalgebra::{Vector3, Matrix3x4, Point2, Point3, Point4, Rotation3, Unit};
+use std::{time};
+
 use constants::{SCREEN_WIDTH, SCREEN_HEIGHT};
 use geometry::{Triangle3, PointLight, Cube};
-use nalgebra::{Vector3, Matrix4, Matrix3x4, Perspective3, Point2, Point3, Point4, Rotation3, Unit};
-use std::{time};
 
 fn main() {
     ctrlc::set_handler(move || {
-        print!("\x1b[{};{}H", SCREEN_HEIGHT + 5, 0);
+        graphics::move_cursor(0, 0, SCREEN_HEIGHT, 5);
+        graphics::show_cursor();
         std::process::exit(0);
     }).expect("Error setting Ctrl-C handler");
 
-    println!("\x1b[H\x1b[J");
     graphics::clear_screen();
+    graphics::hide_cursor();
+
     let mut start_time = time::Instant::now();
-    let delay_duration = time::Duration::from_millis(100);
+    let delay_duration = time::Duration::from_millis(34);
     let ansi_background_color = graphics::rgb_to_ansi256(100, 100, 100);
 
     // Assume camera is fixed at origin, for now
-    let camera_transform : Matrix3x4<f32> = Matrix3x4::new(
+    let camera_transform = Matrix3x4::<f32>::new(
         1.0, 0.0, 0.0, 0.0,
         0.0, 1.0, 0.0, 0.0,
         0.0, 0.0, 1.0, 0.0
     );
 
-    /* 
-        Perspective3 produces a symmetric frustum identical to that used by OpenGL
-        Perspective matrix :
-
-        |  f / aspect  0                              0                                 0  |
-        |  0           f                              0                                 0  |
-        |  0           0   -(far + near) / (far - near)    -2 * far * near / (far - near)  |
-        |  0           0                             -1                                 0  |
-
-        where f = 1 / tan(fov / 2)
-    */
-
-    let projection_matrix : Matrix4<f32> = Perspective3::new(
-        constants::ASPECT_RATIO, 
-        constants::FOV, 
-        constants::NEAR_PLANE,
-        constants::FAR_PLANE)
-        .to_homogeneous();
+    let projection_matrix = geometry::get_projection_matrix();
     let projection_matrix_inverse = projection_matrix.try_inverse().unwrap();
 
     let mut theta : f32 = 0.0;
@@ -66,7 +52,7 @@ fn main() {
         let mut z_buffer : [[f32; SCREEN_WIDTH] ; SCREEN_HEIGHT] 
             = [[f32::MAX ; SCREEN_WIDTH] ; SCREEN_HEIGHT]; 
 
-        theta -= 0.15;
+        theta -= 0.02;
         //theta = std::f32::consts::PI / 4.0 + 0.1;
         //theta = 0.5;
 
@@ -76,7 +62,6 @@ fn main() {
 
         let rotation3 = Rotation3::from_axis_angle(&rotation_axis, theta);
         let cube = Cube {
-            //origin : Point3::new(0.0, 0.0, -3.0 + f32::sin(phi)),
             origin : Point3::new(0.0, 0.0, -3.0),
             rotation : rotation3
         };
@@ -155,10 +140,9 @@ fn main() {
                     let light_norm = (camera_point_light - point_camera_space).normalize();
 
                     
-                    let mut dot = light_norm.dot(&triangle_norm).max(0.0);
-
-                   // dot = scale_range(dot, 0.0, 1.0, 0.5, 1.0);
-                    dot = utils::round_up_to_nearest_increment(dot, 0.2);
+                    let dot = utils::round_up_to_nearest_increment(
+                        light_norm.dot(&triangle_norm).max(0.0), 
+                        0.2);
 
                     let mut r = triangle.color.r;
                     if r != 0 {

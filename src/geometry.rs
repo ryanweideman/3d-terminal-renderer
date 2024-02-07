@@ -1,6 +1,6 @@
-use crate::constants::{SCREEN_WIDTH, SCREEN_HEIGHT};
-use nalgebra::{Matrix4, Point3, Rotation3};
+use nalgebra::{Matrix4, Point3, Rotation3, Perspective3};
 
+use crate::constants::{ASPECT_RATIO, FOV, NEAR_PLANE, FAR_PLANE, SCREEN_WIDTH, SCREEN_HEIGHT};
 
 #[derive(Copy, Clone)]
 pub struct Color { 
@@ -49,6 +49,26 @@ pub const CUBE_TRIANGLES: [Triangle3; 12] = [
     Triangle3 { geometry: [Point3::new(-0.5, -0.5, -0.5), Point3::new( 0.5, -0.5, -0.5), Point3::new( 0.5, -0.5,  0.5)], color: Color {r: 0, g: 255, b: 255} },
     Triangle3 { geometry: [Point3::new(-0.5, -0.5, -0.5), Point3::new( 0.5, -0.5,  0.5), Point3::new(-0.5, -0.5,  0.5)], color: Color {r: 0, g: 255, b: 255} },
 ];
+
+/* 
+    Perspective3 produces a symmetric frustum identical to that used by OpenGL
+    Perspective matrix :
+
+    |  f / aspect  0                              0                                 0  |
+    |  0           f                              0                                 0  |
+    |  0           0   -(far + near) / (far - near)    -2 * far * near / (far - near)  |
+    |  0           0                             -1                                 0  |
+
+    where f = 1 / tan(fov / 2)
+*/
+pub fn get_projection_matrix() -> Matrix4<f32> {
+    Perspective3::new(
+        ASPECT_RATIO, 
+        FOV, 
+        NEAR_PLANE,
+        FAR_PLANE)
+        .to_homogeneous()
+}
 
 pub fn get_cube_geometry(cube: &Cube) -> [Triangle3; 12] {
     let rotation = Matrix4::from(cube.rotation);

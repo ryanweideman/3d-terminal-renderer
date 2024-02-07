@@ -1,15 +1,33 @@
 use crate::constants::{SCREEN_WIDTH, SCREEN_HEIGHT};
 use crate::geometry;
 
-use geometry::{Triangle3};
 use nalgebra::{Point2, Point3, Point4};
+use geometry::{Triangle3};
+use std::io::Write;
 
 pub fn clear_screen() {
     println!("\x1b[H\x1b[J");
+    std::io::stdout().flush().unwrap();
 }
 
 pub fn reset_cursor() {
     println!("\x1b[H");
+    std::io::stdout().flush().unwrap();
+}
+
+pub fn hide_cursor() {
+    print!("\x1b[?25l");
+    std::io::stdout().flush().unwrap();
+}
+
+pub fn show_cursor() {
+    print!("\x1b[?25h");
+    std::io::stdout().flush().unwrap();
+}
+
+pub fn move_cursor(x : usize, x_offset : usize, y : usize, y_offset : usize) {
+    print!("\x1b[{};{}H", y + y_offset, x + x_offset);
+    std::io::stdout().flush().unwrap();
 }
 
 fn rgb_channel_to_ansi_index(v: u8) -> u8 {
