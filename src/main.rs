@@ -2,12 +2,13 @@ mod constants;
 mod geometry;
 mod graphics;
 mod math;
+mod model_reader;
 
 use nalgebra::{Vector3, Matrix3x4, Point2, Point3, Rotation3, Unit};
 use std::{time};
 
 use constants::{SCREEN_WIDTH, SCREEN_HEIGHT, TARGET_FPS};
-use geometry::{Triangle3, PointLight, Cube, ProjectionResult};
+use geometry::{PointLight, Cube};
 
 fn main() {
     ctrlc::set_handler(move || {
@@ -18,6 +19,8 @@ fn main() {
 
     graphics::clear_screen();
     graphics::hide_cursor();
+
+    let cube_model = model_reader::read_model("models/cube.json");
 
     let mut start_time = time::Instant::now();
     let delay_duration = time::Duration::from_millis((1000.0 / TARGET_FPS) as u64);
@@ -54,7 +57,7 @@ fn main() {
         let mut projection_buffer : [[usize; SCREEN_WIDTH] ; SCREEN_HEIGHT] 
             = [[usize::MAX ; SCREEN_WIDTH] ; SCREEN_HEIGHT]; 
 
-        theta -= 0.02;
+        theta -= 0.05;
 
         // Define the rotation using Rotation3
         let rotation_axis = Unit::new_normalize(Vector3::new(1.7, 3.0, 0.0)); // Rotate around the Y axis
@@ -66,7 +69,8 @@ fn main() {
             rotation : rotation3
         };
         let camera_point_light : Point3<f32> = (camera_transform * point_light.origin.to_homogeneous()).into();
-        let geometry : [Triangle3; 12] = geometry::get_cube_geometry(&cube);
+
+        let geometry = geometry::transform_model(&cube.origin, &cube.rotation, &cube_model);
 
         let mut projection_results = Vec::with_capacity(100);
         for triangle in &geometry {
@@ -82,8 +86,8 @@ fn main() {
             let bounding_box = &projection_result.screen_bounding_box;
             let x_min = bounding_box.x_min.max(0);
             let y_min = bounding_box.y_min.max(0);
-            let x_max = bounding_box.x_max.min(SCREEN_WIDTH);
-            let y_max = bounding_box.y_max.max(SCREEN_HEIGHT);
+            let x_max = bounding_box.x_max.min(SCREEN_WIDTH - 1);
+            let y_max = bounding_box.y_max.min(SCREEN_HEIGHT - 1);
 
             // Rasterize
             for y in y_min..y_max {

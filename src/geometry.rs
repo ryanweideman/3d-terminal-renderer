@@ -2,6 +2,10 @@ use nalgebra::{Matrix3x4, Matrix4, Point2, Point3, Point4, Rotation3, Perspectiv
 
 use crate::constants::{ASPECT_RATIO, FOV, NEAR_PLANE, FAR_PLANE, SCREEN_WIDTH, SCREEN_HEIGHT};
 
+pub struct ModelGeometry {
+    pub geometry: Vec<Triangle3>
+}
+
 #[derive(Copy, Clone)]
 pub struct Color { 
     pub r: u8,
@@ -62,32 +66,6 @@ pub struct ProjectionResult {
     pub screen_bounding_box: BoundingBox2<usize>
 }
 
-const CUBE_TRIANGLES: [Triangle3; 12] = [
-    // Front face
-    Triangle3 { vertices: [Point3::new(-0.5, -0.5,  0.5), Point3::new( 0.5, -0.5,  0.5), Point3::new( 0.5,  0.5,  0.5)], color: Color {r: 255, g: 0, b: 0} },
-    Triangle3 { vertices: [Point3::new(-0.5, -0.5,  0.5), Point3::new( 0.5,  0.5,  0.5), Point3::new(-0.5,  0.5,  0.5)], color: Color {r: 255, g: 0, b: 0} },
-    
-    // Back face
-    Triangle3 { vertices: [Point3::new(-0.5, -0.5, -0.5), Point3::new( 0.5,  0.5, -0.5), Point3::new( 0.5, -0.5, -0.5)], color: Color {r: 0, g: 255, b: 0} },
-    Triangle3 { vertices: [Point3::new(-0.5, -0.5, -0.5), Point3::new(-0.5,  0.5, -0.5), Point3::new( 0.5,  0.5, -0.5)], color: Color {r: 0, g: 255, b: 0} },
-    
-    // Right face
-    Triangle3 { vertices: [Point3::new( 0.5, -0.5, -0.5), Point3::new( 0.5,  0.5,  0.5), Point3::new( 0.5, -0.5,  0.5)], color: Color {r: 0, g: 0, b: 255} },
-    Triangle3 { vertices: [Point3::new( 0.5, -0.5, -0.5), Point3::new( 0.5,  0.5, -0.5), Point3::new( 0.5,  0.5,  0.5)], color: Color {r: 0, g: 0, b: 255} },
-    
-    // Left face
-    Triangle3 { vertices: [Point3::new(-0.5, -0.5, -0.5), Point3::new(-0.5, -0.5,  0.5), Point3::new(-0.5,  0.5,  0.5)], color: Color {r: 255, g: 255, b: 0} },
-    Triangle3 { vertices: [Point3::new(-0.5, -0.5, -0.5), Point3::new(-0.5,  0.5,  0.5), Point3::new(-0.5,  0.5, -0.5)], color: Color {r: 255, g: 255, b: 0} },
-    
-    // Top face
-    Triangle3 { vertices: [Point3::new(-0.5,  0.5, -0.5), Point3::new(-0.5,  0.5,  0.5), Point3::new( 0.5,  0.5,  0.5)], color: Color {r: 255, g: 0, b: 255} },
-    Triangle3 { vertices: [Point3::new(-0.5,  0.5, -0.5), Point3::new( 0.5,  0.5,  0.5), Point3::new( 0.5,  0.5, -0.5)], color: Color {r: 255, g: 0, b: 255} },
-    
-    // Bottom face
-    Triangle3 { vertices: [Point3::new(-0.5, -0.5, -0.5), Point3::new( 0.5, -0.5, -0.5), Point3::new( 0.5, -0.5,  0.5)], color: Color {r: 0, g: 255, b: 255} },
-    Triangle3 { vertices: [Point3::new(-0.5, -0.5, -0.5), Point3::new( 0.5, -0.5,  0.5), Point3::new(-0.5, -0.5,  0.5)], color: Color {r: 0, g: 255, b: 255} },
-];
-
 /* 
     Perspective3 produces a symmetric frustum identical to that used by OpenGL
     Perspective matrix :
@@ -108,14 +86,14 @@ pub fn get_projection_matrix() -> Matrix4<f32> {
         .to_homogeneous()
 }
 
-pub fn get_cube_geometry(cube: &Cube) -> [Triangle3; 12] {
-    let rotation = Matrix4::from(cube.rotation);
-    let translation = Matrix4::new_translation(&cube.origin.coords);
+pub fn transform_model(origin: &Point3<f32>, rotation: &Rotation3<f32>, model: &ModelGeometry) -> Vec<Triangle3> {
+    let rotation = Matrix4::from(rotation.clone());
+    let translation = Matrix4::new_translation(&origin.coords);
 
     // First rotate the vertices around it's origin (model space), then translate it to the desired position (world space)
     let transform = translation * rotation;
 
-    let transformed_triangles_vec: Vec<Triangle3> = CUBE_TRIANGLES.iter().map(|triangle| {
+    let transformed_triangles_vec: Vec<Triangle3> = model.geometry.iter().map(|triangle| {
         let transformed_vertices = triangle.vertices.iter().map(|vertex| {
             transform.transform_point(&vertex)
         }).collect::<Vec<Point3<f32>>>();
@@ -126,12 +104,7 @@ pub fn get_cube_geometry(cube: &Cube) -> [Triangle3; 12] {
         }
     }).collect();
 
-    let transformed_triangles: [Triangle3; 12] = match transformed_triangles_vec.try_into() {
-        Ok(arr) => arr,
-        Err(_) => panic!("Expected a Vec of length 12"),
-    };
-
-    transformed_triangles
+    transformed_triangles_vec
 }
 
 #[allow(dead_code)]
