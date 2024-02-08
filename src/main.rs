@@ -7,7 +7,7 @@ use nalgebra::{Vector3, Matrix3x4, Point2, Point3, Rotation3, Unit};
 use std::{time};
 
 use constants::{SCREEN_WIDTH, SCREEN_HEIGHT, TARGET_FPS};
-use geometry::{Triangle3, PointLight, Cube};
+use geometry::{Triangle3, PointLight, Cube, ProjectionResult};
 
 fn main() {
     ctrlc::set_handler(move || {
@@ -51,6 +51,8 @@ fn main() {
             = [[ansi_background_color ; SCREEN_WIDTH] ; SCREEN_HEIGHT]; 
         let mut z_buffer : [[f32; SCREEN_WIDTH] ; SCREEN_HEIGHT] 
             = [[f32::MAX ; SCREEN_WIDTH] ; SCREEN_HEIGHT]; 
+        let mut projection_buffer : [[usize; SCREEN_WIDTH] ; SCREEN_HEIGHT] 
+            = [[usize::MAX ; SCREEN_WIDTH] ; SCREEN_HEIGHT]; 
 
         theta -= 0.02;
 
@@ -63,21 +65,29 @@ fn main() {
             origin : Point3::new(0.0, 0.0, -2.5),
             rotation : rotation3
         };
-
+        let camera_point_light : Point3<f32> = (camera_transform * point_light.origin.to_homogeneous()).into();
         let geometry : [Triangle3; 12] = geometry::get_cube_geometry(&cube);
 
+        let mut projection_results = Vec::with_capacity(100);
         for triangle in &geometry {
             // world cords -> camera coords -> ndc -> screen coords
             let maybe_projection_result = geometry::project_triangle(triangle, &projection_matrix, &camera_transform);
             if maybe_projection_result.is_none() {
                 continue;
             }
-            let projection_result = maybe_projection_result.unwrap();
+            projection_results.push(maybe_projection_result.unwrap());
+            let projection_result_index = projection_results.len() - 1;
+            let projection_result = projection_results.last().unwrap();
+
             let bounding_box = &projection_result.screen_bounding_box;
+            let x_min = bounding_box.x_min.max(0);
+            let y_min = bounding_box.y_min.max(0);
+            let x_max = bounding_box.x_max.min(SCREEN_WIDTH);
+            let y_max = bounding_box.y_max.max(SCREEN_HEIGHT);
 
             // Rasterize
-            for y in bounding_box.y_min..bounding_box.y_max {
-                for x in bounding_box.x_min..bounding_box.x_max {
+            for y in y_min..y_max {
+                for x in x_min..x_max {
                     let px = (x as f32) + 0.5;
                     let py = (y as f32) + 0.5;
                     let pixel = Point2::new(px, py);
@@ -94,34 +104,51 @@ fn main() {
                         continue;
                     }
                     
-                    let p_ndc = geometry::screen_to_ndc(&Point3::new(px, py, z)).to_homogeneous();
-                    let point_camera_space_homogeneous = projection_matrix_inverse * p_ndc;
-                    let point_camera_space : Point3<f32> = (point_camera_space_homogeneous.xyz() / point_camera_space_homogeneous.w).into();
-                    
-                    // Transform the point light into camera coordinates
-                    let camera_point_light : Point3<f32> = (camera_transform * point_light.origin.to_homogeneous()).into();
-                    let light_norm = (camera_point_light - point_camera_space).normalize();
-
-                    let dot = math::round_up_to_nearest_increment(
-                        light_norm.dot(&projection_result.normal).max(0.0), 
-                        0.2);
-
-                    let correct_color = |input: u8| -> u8 {
-                        if input == 0 {
-                            return input;
-                        } 
-                        math::scale_range((input as f32) * dot, 0.0, 255.0, 95.0, 255.0) as u8
-                    };
-
-                    let r = correct_color(triangle.color.r);
-                    let g = correct_color(triangle.color.g);
-                    let b = correct_color(triangle.color.b);
-
-                    screen_buffer[y][x] = graphics::rgb_to_ansi256(r, g, b);
                     z_buffer[y][x] = z;
+                    projection_buffer[y][x] = projection_result_index;
                 }
             }
         }
+
+        let pixel_shading_start = time::Instant::now();
+        for y in 0..SCREEN_HEIGHT {
+            for x in 0..SCREEN_WIDTH {
+                let projection_result_index = projection_buffer[y][x];
+                if projection_result_index == usize::MAX {
+                    continue;
+                }
+                let projection_result = &projection_results[projection_result_index];
+
+                let pixel = Point3::new(
+                    (x as f32) + 0.5, 
+                    (y as f32) + 0.5, 
+                    z_buffer[y][x]);
+
+                let p_ndc = geometry::screen_to_ndc(&pixel).to_homogeneous();
+                let point_camera_space_homogeneous = projection_matrix_inverse * p_ndc;
+                let point_camera_space = point_camera_space_homogeneous.xyz() / point_camera_space_homogeneous.w;
+                let light_norm = (camera_point_light - point_camera_space).coords.normalize();
+
+                let dot = math::round_up_to_nearest_increment(
+                    light_norm.dot(&projection_result.normal).max(0.0), 
+                    0.2);
+
+                let correct_color = |input: u8| -> u8 {
+                    if input == 0 {
+                        return input;
+                    } 
+                    math::scale_range((input as f32) * dot, 0.0, 255.0, 95.0, 255.0) as u8
+                };
+
+                let color = projection_result.screen_triangle.color;
+                let r = correct_color(color.r);
+                let g = correct_color(color.g);
+                let b = correct_color(color.b);
+
+                screen_buffer[y][x] = graphics::rgb_to_ansi256(r, g, b);
+            }
+        }
+        let pixel_shading_end = time::Instant::now();
 
         let draw_start = time::Instant::now();
         graphics::output_screen_buffer(&screen_buffer);
@@ -133,6 +160,6 @@ fn main() {
         println!("total time elapsed ms: {:.2}", n / 1000000.0);
         println!("  draw time elapsed ms: {:.2}\n", draw_time_elapsed / 1000000.0);
         println!("  processing time elapsed ms: {:.2}\n", ((loop_end - start_time - (draw_end - draw_start)).as_nanos() as f32) / 1000000.0);
-
+        println!("  pixel shading ms: {:.2}\n", ((pixel_shading_end - pixel_shading_start).as_nanos() as f32) / 1000000.0);
     }
 } 

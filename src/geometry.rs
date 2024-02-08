@@ -33,6 +33,7 @@ impl Triangle4 {
     }
 }
 
+#[derive(Copy, Clone)]
 pub struct BoundingBox2<T> {
     pub x_min: T,
     pub y_min: T,
@@ -40,15 +41,18 @@ pub struct BoundingBox2<T> {
     pub y_max: T
 }
 
+#[derive(Copy, Clone)]
 pub struct Cube {
     pub origin: Point3<f32>,
     pub rotation: Rotation3<f32>
 }
 
+#[derive(Copy, Clone)]
 pub struct PointLight {
     pub origin: Point3<f32>
 }
 
+#[derive(Copy, Clone)]
 pub struct ProjectionResult {
     pub camera_frame_triangle: Triangle3,
     pub normal: Vector3<f32>,
