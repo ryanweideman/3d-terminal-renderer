@@ -1,8 +1,8 @@
 use crate::constants::{SCREEN_WIDTH, SCREEN_HEIGHT};
 use crate::geometry;
 
-use nalgebra::{Point2, Point3, Point4};
-use geometry::{Triangle3};
+use nalgebra::{Point2};
+use geometry::{ProjectionResult};
 use std::io::Write;
 
 pub fn clear_screen() {
@@ -65,21 +65,17 @@ pub fn output_screen_buffer(screen_buffer : &[[u16; SCREEN_WIDTH] ; SCREEN_HEIGH
 }
 
 pub fn interpolate_attributes_at_pixel(
-    p  : &Point2<f32>,
-    v0 : &Point3<f32>, 
-    v1 : &Point3<f32>, 
-    v2 : &Point3<f32>,
-    clip_v0 : &Point4<f32>,
-    clip_v1 : &Point4<f32>,
-    clip_v2 : &Point4<f32>,
-    ndc0 : &Point3<f32>, 
-    ndc1 : &Point3<f32>, 
-    ndc2 : &Point3<f32>) 
+    p: &Point2<f32>,
+    projection_result: &ProjectionResult) 
     -> (f32, f32) {
 
-    let total_area : f32 = v0.x * (v1.y - v2.y) + v1.x * (v2.y - v0.y) + v2.x * (v0.y - v1.y);
-    let lambda0 : f32 = ((v1.y - v2.y) * (p.x - v2.x) + (v2.x - v1.x) * (p.y - v2.y)) / total_area;
-    let lambda1 : f32 = ((v2.y - v0.y) * (p.x - v2.x) + (v0.x - v2.x) * (p.y - v2.y)) / total_area;
+    let (p0, p1, p2) = projection_result.screen_triangle.vertices();
+    let (clip_v0, clip_v1, clip_v2) = projection_result.clip_space_triangle.vertices();
+    let (ndc_v0, ndc_v1, ndc_v2) = projection_result.ndc_triangle.vertices();
+
+    let total_area : f32 = p0.x * (p1.y - p2.y) + p1.x * (p2.y - p0.y) + p2.x * (p0.y - p1.y);
+    let lambda0 : f32 = ((p1.y - p2.y) * (p.x - p2.x) + (p2.x - p1.x) * (p.y - p2.y)) / total_area;
+    let lambda1 : f32 = ((p2.y - p0.y) * (p.x - p2.x) + (p0.x - p2.x) * (p.y - p2.y)) / total_area;
     let lambda2 : f32 = 1.0 - lambda0 - lambda1;
 
     assert!(lambda0 + lambda1 + lambda2 < 1.00001 
@@ -94,51 +90,7 @@ pub fn interpolate_attributes_at_pixel(
     let lambdap1 = lambda1 * wp1 / den;
     let lambdap2 = lambda2 * wp2 / den;
 
-    let z = ndc0.z * lambdap0 + ndc1.z * lambdap1 + ndc2.z * lambdap2;
+    let z = ndc_v0.z * lambdap0 + ndc_v1.z * lambdap1 + ndc_v2.z * lambdap2;
     let w = 1.0 / den;
     (z, w)
-}
-
-pub fn is_point_in_triangle(pt: &Point2<f32>, triangle: &Triangle3) -> bool {
-    let v1 = Point2::new(triangle.geometry[0].x, triangle.geometry[0].y);
-    let v2 = Point2::new(triangle.geometry[1].x, triangle.geometry[1].y);
-    let v3 = Point2::new(triangle.geometry[2].x, triangle.geometry[2].y);
-
-    fn sign(p1: &Point2<f32>, p2: Point2<f32>, p3: Point2<f32>) -> f32 {
-        (p1.x - p3.x) * (p2.y - p3.y) - (p2.x - p3.x) * (p1.y - p3.y)
-    }
-
-    let d1 = sign(pt, v1, v2);
-    let d2 = sign(pt, v2, v3);
-    let d3 = sign(pt, v3, v1);
-
-    let has_neg = d1 < 0.0 || d2 < 0.0 || d3 < 0.0;
-    let has_pos = d1 > 0.0 || d2 > 0.0 || d3 > 0.0;
-
-    !(has_neg && has_pos)
-}
-
-pub fn calculate_bounding_box(projected_triangle : &Triangle3) -> (usize, usize, usize, usize) {
-    let minx = projected_triangle.geometry[0].x
-        .min(projected_triangle.geometry[1].x)
-        .min(projected_triangle.geometry[2].x)
-        .max(0.0)
-        .floor() as usize;
-    let miny = projected_triangle.geometry[0].y
-        .min(projected_triangle.geometry[1].y)
-        .min(projected_triangle.geometry[2].y)
-        .max(0.0)
-        .floor() as usize;
-    let maxx = projected_triangle.geometry[0].x
-        .max(projected_triangle.geometry[1].x)
-        .max(projected_triangle.geometry[2].x)
-        .min(SCREEN_WIDTH as f32)
-        .ceil() as usize;
-    let maxy = projected_triangle.geometry[0].y
-        .max(projected_triangle.geometry[1].y)
-        .max(projected_triangle.geometry[2].y)
-        .min(SCREEN_HEIGHT as f32)
-        .ceil() as usize;
-
-    (minx, miny, maxx, maxy)
 }

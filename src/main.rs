@@ -1,7 +1,7 @@
 mod constants;
 mod geometry;
 mod graphics;
-mod utils;
+mod math;
 
 use nalgebra::{Vector3, Matrix3x4, Point2, Point3, Rotation3, Unit};
 use std::{time};
@@ -53,8 +53,6 @@ fn main() {
             = [[f32::MAX ; SCREEN_WIDTH] ; SCREEN_HEIGHT]; 
 
         theta -= 0.02;
-        //theta = std::f32::consts::PI / 4.0 + 0.1;
-        //theta = 0.5;
 
         // Define the rotation using Rotation3
         let rotation_axis = Unit::new_normalize(Vector3::new(1.7, 3.0, 0.0)); // Rotate around the Y axis
@@ -70,74 +68,49 @@ fn main() {
 
         for triangle in &geometry {
             // world cords -> camera coords -> ndc -> screen coords
-            let (camera_v0, camera_v1, camera_v2) = geometry::transform_triangle_to_camera_coords(&triangle, &camera_transform);
-
-            let clip_space_v0 = geometry::camera_coordinates_to_clip_space(&camera_v0, &projection_matrix);
-            let clip_space_v1 = geometry::camera_coordinates_to_clip_space(&camera_v1, &projection_matrix);
-            let clip_space_v2 = geometry::camera_coordinates_to_clip_space(&camera_v2, &projection_matrix);
-
-            // Transform from clip space coordinates to normlized device coordinates
-            let ndc_v0 = geometry::clips_space_to_ndc(&clip_space_v0);
-            let ndc_v1 = geometry::clips_space_to_ndc(&clip_space_v1);
-            let ndc_v2 = geometry::clips_space_to_ndc(&clip_space_v2);
-
-            // Transform from normalized device coordinates to screen coordinates
-            let screen_v0 = geometry::ndc_to_screen(&ndc_v0);
-            let screen_v1 = geometry::ndc_to_screen(&ndc_v1);
-            let screen_v2 = geometry::ndc_to_screen(&ndc_v2);
-
-            let projected_triangle = Triangle3 {
-                geometry: [
-                    screen_v0,
-                    screen_v1,
-                    screen_v2
-                ],
-                color: triangle.color
-            };
-
-            // Get bounding box of the projected triangle
-            let (minx, miny, maxx, maxy) = graphics::calculate_bounding_box(&projected_triangle);
+            let maybe_projection_result = geometry::project_triangle(triangle, &projection_matrix, &camera_transform);
+            if maybe_projection_result.is_none() {
+                continue;
+            }
+            let projection_result = maybe_projection_result.unwrap();
+            let bounding_box = &projection_result.screen_bounding_box;
 
             // Rasterize
-            for y in miny..maxy {
-                for x in minx..maxx {
+            for y in bounding_box.y_min..bounding_box.y_max {
+                for x in bounding_box.x_min..bounding_box.x_max {
                     let px = (x as f32) + 0.5;
                     let py = (y as f32) + 0.5;
                     let pixel = Point2::new(px, py);
 
-                    if !graphics::is_point_in_triangle(&pixel, &projected_triangle) {
+                    if !geometry::is_point_in_triangle(&pixel, &projection_result.screen_triangle) {
                         continue;
                     }
 
                     let (z, _w) = graphics::interpolate_attributes_at_pixel(
-                        &pixel, &screen_v0, &screen_v1, &screen_v2, 
-                        &clip_space_v0, &clip_space_v1, &clip_space_v2, 
-                        &ndc_v0, &ndc_v1, &ndc_v2);
+                        &pixel, &projection_result);
 
                     // pixel in this triangle is behind another triangle
                     if z >= z_buffer[y][x] {
                         continue;
                     }
-
+                    
                     let p_ndc = geometry::screen_to_ndc(&Point3::new(px, py, z)).to_homogeneous();
                     let point_camera_space_homogeneous = projection_matrix_inverse * p_ndc;
                     let point_camera_space : Point3<f32> = (point_camera_space_homogeneous.xyz() / point_camera_space_homogeneous.w).into();
                     
-                    // calculate normal
-                    let triangle_norm = (camera_v1 - camera_v0).cross(&(camera_v2 - camera_v0)).normalize();
                     // Transform the point light into camera coordinates
                     let camera_point_light : Point3<f32> = (camera_transform * point_light.origin.to_homogeneous()).into();
                     let light_norm = (camera_point_light - point_camera_space).normalize();
 
-                    let dot = utils::round_up_to_nearest_increment(
-                        light_norm.dot(&triangle_norm).max(0.0), 
+                    let dot = math::round_up_to_nearest_increment(
+                        light_norm.dot(&projection_result.normal).max(0.0), 
                         0.2);
 
                     let correct_color = |input: u8| -> u8 {
                         if input == 0 {
                             return input;
                         } 
-                        utils::scale_range((input as f32) * dot, 0.0, 255.0, 95.0, 255.0) as u8
+                        math::scale_range((input as f32) * dot, 0.0, 255.0, 95.0, 255.0) as u8
                     };
 
                     let r = correct_color(triangle.color.r);
@@ -155,8 +128,11 @@ fn main() {
         let draw_end = time::Instant::now();
         let draw_time_elapsed = (draw_end - draw_start).as_nanos() as f32; 
 
-        let n = (time::Instant::now() - start_time).as_nanos() as f32;
+        let loop_end = time::Instant::now();
+        let n = (loop_end - start_time).as_nanos() as f32;
         println!("total time elapsed ms: {:.2}", n / 1000000.0);
         println!("  draw time elapsed ms: {:.2}\n", draw_time_elapsed / 1000000.0);
+        println!("  processing time elapsed ms: {:.2}\n", ((loop_end - start_time - (draw_end - draw_start)).as_nanos() as f32) / 1000000.0);
+
     }
 } 
