@@ -8,11 +8,12 @@ use crate::math;
 use crate::geometry;
 
 pub fn render_geometry(
+        screen_buffer: &mut [[u16; SCREEN_WIDTH] ; SCREEN_HEIGHT],
         geometry: &Vec<geometry::Triangle3>, 
         projection_matrix: &Matrix4<f32>,        
         projection_matrix_inverse: &Matrix4<f32>, 
         camera_transform: &Matrix3x4<f32>, 
-        ansi_background_color: u16) -> [[u16; SCREEN_WIDTH] ; SCREEN_HEIGHT] {
+        ansi_background_color: u16) {
 
     let point_light = geometry::PointLight {
         origin: Point3::new(2.0, -2.0, 3.0)
@@ -20,8 +21,6 @@ pub fn render_geometry(
 
     let camera_point_light = geometry::transform_world_vertice_to_camera_coords(&point_light.origin, camera_transform);
 
-    let mut screen_buffer : [[u16; SCREEN_WIDTH] ; SCREEN_HEIGHT] 
-        = [[ansi_background_color ; SCREEN_WIDTH] ; SCREEN_HEIGHT]; 
     let mut z_buffer : [[f32; SCREEN_WIDTH] ; SCREEN_HEIGHT] 
         = [[f32::MAX ; SCREEN_WIDTH] ; SCREEN_HEIGHT]; 
     let mut projection_buffer : [[usize; SCREEN_WIDTH] ; SCREEN_HEIGHT] 
@@ -106,6 +105,4 @@ pub fn render_geometry(
             screen_buffer[y][x] = graphics::rgb_to_ansi256(r, g, b);
         }
     }
-
-    screen_buffer
 }

@@ -8,7 +8,7 @@ mod renderer;
 use nalgebra::{Vector3, Matrix3x4, Point3, Rotation3, Unit};
 use std::{time};
 
-use constants::{SCREEN_HEIGHT, TARGET_FPS};
+use constants::{SCREEN_WIDTH, SCREEN_HEIGHT, TARGET_FPS};
 use geometry::{Cube};
 
 fn main() {
@@ -40,10 +40,15 @@ fn main() {
 
     let mut theta : f32 = 0.0;
 
+    let mut screen_buffer : [[u16; SCREEN_WIDTH] ; SCREEN_HEIGHT] 
+        = [[ansi_background_color ; SCREEN_WIDTH] ; SCREEN_HEIGHT]; 
+
     loop {
         if start_time.elapsed() < delay_duration {
             continue;
         }
+
+        screen_buffer = [[ansi_background_color ; SCREEN_WIDTH] ; SCREEN_HEIGHT]; 
 
         start_time = time::Instant::now();
         graphics::reset_cursor();
@@ -64,7 +69,8 @@ fn main() {
         let geometry = [cube_geometry, square_geometry].concat();
         //let geometry = cube_geometry;
 
-        let screen_buffer = renderer::render_geometry(
+        renderer::render_geometry(
+            &mut screen_buffer,
             &geometry, 
             &projection_matrix, 
             &projection_matrix_inverse, 
