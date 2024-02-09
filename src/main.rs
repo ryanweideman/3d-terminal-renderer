@@ -2,7 +2,7 @@ mod constants;
 mod geometry;
 mod graphics;
 mod math;
-mod model_reader;
+mod model_loader;
 mod renderer;
 
 use nalgebra::{Vector3, Matrix3x4, Point3, Rotation3, Unit};
@@ -21,8 +21,8 @@ fn main() {
     graphics::clear_screen();
     graphics::hide_cursor();
 
-    let cube_model = model_reader::read_model("models/cube.json");
-    let square_model = model_reader::read_model("models/square.json");
+    let cube_model = model_loader::read_model("models/cube.json");
+    let square_model = model_loader::read_model("models/square.json");
 
     let mut start_time = time::Instant::now();
     let delay_duration = time::Duration::from_millis((1000.0 / TARGET_FPS) as u64);
@@ -62,6 +62,7 @@ fn main() {
         let square_rotation = Rotation3::from_axis_angle(&Vector3::y_axis(), 0.0);
         let square_geometry = geometry::transform_model(&Point3::new(-2.0, 1.0, -4.0), &square_rotation, &square_model);
         let geometry = [cube_geometry, square_geometry].concat();
+        //let geometry = cube_geometry;
 
         let screen_buffer = renderer::render_geometry(
             &geometry, 

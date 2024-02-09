@@ -17,7 +17,8 @@ pub fn render_geometry(
     let point_light = geometry::PointLight {
         origin: Point3::new(2.0, -2.0, 3.0)
     };
-    let camera_point_light : Point3<f32> = (camera_transform * point_light.origin.to_homogeneous()).into();
+
+    let camera_point_light = geometry::transform_world_vertice_to_camera_coords(&point_light.origin, camera_transform);
 
     let mut screen_buffer : [[u16; SCREEN_WIDTH] ; SCREEN_HEIGHT] 
         = [[ansi_background_color ; SCREEN_WIDTH] ; SCREEN_HEIGHT]; 

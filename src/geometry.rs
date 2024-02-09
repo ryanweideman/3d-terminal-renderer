@@ -135,16 +135,22 @@ pub fn is_point_in_triangle(pt: &Point2<f32>, triangle: &Triangle3) -> bool {
     !(has_neg && has_pos)
 }
 
+pub fn transform_world_vertice_to_camera_coords(
+        point: &Point3<f32>, 
+        camera_transform: &Matrix3x4<f32>) -> Point3<f32> {
+    (camera_transform * point.to_homogeneous()).xyz().into()
+}
+
 fn transform_triangle_to_camera_coords(triangle: &Triangle3, camera_transform: &Matrix3x4<f32>) 
         -> Triangle3 {
     let (world_v0, world_v1, world_v2) = triangle.vertices();
 
-    let camera_v0: Point3<f32> = (camera_transform * world_v0.to_homogeneous()).xyz().into();
-    let camera_v1: Point3<f32> = (camera_transform * world_v1.to_homogeneous()).xyz().into();
-    let camera_v2: Point3<f32> = (camera_transform * world_v2.to_homogeneous()).xyz().into();
+    let camera_v0 = transform_world_vertice_to_camera_coords(world_v0, camera_transform);
+    let camera_v1 = transform_world_vertice_to_camera_coords(world_v1, camera_transform);
+    let camera_v2 = transform_world_vertice_to_camera_coords(world_v2, camera_transform);
 
     Triangle3 {
-        vertices : [camera_v0, camera_v1, camera_v2],
+        vertices: [camera_v0, camera_v1, camera_v2],
         color: triangle.color
     }
 }
