@@ -2,6 +2,36 @@ use crate:: geometry::{Color, ModelGeometry, Triangle3};
 use nalgebra::{Point3};
 use serde::{Deserialize};
 use std::fs;
+use std::collections::HashMap;
+
+pub struct ModelLoader {
+    models: HashMap<String, ModelGeometry>
+}
+
+impl ModelLoader {
+    pub fn new(path: &str) -> Self {
+        let mut models = HashMap::new();
+
+        let directory = fs::read_dir(path).expect("Failed to read directory");
+        for entry in directory {
+            let path = entry.expect("Failed to read directory entry").path();
+            if !path.is_file() || path.extension().and_then(|ext| ext.to_str()) != Some("json") {
+                continue;
+            }
+
+            let model_geometry = load_model(path.to_str().expect("REASON"));
+            let file_name = path.file_name().and_then(|name| name.to_str()).unwrap();
+
+            models.insert(file_name.to_string(), model_geometry);
+        }
+
+        ModelLoader { models }
+    }
+
+    pub fn get_model(&self, model_name: &str) -> Option<&ModelGeometry> {
+        self.models.get(model_name)
+    }
+}
 
 #[derive(Deserialize, Debug)]
 struct GeometryData {
@@ -12,6 +42,18 @@ struct GeometryData {
 struct Triangle {
     vertices: [[f32; 3]; 3],
     color: [u8; 3],
+}
+
+fn load_model(path: &str) -> ModelGeometry {
+    let file_content = fs::read_to_string(path)
+        .unwrap_or_else(|_| panic!("Failed to read file at path {}", path));
+
+    let geometry_data: GeometryData = serde_json::from_str(&file_content)
+        .unwrap_or_else(|_| panic!("Failed to deserialize json at path {}", path));
+    
+    let model_geometry : ModelGeometry = convert_geometry_data(&geometry_data);
+
+    model_geometry
 }
 
 fn convert_geometry_data(geometry_data: &GeometryData) -> ModelGeometry {
@@ -37,16 +79,4 @@ fn convert_geometry_data(geometry_data: &GeometryData) -> ModelGeometry {
     ModelGeometry {
         geometry: geometry
     }
-}
-
-pub fn read_model(path: &str) -> ModelGeometry {
-    let file_content = fs::read_to_string(path)
-        .unwrap_or_else(|_| panic!("Failed to read file at path {}", path));
-
-    let geometry_data: GeometryData = serde_json::from_str(&file_content)
-        .unwrap_or_else(|_| panic!("Failed to deserialize json at path {}", path));
-    
-    let model_geometry : ModelGeometry = convert_geometry_data(&geometry_data);
-
-    model_geometry
 }
