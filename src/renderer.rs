@@ -12,7 +12,7 @@ pub fn render_geometry(
         geometry: &Vec<geometry::Triangle3>, 
         projection_matrix: &Matrix4<f32>,        
         projection_matrix_inverse: &Matrix4<f32>, 
-        camera_transform: &Matrix3x4<f32>, 
+        camera_transform: &Matrix4<f32>, 
         ansi_background_color: u16) {
 
     let point_light = world_objects::PointLight {

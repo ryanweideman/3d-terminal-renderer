@@ -1,3 +1,4 @@
+mod camera;
 mod constants;
 mod geometry;
 mod graphics;
@@ -22,6 +23,8 @@ fn main() {
     graphics::clear_screen();
     graphics::hide_cursor();
 
+    let camera = camera::Camera::new(Point3::new(0.0, 0.0, 0.0));
+
     let model_loader = model_loader::ModelLoader::new("models/");
     let cube_model = model_loader.get_model("cube.json");
     let square_model = model_loader.get_model("square.json");
@@ -32,11 +35,7 @@ fn main() {
     let ansi_background_color = graphics::rgb_to_ansi256(100, 100, 100);
 
     // Assume camera is fixed at origin, for now
-    let camera_transform = Matrix3x4::<f32>::new(
-        1.0, 0.0, 0.0, 0.0,
-        0.0, 1.0, 0.0, 0.0,
-        0.0, 0.0, 1.0, 0.0
-    );
+    let camera_transform = camera.get_transform();
 
     let projection_matrix = geometry::get_projection_matrix();
     let projection_matrix_inverse = projection_matrix.try_inverse().unwrap();

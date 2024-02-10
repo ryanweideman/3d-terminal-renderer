@@ -155,11 +155,12 @@ pub fn is_point_in_triangle(pt: &Point2<f32>, triangle: &Triangle3) -> bool {
 
 pub fn transform_world_vertice_to_camera_coords(
         point: &Point3<f32>, 
-        camera_transform: &Matrix3x4<f32>) -> Point3<f32> {
-    (camera_transform * point.to_homogeneous()).xyz().into()
+        camera_transform: &Matrix4<f32>) -> Point3<f32> {
+    let t = camera_transform * point.to_homogeneous();
+    (t.xyz() / t.w).into()
 }
 
-fn transform_triangle_to_camera_coords(triangle: &Triangle3, camera_transform: &Matrix3x4<f32>) 
+fn transform_triangle_to_camera_coords(triangle: &Triangle3, camera_transform: &Matrix4<f32>) 
         -> Triangle3 {
     let (world_v0, world_v1, world_v2) = triangle.vertices();
 
@@ -256,7 +257,7 @@ fn calculate_bounding_box(projected_triangle : &Triangle3) -> BoundingBox2<usize
 pub fn project_triangle(
         input : &Triangle3, 
         projection_matrix : &Matrix4<f32>,  
-        camera_transform : &Matrix3x4<f32>) -> Option<ProjectionResult> {
+        camera_transform : &Matrix4<f32>) -> Option<ProjectionResult> {
     // Transform world coordinates to camera coordinates
     let camera_frame_triangle = transform_triangle_to_camera_coords(&input, &camera_transform);
 
