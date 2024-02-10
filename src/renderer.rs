@@ -40,8 +40,8 @@ pub fn render_geometry(
         let bounding_box = &projection_result.screen_bounding_box;
         let x_min = bounding_box.x_min.max(0);
         let y_min = bounding_box.y_min.max(0);
-        let x_max = bounding_box.x_max.min(SCREEN_WIDTH - 1);
-        let y_max = bounding_box.y_max.min(SCREEN_HEIGHT - 1);
+        let x_max = bounding_box.x_max.min(SCREEN_WIDTH);
+        let y_max = bounding_box.y_max.min(SCREEN_HEIGHT);
 
         // Rasterize
         for y in y_min..y_max {

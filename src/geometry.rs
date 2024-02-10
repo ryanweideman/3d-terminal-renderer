@@ -15,6 +15,12 @@ pub struct Color {
     pub b: u8
 }
 
+impl Color {
+    pub fn new(r: u8, g: u8, b: u8) -> Self {
+        Self {r, g, b}
+    }
+}
+
 #[derive(Copy, Clone)]
 pub struct Triangle3 {
     pub vertices: [Point3<f32> ; 3],
@@ -99,7 +105,7 @@ pub fn transform_model(origin: &Point3<f32>, rotation: &Rotation3<f32>, model: &
 }
 
 pub fn transform_entity_model(entity: &Entity) -> Vec<Triangle3> {
-    let scale = Matrix4::new_scaling(entity.get_scale());
+    let scale = entity.get_scale();
     let rotation = Matrix4::from(entity.get_rotation().clone());
     let translation = Matrix4::new_translation(&entity.get_origin().coords);
 
@@ -112,7 +118,7 @@ pub fn transform_entity_model(entity: &Entity) -> Vec<Triangle3> {
         
         Triangle3 {
             vertices: [transformed_vertices[0], transformed_vertices[1], transformed_vertices[2]],
-            color: triangle.color.clone()
+            color: entity.get_maybe_color().unwrap_or_else(|| triangle.color.clone())
         }
     }).collect();
 

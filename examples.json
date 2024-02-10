@@ -5,3 +5,31 @@
     "rotation_axis": [0.0, 0.0, 1.0],
     "rotation_angle": 0.0
 },
+
+{
+    "type": "SpinningCube",
+    "model": "cube.json",
+    "origin": [1.5, 1.0, -3.0],
+    "rotation_axis": [1.7, 3.0, 0.0],
+    "rotation_angle": 0.0,
+    "angular_velocity": -0.05,
+    "scale": 1.0
+},
+{
+    "type": "SpinningCube",
+    "model": "cube.json",
+    "origin": [-1.5, 1.0, -3.0],
+    "rotation_axis": [1.7, 1.0, 0.0],
+    "rotation_angle": 0.0,
+    "angular_velocity": 0.02,
+    "scale": 2.0
+},
+{
+    "type": "SpinningCube",
+    "model": "cube.json",
+    "origin": [0.0, -1.0, -3.0],
+    "rotation_axis": [-1.7, 2.0, 0.0],
+    "rotation_angle": 0.0,
+    "angular_velocity": 0.01,
+    "scale": 0.5
+}

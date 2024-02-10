@@ -1,7 +1,7 @@
 use crate::geometry::{Color, Model, Triangle3};
 use crate::model_loader::{ModelLoader};
 use crate::world_objects; 
-use nalgebra::{Point3, Vector3, Rotation3, Unit};
+use nalgebra::{Point3, Vector3, Rotation3, Unit, Matrix4};
 use serde::{Deserialize};
 use std::fs;
 
@@ -20,6 +20,15 @@ enum JsonObject {
         rotation_axis: [f32; 3],
         rotation_angle: f32,
         scale: f32
+    },
+    Rectangle {
+        model: String,
+        origin: [f32; 3],
+        rotation_axis: [f32; 3],
+        rotation_angle: f32,
+        width: f32,
+        height: f32,
+        color: [u8; 3]
     },
     SpinningCube {
         model: String,
@@ -58,11 +67,30 @@ pub fn load_world<'a>(world_path: &'a str, model_loader: &'a ModelLoader) -> Vec
                 } => {
                     world_objects::Entity::Square(world_objects::Square {
                         model: &model_loader.get_model(model),
-                        origin: Point3::new(origin[0], origin[1], origin[2]),
-                        rotation: Rotation3::from_axis_angle(
+                        origin: Point3::<f32>::new(origin[0], origin[1], origin[2]),
+                        rotation: Rotation3::<f32>::from_axis_angle(
                             &Unit::new_normalize(Vector3::new(rotation_axis[0], rotation_axis[1], rotation_axis[2])), 
                             *rotation_angle),
-                        scale: *scale
+                        scale: Matrix4::<f32>::new_scaling(*scale)
+                    })
+                },                
+                JsonObject::Rectangle {
+                    model,
+                    origin,
+                    rotation_axis,
+                    rotation_angle,
+                    width,
+                    height,
+                    color
+                } => {
+                    world_objects::Entity::Rectangle(world_objects::Rectangle {
+                        model: &model_loader.get_model(model),
+                        origin: Point3::<f32>::new(origin[0], origin[1], origin[2]),
+                        rotation: Rotation3::<f32>::from_axis_angle(
+                            &Unit::new_normalize(Vector3::new(rotation_axis[0], rotation_axis[1], rotation_axis[2])), 
+                            *rotation_angle),
+                        scale: Matrix4::<f32>::new_nonuniform_scaling(&Vector3::new(*width, *height, 1.0)),
+                        color: Color::new(color[0], color[1], color[2])
                     })
                 },
                 JsonObject::SpinningCube {
@@ -75,11 +103,11 @@ pub fn load_world<'a>(world_path: &'a str, model_loader: &'a ModelLoader) -> Vec
                 } => {
                     world_objects::Entity::SpinningCube(world_objects::SpinningCube {
                         model: &model_loader.get_model(model),
-                        origin: Point3::new(origin[0], origin[1], origin[2]),
-                        rotation_axis: Vector3::new(rotation_axis[0], rotation_axis[1], rotation_axis[2]),
+                        origin: Point3::<f32>::new(origin[0], origin[1], origin[2]),
+                        rotation_axis: Vector3::<f32>::new(rotation_axis[0], rotation_axis[1], rotation_axis[2]),
                         rotation_angle: *rotation_angle,
                         rotation_velocity: *angular_velocity,
-                        scale: *scale
+                        scale: Matrix4::<f32>::new_scaling(*scale)
                     })
                 },
             }
