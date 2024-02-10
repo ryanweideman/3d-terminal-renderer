@@ -23,7 +23,7 @@ fn main() {
     graphics::clear_screen();
     graphics::hide_cursor();
 
-    let camera = camera::Camera::new(Point3::new(0.0, 0.0, 0.0));
+    let mut camera = camera::Camera::new(Point3::new(0.0, 0.0, 0.0));
 
     let model_loader = model_loader::ModelLoader::new("models/");
     let cube_model = model_loader.get_model("cube.json");
@@ -35,7 +35,6 @@ fn main() {
     let ansi_background_color = graphics::rgb_to_ansi256(100, 100, 100);
 
     // Assume camera is fixed at origin, for now
-    let camera_transform = camera.get_transform();
 
     let projection_matrix = geometry::get_projection_matrix();
     let projection_matrix_inverse = projection_matrix.try_inverse().unwrap();
@@ -50,6 +49,8 @@ fn main() {
             continue;
         }
 
+        camera.update(Vector3::new(0.0, 0.0, 0.0));
+
         screen_buffer = [[ansi_background_color ; SCREEN_WIDTH] ; SCREEN_HEIGHT]; 
 
         start_time = time::Instant::now();
@@ -62,6 +63,8 @@ fn main() {
             .map(|entity| geometry::transform_entity_model(&entity))
             .flat_map(|v| v)
             .collect();
+
+        let camera_transform = camera.get_transform();
 
         renderer::render_geometry(
             &mut screen_buffer,

@@ -1,4 +1,4 @@
-use nalgebra::{Matrix4, Point2, Point3, Rotation3};
+use nalgebra::{Matrix4, Point2, Point3, Rotation3, Vector3};
 
 pub struct Camera {
     origin: Point3<f32>
@@ -16,5 +16,9 @@ impl Camera {
         let transform = translation;
 
         transform
+    }
+
+    pub fn update(&mut self, velocity: Vector3<f32>) {
+        self.origin += velocity;
     }
 }
