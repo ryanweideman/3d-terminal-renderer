@@ -148,9 +148,9 @@ fn transform_triangle_to_camera_coords(triangle: &Triangle3, camera_transform: &
 fn camera_coordinates_to_clip_space(camera_triangle: &Triangle3, projection_matrix: &Matrix4<f32>) -> Triangle4 {
     let (camera_v0, camera_v1, camera_v2) = camera_triangle.vertices();
     
-    let v0 : Point4<f32> = (projection_matrix * camera_v0.to_homogeneous()).into();
-    let v1 : Point4<f32> = (projection_matrix * camera_v1.to_homogeneous()).into();
-    let v2 : Point4<f32> = (projection_matrix * camera_v2.to_homogeneous()).into();
+    let v0 = Point4::from(projection_matrix * camera_v0.to_homogeneous());
+    let v1 = Point4::from(projection_matrix * camera_v1.to_homogeneous());
+    let v2 = Point4::from(projection_matrix * camera_v2.to_homogeneous());
 
     Triangle4 {
         vertices : [v0, v1, v2],
@@ -160,9 +160,9 @@ fn camera_coordinates_to_clip_space(camera_triangle: &Triangle3, projection_matr
 
 fn clips_space_to_ndc(clip_space_triangle: &Triangle4) -> Triangle3 {
     let (clip_space_v0, clip_space_v1, clip_space_v2) = clip_space_triangle.vertices();
-    let v0 : Point3<f32> = (clip_space_v0.xyz() / clip_space_v0.w).into();
-    let v1 : Point3<f32> = (clip_space_v1.xyz() / clip_space_v1.w).into();
-    let v2 : Point3<f32> = (clip_space_v2.xyz() / clip_space_v2.w).into();
+    let v0 = Point3::from(clip_space_v0.xyz() / clip_space_v0.w);
+    let v1 = Point3::from(clip_space_v1.xyz() / clip_space_v1.w);
+    let v2 = Point3::from(clip_space_v2.xyz() / clip_space_v2.w);
     Triangle3 {
         vertices: [v0, v1, v2],
         color: clip_space_triangle.color
