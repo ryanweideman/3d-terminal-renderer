@@ -4,8 +4,8 @@ use crate::constants::{SCREEN_WIDTH, SCREEN_HEIGHT};
 
 use crate::graphics;
 use crate::math;
-
 use crate::geometry;
+use crate::world_objects;
 
 pub fn render_geometry(
         screen_buffer: &mut [[u16; SCREEN_WIDTH] ; SCREEN_HEIGHT],
@@ -15,7 +15,7 @@ pub fn render_geometry(
         camera_transform: &Matrix3x4<f32>, 
         ansi_background_color: u16) {
 
-    let point_light = geometry::PointLight {
+    let point_light = world_objects::PointLight {
         origin: Point3::new(2.0, -2.0, 3.0)
     };
 

@@ -2,7 +2,8 @@ use nalgebra::{Matrix3x4, Matrix4, Point2, Point3, Point4, Rotation3, Perspectiv
 
 use crate::constants::{ASPECT_RATIO, FOV, NEAR_PLANE, FAR_PLANE, SCREEN_WIDTH, SCREEN_HEIGHT};
 
-pub struct ModelGeometry {
+#[derive(Clone)]
+pub struct Model {
     pub geometry: Vec<Triangle3>
 }
 
@@ -46,17 +47,6 @@ pub struct BoundingBox2<T> {
 }
 
 #[derive(Copy, Clone)]
-pub struct Cube {
-    pub origin: Point3<f32>,
-    pub rotation: Rotation3<f32>
-}
-
-#[derive(Copy, Clone)]
-pub struct PointLight {
-    pub origin: Point3<f32>
-}
-
-#[derive(Copy, Clone)]
 pub struct ProjectionResult {
     pub camera_frame_triangle: Triangle3,
     pub normal: Vector3<f32>,
@@ -86,7 +76,7 @@ pub fn get_projection_matrix() -> Matrix4<f32> {
         .to_homogeneous()
 }
 
-pub fn transform_model(origin: &Point3<f32>, rotation: &Rotation3<f32>, model: &ModelGeometry) -> Vec<Triangle3> {
+pub fn transform_model(origin: &Point3<f32>, rotation: &Rotation3<f32>, model: &Model) -> Vec<Triangle3> {
     let rotation = Matrix4::from(rotation.clone());
     let translation = Matrix4::new_translation(&origin.coords);
 

@@ -1,11 +1,11 @@
-use crate:: geometry::{Color, ModelGeometry, Triangle3};
+use crate:: geometry::{Color, Model, Triangle3};
 use nalgebra::{Point3};
 use serde::{Deserialize};
 use std::fs;
 use std::collections::HashMap;
 
 pub struct ModelLoader {
-    models: HashMap<String, ModelGeometry>
+    models: HashMap<String, Model>
 }
 
 impl ModelLoader {
@@ -25,11 +25,13 @@ impl ModelLoader {
             models.insert(file_name.to_string(), model_geometry);
         }
 
-        ModelLoader { models }
+        ModelLoader { 
+            models 
+        }
     }
 
-    pub fn get_model(&self, model_name: &str) -> Option<&ModelGeometry> {
-        self.models.get(model_name)
+    pub fn get_model(&self, model_name: &str) -> &Model {
+        self.models.get(model_name).unwrap_or_else(|| panic!("Could not get model of name {}", model_name))
     }
 }
 
@@ -44,19 +46,19 @@ struct Triangle {
     color: [u8; 3],
 }
 
-fn load_model(path: &str) -> ModelGeometry {
+fn load_model(path: &str) -> Model {
     let file_content = fs::read_to_string(path)
         .unwrap_or_else(|_| panic!("Failed to read file at path {}", path));
 
     let geometry_data: GeometryData = serde_json::from_str(&file_content)
         .unwrap_or_else(|_| panic!("Failed to deserialize json at path {}", path));
     
-    let model_geometry : ModelGeometry = convert_geometry_data(&geometry_data);
+    let model_geometry : Model = convert_geometry_data(&geometry_data);
 
     model_geometry
 }
 
-fn convert_geometry_data(geometry_data: &GeometryData) -> ModelGeometry {
+fn convert_geometry_data(geometry_data: &GeometryData) -> Model {
     let geometry : Vec::<Triangle3> = geometry_data.geometry.iter()
         .map(|triangle| {
             let vertices = triangle.vertices;
@@ -76,7 +78,7 @@ fn convert_geometry_data(geometry_data: &GeometryData) -> ModelGeometry {
         })
         .collect();
 
-    ModelGeometry {
+    Model {
         geometry: geometry
     }
 }

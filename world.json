@@ -1,28 +1,29 @@
 {
     "objects": [
         {
-            "type": "Square",
-            "model": "square.json",
-            "origin": [
-                [0.0, 0.0, 0.0],
-                [1.0, 0.0, 0.0],
-                [1.0, 1.0, 0.0]
-            ],
-            "rotation_axis": [0.0, 0.0, 1.0],
-            "rotation_angle": 45.0
+            "type": "SpinningCube",
+            "model": "cube.json",
+            "origin": [1.5, 1.0, -3.0],
+            "rotation_axis": [1.7, 3.0, 0.0],
+            "rotation_angle": 0.0,
+            "angular_velocity": -0.05
         },
         {
             "type": "SpinningCube",
             "model": "cube.json",
-            "origin": [
-                [2.0, 2.0, 2.0],
-                [3.0, 2.0, 2.0],
-                [3.0, 3.0, 3.0]
-            ],
-            "rotation_axis": [0.1, 0.9, 0.0],
-            "rotation_angle": 30.0,
-            "angular_velocity": 2.5
-          }
+            "origin": [-1.5, 1.0, -3.0],
+            "rotation_axis": [1.7, 1.0, 0.0],
+            "rotation_angle": 0.0,
+            "angular_velocity": 0.11
+        },
+        {
+            "type": "SpinningCube",
+            "model": "cube.json",
+            "origin": [0.0, -1.0, -3.0],
+            "rotation_axis": [-1.7, 2.0, 0.0],
+            "rotation_angle": 0.0,
+            "angular_velocity": 0.08
+        }
     ],
     "lights": []
 }

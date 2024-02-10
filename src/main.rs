@@ -5,12 +5,12 @@ mod math;
 mod model_loader;
 mod renderer;
 mod world_loader;
+mod world_objects;
 
 use nalgebra::{Vector3, Matrix3x4, Point3, Rotation3, Unit};
 use std::{time};
 
 use constants::{SCREEN_WIDTH, SCREEN_HEIGHT, TARGET_FPS};
-use geometry::{Cube};
 
 fn main() {
     ctrlc::set_handler(move || {
@@ -23,9 +23,9 @@ fn main() {
     graphics::hide_cursor();
 
     let model_loader = model_loader::ModelLoader::new("models/");
-    let cube_model = model_loader.get_model("cube.json").unwrap();
-    let square_model = model_loader.get_model("square.json").unwrap();
-    world_loader::load_world("world.json");
+    let cube_model = model_loader.get_model("cube.json");
+    let square_model = model_loader.get_model("square.json");
+    let mut entities = world_loader::load_world("world.json", &model_loader);
 
     let mut start_time = time::Instant::now();
     let delay_duration = time::Duration::from_millis((1000.0 / TARGET_FPS) as u64);
@@ -56,21 +56,19 @@ fn main() {
         start_time = time::Instant::now();
         graphics::reset_cursor();
 
-        theta -= 0.05;
+        entities.iter_mut()
+            .for_each(|entity| entity.update(0.0));
 
-        // Define the rotation using Rotation3
-        let cube_rotation_axis = Unit::new_normalize(Vector3::new(1.7, 3.0, 0.0)); // Rotate around the Y axis
-        let cube_rotation = Rotation3::from_axis_angle(&cube_rotation_axis, theta);
-        let cube = Cube {
-            origin : Point3::new(0.0, 0.0, -2.5),
-            rotation : cube_rotation
-        };
-        let cube_geometry = geometry::transform_model(&cube.origin, &cube.rotation, &cube_model);
+        let geometry: Vec<geometry::Triangle3> = entities.iter()
+            .map(|entity| {
+                let model = entity.get_model();
+                let origin = entity.get_origin();
+                let rotation = entity.get_rotation();
 
-        let square_rotation = Rotation3::from_axis_angle(&Vector3::y_axis(), 0.0);
-        let square_geometry = geometry::transform_model(&Point3::new(-2.0, 1.0, -4.0), &square_rotation, &square_model);
-        let geometry = [cube_geometry, square_geometry].concat();
-        //let geometry = cube_geometry;
+                geometry::transform_model(&origin, &rotation, &model)
+            })
+            .flat_map(|v| v)
+            .collect();
 
         renderer::render_geometry(
             &mut screen_buffer,
