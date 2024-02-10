@@ -1,6 +1,7 @@
 use nalgebra::{Matrix3x4, Matrix4, Point2, Point3, Point4, Rotation3, Perspective3, Vector3};
 
 use crate::constants::{ASPECT_RATIO, FOV, NEAR_PLANE, FAR_PLANE, SCREEN_WIDTH, SCREEN_HEIGHT};
+use crate::world_objects::{Entity};
 
 #[derive(Clone)]
 pub struct Model {
@@ -84,6 +85,27 @@ pub fn transform_model(origin: &Point3<f32>, rotation: &Rotation3<f32>, model: &
     let transform = translation * rotation;
 
     let transformed_triangles_vec: Vec<Triangle3> = model.geometry.iter().map(|triangle| {
+        let transformed_vertices = triangle.vertices.iter().map(|vertex| {
+            transform.transform_point(&vertex)
+        }).collect::<Vec<Point3<f32>>>();
+        
+        Triangle3 {
+            vertices: [transformed_vertices[0], transformed_vertices[1], transformed_vertices[2]],
+            color: triangle.color.clone()
+        }
+    }).collect();
+
+    transformed_triangles_vec
+}
+
+pub fn transform_entity_model(entity: &Entity) -> Vec<Triangle3> {
+    let scale = Matrix4::new_scaling(entity.get_scale());
+    let rotation = Matrix4::from(entity.get_rotation().clone());
+    let translation = Matrix4::new_translation(&entity.get_origin().coords);
+
+    let transform = translation * rotation * scale;
+
+    let transformed_triangles_vec: Vec<Triangle3> = entity.get_model_geometry().iter().map(|triangle| {
         let transformed_vertices = triangle.vertices.iter().map(|vertex| {
             transform.transform_point(&vertex)
         }).collect::<Vec<Point3<f32>>>();

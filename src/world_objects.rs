@@ -39,6 +39,13 @@ impl<'a> Entity<'a> {
         }
     }
 
+    pub fn get_scale(&self) -> f32 {
+        match self {
+            Entity::Square(square) => square.scale,
+            Entity::SpinningCube(cube) => cube.scale
+        }
+    }
+
     pub fn get_model_geometry(&self) -> Vec<Triangle3> {
         match self {
             Entity::Square(square) => square.model.geometry.clone(),
@@ -63,7 +70,8 @@ pub struct Cube {
 pub struct Square<'a> {
     pub model: &'a Model,
     pub origin: Point3<f32>,
-    pub rotation: Rotation3<f32>
+    pub rotation: Rotation3<f32>,
+    pub scale: f32
 }
 
 #[derive(Copy, Clone)]
@@ -72,7 +80,8 @@ pub struct SpinningCube<'a> {
     pub origin: Point3<f32>,
     pub rotation_axis: Vector3<f32>,
     pub rotation_angle: f32,
-    pub rotation_velocity: f32
+    pub rotation_velocity: f32,
+    pub scale: f32
 }
 
 impl Updatable for SpinningCube<'_> {

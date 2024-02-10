@@ -19,13 +19,15 @@ enum JsonObject {
         origin: [f32; 3],
         rotation_axis: [f32; 3],
         rotation_angle: f32,
+        scale: f32
     },
     SpinningCube {
         model: String,
         origin: [f32; 3],
         rotation_axis: [f32; 3],
         rotation_angle: f32,
-        angular_velocity: f32 
+        angular_velocity: f32,
+        scale: f32
     }
 }
 
@@ -52,13 +54,15 @@ pub fn load_world<'a>(world_path: &'a str, model_loader: &'a ModelLoader) -> Vec
                     origin,
                     rotation_axis,
                     rotation_angle,
+                    scale
                 } => {
                     world_objects::Entity::Square(world_objects::Square {
                         model: &model_loader.get_model(model),
                         origin: Point3::new(origin[0], origin[1], origin[2]),
                         rotation: Rotation3::from_axis_angle(
                             &Unit::new_normalize(Vector3::new(rotation_axis[0], rotation_axis[1], rotation_axis[2])), 
-                            *rotation_angle)
+                            *rotation_angle),
+                        scale: *scale
                     })
                 },
                 JsonObject::SpinningCube {
@@ -67,13 +71,15 @@ pub fn load_world<'a>(world_path: &'a str, model_loader: &'a ModelLoader) -> Vec
                     rotation_axis,
                     rotation_angle,
                     angular_velocity,
+                    scale,
                 } => {
                     world_objects::Entity::SpinningCube(world_objects::SpinningCube {
                         model: &model_loader.get_model(model),
                         origin: Point3::new(origin[0], origin[1], origin[2]),
                         rotation_axis: Vector3::new(rotation_axis[0], rotation_axis[1], rotation_axis[2]),
                         rotation_angle: *rotation_angle,
-                        rotation_velocity: *angular_velocity
+                        rotation_velocity: *angular_velocity,
+                        scale: *scale
                     })
                 },
             }

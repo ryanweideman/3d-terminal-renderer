@@ -59,20 +59,14 @@ fn main() {
         entities.iter_mut()
             .for_each(|entity| entity.update(0.0));
 
-        let geometry: Vec<geometry::Triangle3> = entities.iter()
-            .map(|entity| {
-                let model = entity.get_model();
-                let origin = entity.get_origin();
-                let rotation = entity.get_rotation();
-
-                geometry::transform_model(&origin, &rotation, &model)
-            })
+        let world_geometry = entities.iter()
+            .map(|entity| geometry::transform_entity_model(&entity))
             .flat_map(|v| v)
             .collect();
 
         renderer::render_geometry(
             &mut screen_buffer,
-            &geometry, 
+            &world_geometry, 
             &projection_matrix, 
             &projection_matrix_inverse, 
             &camera_transform, 
