@@ -116,9 +116,19 @@ fn is_vertex_outside_frustum(vertex : &Point4<f32>) -> bool {
 pub fn is_triangle_outside_frustum(triangle : &Triangle4) -> bool {
     let (v0, v1, v2) = triangle.vertices();
 
+    let lx = v0.x <= -v0.w && v1.x <= -v1.w && v2.x <= -v2.w;
+    let gx = v0.x >=  v0.w && v1.x >=  v1.w && v2.x >=  v2.w;
+    let ly = v0.y <= -v0.w && v1.y <= -v1.w && v2.y <= -v2.w;
+    let gy = v0.y >=  v0.w && v1.y >=  v1.w && v2.y >=  v2.w;
+    let lz = v0.z <= -v0.w && v1.z <= -v1.w && v2.z <= -v2.w;
+    let gz = v0.z >=  v0.w && v1.z >=  v1.w && v2.z >=  v2.w;
+
+    lx || gx || ly || gy || lz || gz
+/*
     is_vertex_outside_frustum(v0) &&
     is_vertex_outside_frustum(v1) && 
     is_vertex_outside_frustum(v2) 
+    */
 }
 
 pub fn is_point_in_triangle(pt: &Point2<f32>, triangle: &Triangle3) -> bool {

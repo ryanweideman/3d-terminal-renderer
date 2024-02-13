@@ -50,18 +50,25 @@ pub fn output_screen_buffer(stdout : &mut std::io::Stdout, screen_buffer : &[[u1
 pub fn print_debug_info(
         stdout : &mut std::io::Stdout, 
         total_time_elapsed: &time::Duration, 
-        processed_time_elapsed: &time::Duration) {
+        processed_time_elapsed: &time::Duration,
+        num_triangles_rendered: u32) {
     queue!(stdout, MoveTo(1, (SCREEN_HEIGHT) as u16)).unwrap();
     queue!(
         stdout,
         SetBackgroundColor(Color::AnsiValue(0)),
-        Print(format!("total loop time elapsed ms: {:.2}", total_time_elapsed.as_secs_f64() * 1000.0))
+        Print(format!("total loop time elapsed ms: {:3.0}", total_time_elapsed.as_secs_f64() * 1000.0))
     ).unwrap();
     queue!(stdout, MoveTo(1, (SCREEN_HEIGHT + 1) as u16)).unwrap();
     queue!(
         stdout,
         SetBackgroundColor(Color::AnsiValue(0)),
-        Print(format!("processing time elapsed ms: {:.2}", processed_time_elapsed.as_secs_f64() * 1000.0))
+        Print(format!("processing time elapsed ms: {:3.0}", processed_time_elapsed.as_secs_f64() * 1000.0))
+    ).unwrap();
+    queue!(stdout, MoveTo(1, (SCREEN_HEIGHT + 2) as u16)).unwrap();
+    queue!(
+        stdout,
+        SetBackgroundColor(Color::AnsiValue(0)),
+        Print(format!("num triangles in frame: {:5}", num_triangles_rendered))
     ).unwrap();
 }
 

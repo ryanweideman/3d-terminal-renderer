@@ -1,13 +1,14 @@
 {
     "objects": [
         {
-            "type": "SpinningCube",
-            "model": "cube.json",
-            "origin": [0.0, 0.0, -3.0],
-            "rotation_axis": [1.7, 3.0, 0.0],
+            "type": "Rectangle",
+            "model": "square.json",
+            "origin": [-3.0, 0.0, -10.0],
+            "rotation_axis": [0.0, -1.0, 0.0],
             "rotation_angle": 0.0,
-            "angular_velocity": -0.05,
-            "scale": 1.0
+            "width": 10.0,
+            "height": 5.0,
+            "color": [120, 120, 120]
         }
     ],
     "lights": []
