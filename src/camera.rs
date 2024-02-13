@@ -43,7 +43,7 @@ impl Camera {
         let mut pitch_velocity : f32 = 0.0;
 
         let linear_speed: f32 = 0.35;
-        let angular_speed: f32 = 0.04;
+        let angular_speed: f32 = 0.06;
 
         keyboard.pressed_keys.iter()
             .for_each(|key| {

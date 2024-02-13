@@ -16,17 +16,11 @@ use crossterm::{
         EnterAlternateScreen, 
         LeaveAlternateScreen
     }, 
-    style::{
-        Color,
-        Print,
-        SetBackgroundColor
-    },
     queue, 
     ExecutableCommand, 
     cursor::{
         Show,
-        Hide,
-        MoveTo
+        Hide
     }
 };
 
@@ -68,7 +62,6 @@ fn main() {
         start_time = time::Instant::now();
 
         camera.update(&keyboard);
-        keyboard.clear_all_keys();
         let mut screen_buffer = [[ansi_background_color ; SCREEN_WIDTH] ; SCREEN_HEIGHT]; 
 
         entities.iter_mut()
@@ -87,32 +80,14 @@ fn main() {
             &projection_matrix_inverse, 
             &camera_transform, 
             ansi_background_color);
+        let processing_time_elapsed = start_time.elapsed();
 
-        let draw_start = time::Instant::now();
         graphics::output_screen_buffer(&mut stdout, &screen_buffer);
-        let draw_end = time::Instant::now();
-        let draw_time_elapsed = (draw_end - draw_start).as_nanos() as f32; 
+        let total_time_elapsed = start_time.elapsed();
 
-        let loop_end = time::Instant::now();
-        let n = (loop_end - start_time).as_nanos() as f32;
-        queue!(
-            stdout,
-            SetBackgroundColor(Color::AnsiValue(1)),
-            Print(format!("total time elapsed ms: {:.2}", n / 1000000.0))
-        ).unwrap();
-        queue!(stdout, MoveTo(1, (SCREEN_HEIGHT + 1) as u16)).unwrap();
-        queue!(
-            stdout,
-            SetBackgroundColor(Color::AnsiValue(1)),
-            Print(format!("draw time elapsed ms: {:.2}", draw_time_elapsed / 1000000.0))
-        ).unwrap();
-        queue!(stdout, MoveTo(1, (SCREEN_HEIGHT + 2) as u16)).unwrap();
-        queue!(
-            stdout,
-            SetBackgroundColor(Color::AnsiValue(1)),
-            Print(format!("processing time elapsed ms: {:.2}", ((loop_end - start_time - (draw_end - draw_start)).as_nanos() as f32) / 1000000.0))
-        ).unwrap();
+        graphics::print_debug_info(&mut stdout, &total_time_elapsed, &processing_time_elapsed);
         stdout.flush().unwrap();
+        keyboard.clear_all_keys();
     }
 
     queue!(stdout, Show).unwrap();
