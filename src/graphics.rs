@@ -1,34 +1,10 @@
 use crate::constants::{SCREEN_WIDTH, SCREEN_HEIGHT};
 use crate::geometry;
 
+use crossterm::{queue, style::{Color, Print, SetBackgroundColor}, cursor::MoveTo};
+
 use nalgebra::{Point2};
 use geometry::{ProjectionResult};
-use std::io::Write;
-
-pub fn clear_screen() {
-    println!("\x1b[H\x1b[J");
-    std::io::stdout().flush().unwrap();
-}
-
-pub fn reset_cursor() {
-    println!("\x1b[H");
-    std::io::stdout().flush().unwrap();
-}
-
-pub fn hide_cursor() {
-    print!("\x1b[?25l");
-    std::io::stdout().flush().unwrap();
-}
-
-pub fn show_cursor() {
-    print!("\x1b[?25h");
-    std::io::stdout().flush().unwrap();
-}
-
-pub fn move_cursor(x : usize, x_offset : usize, y : usize, y_offset : usize) {
-    print!("\x1b[{};{}H", y + y_offset, x + x_offset);
-    std::io::stdout().flush().unwrap();
-}
 
 fn rgb_channel_to_ansi_index(v: u8) -> u8 {
     // the ansi rgb values are on the scale 0-5
@@ -53,15 +29,21 @@ pub fn rgb_to_ansi256(r: u8, g: u8, b: u8) -> u16 {
 }
 
 
-pub fn output_screen_buffer(screen_buffer : &[[u16; SCREEN_WIDTH] ; SCREEN_HEIGHT]) {
-    print!("  ");
+pub fn output_screen_buffer(stdout : &mut std::io::Stdout, screen_buffer : &[[u16; SCREEN_WIDTH] ; SCREEN_HEIGHT]) {
+    queue!(stdout, MoveTo(1, 1)).unwrap();
     for y in 0..SCREEN_HEIGHT {
         for x in 0..SCREEN_WIDTH {
-            print!("\x1b[48;5;{}m  \x1b[m", screen_buffer[y][x]);
+            queue!(
+                stdout,
+                SetBackgroundColor(Color::AnsiValue(screen_buffer[y][x] as u8)),
+                Print("  ")
+            ).unwrap();
         }
-        print!("\n  ");
+        queue!(
+            stdout,
+            MoveTo(1, (y+1) as u16)
+        ).unwrap();
     }
-    std::io::stdout().flush().unwrap();
 }
 
 pub fn interpolate_attributes_at_pixel(

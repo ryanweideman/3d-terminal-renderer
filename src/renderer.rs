@@ -1,4 +1,4 @@
-use nalgebra::{Matrix3x4, Matrix4, Point2, Point3};
+use nalgebra::{Matrix4, Point2, Point3};
 
 use crate::constants::{SCREEN_WIDTH, SCREEN_HEIGHT};
 
@@ -72,6 +72,7 @@ pub fn render_geometry(
         for x in 0..SCREEN_WIDTH {
             let projection_result_index = projection_buffer[y][x];
             if projection_result_index == usize::MAX {
+                screen_buffer[y][x] = ansi_background_color;
                 continue;
             }
             let projection_result = &projection_results[projection_result_index];

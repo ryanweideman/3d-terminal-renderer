@@ -1,4 +1,4 @@
-use nalgebra::{Matrix3x4, Matrix4, Point2, Point3, Point4, Rotation3, Perspective3, Vector3, Unit};
+use nalgebra::{Matrix4, Point3, Rotation3, Vector3, Unit};
 use crate::geometry::{Color, Model, Triangle3};
 
 pub enum Entity<'a> {
@@ -99,7 +99,7 @@ pub struct SpinningCube<'a> {
 }
 
 impl Updatable for SpinningCube<'_> {
-    fn update(&mut self, dt: f32) {
+    fn update(&mut self, _dt: f32) {
         self.rotation_angle += self.rotation_velocity;
     }
 }

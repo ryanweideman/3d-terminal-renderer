@@ -1,4 +1,4 @@
-use crate::geometry::{Color, Model, Triangle3};
+use crate::geometry::{Color};
 use crate::model_loader::{ModelLoader};
 use crate::world_objects; 
 use nalgebra::{Point3, Vector3, Rotation3, Unit, Matrix4};
@@ -6,6 +6,7 @@ use serde::{Deserialize};
 use std::fs;
 
 #[derive(Deserialize, Debug)]
+#[allow(dead_code)]
 pub struct JsonWorldData {
     objects: Vec<JsonObject>,
     lights: Vec<JsonLight>,
@@ -42,6 +43,7 @@ enum JsonObject {
 
 #[derive(Deserialize, Debug)]
 #[serde(tag = "type")]
+#[allow(dead_code)]
 enum JsonLight {
     Point {
         origin: [[f32; 3]; 3]

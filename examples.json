@@ -33,3 +33,13 @@
     "angular_velocity": 0.01,
     "scale": 0.5
 }
+{
+    "type": "Rectangle",
+    "model": "square.json",
+    "origin": [-3.0, 0.0, -10.0],
+    "rotation_axis": [0.0, -1.0, 0.0],
+    "rotation_angle": 0.0,
+    "width": 8.0,
+    "height": 40.0,
+    "color": [150, 100,200]
+},

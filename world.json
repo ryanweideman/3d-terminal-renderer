@@ -1,19 +1,9 @@
 {
     "objects": [
         {
-            "type": "Rectangle",
-            "model": "square.json",
-            "origin": [-3.0, 0.0, -10.0],
-            "rotation_axis": [0.0, -1.0, 0.0],
-            "rotation_angle": 0.0,
-            "width": 8.0,
-            "height": 40.0,
-            "color": [150, 100,200]
-        },
-        {
             "type": "SpinningCube",
             "model": "cube.json",
-            "origin": [1.5, 1.0, -3.0],
+            "origin": [0.0, 0.0, -3.0],
             "rotation_axis": [1.7, 3.0, 0.0],
             "rotation_angle": 0.0,
             "angular_velocity": -0.05,
