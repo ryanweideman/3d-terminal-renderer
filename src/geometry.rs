@@ -104,13 +104,21 @@ pub fn transform_entity_model(entity: &Entity) -> Vec<Triangle3> {
     transformed_triangles_vec
 }
 
-#[allow(dead_code)]
-fn is_vertex_outside_frustum(ndc : &Point3<f32>) -> bool {
-    let x_out_of_range = ndc.x < -1.0 || ndc.x > 1.0;
-    let y_out_of_range = ndc.y < -1.0 || ndc.y > 1.0;
-    let z_out_of_range = ndc.z < -1.0 || ndc.z > 1.0;
+fn is_vertex_outside_frustum(vertex : &Point4<f32>) -> bool {
+    let w = vertex.w;
+    let x_out_of_range = vertex.x <= -w || vertex.x >= w;
+    let y_out_of_range = vertex.y <= -w || vertex.y >= w;
+    let z_out_of_range = vertex.z <= -w || vertex.z >= w;
 
     x_out_of_range || y_out_of_range || z_out_of_range
+}
+
+pub fn is_triangle_outside_frustum(triangle : &Triangle4) -> bool {
+    let (v0, v1, v2) = triangle.vertices();
+
+    is_vertex_outside_frustum(v0) &&
+    is_vertex_outside_frustum(v1) && 
+    is_vertex_outside_frustum(v2) 
 }
 
 pub fn is_point_in_triangle(pt: &Point2<f32>, triangle: &Triangle3) -> bool {
@@ -245,6 +253,10 @@ pub fn project_triangle(
 
     // Transform the camera coordinates to clip space
     let clip_space_triangle = camera_coordinates_to_clip_space(&camera_frame_triangle, &projection_matrix);
+
+    if is_triangle_outside_frustum(&clip_space_triangle) {
+        return None;
+    }
 
     // Transform from clip space coordinates to normalized device coordinates
     let ndc_triangle = clips_space_to_ndc(&clip_space_triangle);
