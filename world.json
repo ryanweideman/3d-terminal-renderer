@@ -6,8 +6,8 @@
             "origin": [-3.0, 0.0, -10.0],
             "rotation_axis": [0.0, -1.0, 0.0],
             "rotation_angle": 0.0,
-            "width": 10.0,
-            "height": 5.0,
+            "width": 1.0,
+            "height": 1.0,
             "color": [120, 120, 120]
         }
     ],

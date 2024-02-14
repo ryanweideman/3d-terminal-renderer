@@ -52,7 +52,7 @@ fn main() {
 
     loop {
         keyboard.update();
-        if keyboard.is_ctrl_pressed() {
+        if keyboard.is_ctrl_c_pressed() {
             break;
         }
 
@@ -73,7 +73,7 @@ fn main() {
 
         let camera_transform = camera.get_transform();
 
-        let num_triangles_rendered = renderer::render_geometry(
+        let projection_results = renderer::render_geometry(
             &mut screen_buffer,
             &world_geometry, 
             &projection_matrix, 
@@ -85,7 +85,7 @@ fn main() {
         graphics::output_screen_buffer(&mut stdout, &screen_buffer);
         let total_time_elapsed = start_time.elapsed();
 
-        graphics::print_debug_info(&mut stdout, &total_time_elapsed, &processing_time_elapsed, num_triangles_rendered);
+        graphics::print_debug_info(&mut stdout, &total_time_elapsed, &processing_time_elapsed, &projection_results);
         stdout.flush().unwrap();
         keyboard.clear_all_keys();
     }

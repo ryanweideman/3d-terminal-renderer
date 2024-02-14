@@ -17,6 +17,7 @@ impl Camera {
     }
 
     pub fn get_transform(&self) -> Matrix4<f32> {
+        // TODO: Needs fix. This is incorrect especially when pitch is close to -90/90 deg
         let direction = Vector3::new(
             self.yaw.sin(),
             self.pitch.sin(),

@@ -51,7 +51,7 @@ pub fn print_debug_info(
         stdout : &mut std::io::Stdout, 
         total_time_elapsed: &time::Duration, 
         processed_time_elapsed: &time::Duration,
-        num_triangles_rendered: u32) {
+        projection_results: &Vec<ProjectionResult>) {
     queue!(stdout, MoveTo(1, (SCREEN_HEIGHT) as u16)).unwrap();
     queue!(
         stdout,
@@ -59,17 +59,51 @@ pub fn print_debug_info(
         Print(format!("total loop time elapsed ms: {:3.0}", total_time_elapsed.as_secs_f64() * 1000.0))
     ).unwrap();
     queue!(stdout, MoveTo(1, (SCREEN_HEIGHT + 1) as u16)).unwrap();
+    /*
     queue!(
         stdout,
         SetBackgroundColor(Color::AnsiValue(0)),
         Print(format!("processing time elapsed ms: {:3.0}", processed_time_elapsed.as_secs_f64() * 1000.0))
     ).unwrap();
     queue!(stdout, MoveTo(1, (SCREEN_HEIGHT + 2) as u16)).unwrap();
-    queue!(
-        stdout,
-        SetBackgroundColor(Color::AnsiValue(0)),
-        Print(format!("num triangles in frame: {:5}", num_triangles_rendered))
-    ).unwrap();
+    */
+
+    for i in 0..projection_results.len() {
+        let result = projection_results[i];
+        let (c0, c1, c2) = result.camera_frame_triangle.vertices();
+        let (cl0, cl1, cl2) = result.clip_space_triangle.vertices();
+        let (n0, n1, n2) = result.ndc_triangle.vertices();
+
+        queue!(stdout, MoveTo(1, (SCREEN_HEIGHT + i*3) as u16)).unwrap();
+        queue!(
+            stdout,
+            SetBackgroundColor(Color::AnsiValue(0)),
+            Print(format!("camera {} {} {}", c0, c1, c2))
+        ).unwrap();
+
+        queue!(stdout, MoveTo(1, (SCREEN_HEIGHT + i*3 + 1) as u16)).unwrap();
+        queue!(
+            stdout,
+            SetBackgroundColor(Color::AnsiValue(0)),
+            Print(format!("clip   {} {} {}", cl0, cl1, cl2))
+        ).unwrap();
+
+        queue!(stdout, MoveTo(1, (SCREEN_HEIGHT + i*3 + 2) as u16)).unwrap();
+        queue!(
+            stdout,
+            SetBackgroundColor(Color::AnsiValue(0)),
+            Print(format!("ndc    {} {} {}", n0, n1, n2))
+        ).unwrap();
+    }
+    
+    /*
+            queue!(
+            stdout,
+            SetBackgroundColor(Color::AnsiValue(0)),
+            Print(format!("num triangles in frame: {:5}", i))
+        ).unwrap();
+    */
+
 }
 
 pub fn interpolate_attributes_at_pixel(

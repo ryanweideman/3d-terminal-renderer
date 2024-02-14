@@ -104,6 +104,7 @@ pub fn transform_entity_model(entity: &Entity) -> Vec<Triangle3> {
     transformed_triangles_vec
 }
 
+#[allow(dead_code)]
 fn is_vertex_outside_frustum(vertex : &Point4<f32>) -> bool {
     let w = vertex.w;
     let x_out_of_range = vertex.x <= -w || vertex.x >= w;
@@ -124,11 +125,6 @@ pub fn is_triangle_outside_frustum(triangle : &Triangle4) -> bool {
     let gz = v0.z >=  v0.w && v1.z >=  v1.w && v2.z >=  v2.w;
 
     lx || gx || ly || gy || lz || gz
-/*
-    is_vertex_outside_frustum(v0) &&
-    is_vertex_outside_frustum(v1) && 
-    is_vertex_outside_frustum(v2) 
-    */
 }
 
 pub fn is_point_in_triangle(pt: &Point2<f32>, triangle: &Triangle3) -> bool {
@@ -264,6 +260,7 @@ pub fn project_triangle(
     // Transform the camera coordinates to clip space
     let clip_space_triangle = camera_coordinates_to_clip_space(&camera_frame_triangle, &projection_matrix);
 
+    // Clip against the near plane here. 
     if is_triangle_outside_frustum(&clip_space_triangle) {
         return None;
     }

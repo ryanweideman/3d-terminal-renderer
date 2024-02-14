@@ -65,7 +65,7 @@ impl Keyboard {
         self.pressed_keys.clear();
     }
 
-    pub fn is_ctrl_pressed(&self) -> bool {
+    pub fn is_ctrl_c_pressed(&self) -> bool {
         self.pressed_keys.contains(&Keys::CtrlC)
     }
 }

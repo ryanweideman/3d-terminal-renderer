@@ -13,7 +13,7 @@ pub fn render_geometry(
         projection_matrix: &Matrix4<f32>,        
         projection_matrix_inverse: &Matrix4<f32>, 
         camera_transform: &Matrix4<f32>, 
-        ansi_background_color: u16) -> u32 {
+        ansi_background_color: u16) -> Vec<geometry::ProjectionResult> {
 
     let point_light = world_objects::PointLight {
         origin: Point3::new(2.0, -2.0, 3.0)
@@ -26,7 +26,6 @@ pub fn render_geometry(
     let mut projection_buffer : [[usize; SCREEN_WIDTH] ; SCREEN_HEIGHT] 
         = [[usize::MAX ; SCREEN_WIDTH] ; SCREEN_HEIGHT]; 
     let mut projection_results = Vec::with_capacity(geometry.len());
-    let mut num_triangles_rendered : u32 = 0;
 
     for triangle in geometry {
         // world cords -> camera coords -> ndc -> screen coords
@@ -35,8 +34,6 @@ pub fn render_geometry(
         if maybe_projection_result.is_none() {
             continue;
         }
-
-        num_triangles_rendered += 1;
 
         projection_results.push(maybe_projection_result.unwrap());
         let projection_result_index = projection_results.len() - 1;
@@ -104,13 +101,14 @@ pub fn render_geometry(
             };
 
             let color = projection_result.screen_triangle.color;
-            let r = correct_color(color.r);
-            let g = correct_color(color.g);
-            let b = correct_color(color.b);
+            //let r = correct_color(color.r);
+            //let g = correct_color(color.g);
+            //let b = correct_color(color.b);
 
-            screen_buffer[y][x] = graphics::rgb_to_ansi256(r, g, b);
+            //screen_buffer[y][x] = graphics::rgb_to_ansi256(r, g, b);
+            screen_buffer[y][x] = graphics::rgb_to_ansi256(color.r, color.g, color.b);
         }
     }
 
-    num_triangles_rendered
+    projection_results.clone()
 }
