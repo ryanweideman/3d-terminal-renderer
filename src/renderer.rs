@@ -25,47 +25,44 @@ pub fn render_geometry(
         = [[f32::MAX ; SCREEN_WIDTH] ; SCREEN_HEIGHT]; 
     let mut projection_buffer : [[usize; SCREEN_WIDTH] ; SCREEN_HEIGHT] 
         = [[usize::MAX ; SCREEN_WIDTH] ; SCREEN_HEIGHT]; 
-    let mut projection_results = Vec::with_capacity(geometry.len());
+    let mut cached_projection_results = Vec::with_capacity(geometry.len());
 
     for triangle in geometry {
         // world cords -> camera coords -> ndc -> screen coords
-        let maybe_projection_result = geometry::project_triangle(triangle, &projection_matrix, &camera_transform);
+        let projection_results = geometry::project_triangle(triangle, &projection_matrix, &camera_transform);
 
-        if maybe_projection_result.is_none() {
-            continue;
-        }
+        for projection_result in &projection_results {
+            cached_projection_results.push(*projection_result);
+            let projection_result_index = cached_projection_results.len() - 1;
 
-        projection_results.push(maybe_projection_result.unwrap());
-        let projection_result_index = projection_results.len() - 1;
-        let projection_result = projection_results.last().unwrap();
+            let bounding_box = &projection_result.screen_bounding_box;
+            let x_min = bounding_box.x_min.max(0);
+            let y_min = bounding_box.y_min.max(0);
+            let x_max = bounding_box.x_max.min(SCREEN_WIDTH);
+            let y_max = bounding_box.y_max.min(SCREEN_HEIGHT);
 
-        let bounding_box = &projection_result.screen_bounding_box;
-        let x_min = bounding_box.x_min.max(0);
-        let y_min = bounding_box.y_min.max(0);
-        let x_max = bounding_box.x_max.min(SCREEN_WIDTH);
-        let y_max = bounding_box.y_max.min(SCREEN_HEIGHT);
+            // Rasterize
+            for y in y_min..y_max {
+                for x in x_min..x_max {
+                    let px = (x as f32) + 0.5;
+                    let py = (y as f32) + 0.5;
+                    let pixel = Point2::new(px, py);
 
-        // Rasterize
-        for y in y_min..y_max {
-            for x in x_min..x_max {
-                let px = (x as f32) + 0.5;
-                let py = (y as f32) + 0.5;
-                let pixel = Point2::new(px, py);
+                    if !geometry::is_point_in_triangle(&pixel, &projection_result.screen_triangle) {
+                        continue;
+                    }
 
-                if !geometry::is_point_in_triangle(&pixel, &projection_result.screen_triangle) {
-                    continue;
+                    let (z, _w) = graphics::interpolate_attributes_at_pixel(
+                        &pixel, &projection_result);
+
+                    // pixel in this triangle is behind another triangle
+                    if z >= z_buffer[y][x] {
+                        continue;
+                    }
+                    
+                    z_buffer[y][x] = z;
+                    projection_buffer[y][x] = projection_result_index;
                 }
-
-                let (z, _w) = graphics::interpolate_attributes_at_pixel(
-                    &pixel, &projection_result);
-
-                // pixel in this triangle is behind another triangle
-                if z >= z_buffer[y][x] {
-                    continue;
-                }
-                
-                z_buffer[y][x] = z;
-                projection_buffer[y][x] = projection_result_index;
             }
         }
     }
@@ -77,7 +74,7 @@ pub fn render_geometry(
                 screen_buffer[y][x] = ansi_background_color;
                 continue;
             }
-            let projection_result = &projection_results[projection_result_index];
+            let projection_result = &cached_projection_results[projection_result_index];
 
             let pixel = Point3::new(
                 (x as f32) + 0.5, 
@@ -101,14 +98,13 @@ pub fn render_geometry(
             };
 
             let color = projection_result.screen_triangle.color;
-            //let r = correct_color(color.r);
-            //let g = correct_color(color.g);
-            //let b = correct_color(color.b);
+            let r = correct_color(color.r);
+            let g = correct_color(color.g);
+            let b = correct_color(color.b);
 
-            //screen_buffer[y][x] = graphics::rgb_to_ansi256(r, g, b);
-            screen_buffer[y][x] = graphics::rgb_to_ansi256(color.r, color.g, color.b);
+            screen_buffer[y][x] = graphics::rgb_to_ansi256(r, g, b);
         }
     }
 
-    projection_results.clone()
+    cached_projection_results.clone()
 }

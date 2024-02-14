@@ -1,4 +1,4 @@
-use nalgebra::{Matrix4, Point2, Point3, Point4, Perspective3, Vector3};
+use nalgebra::{Matrix4, Point2, Point3, Point4, Perspective3, Vector3, Vector4};
 
 use crate::constants::{ASPECT_RATIO, FOV, NEAR_PLANE, FAR_PLANE, SCREEN_WIDTH, SCREEN_HEIGHT};
 use crate::world_objects::{Entity};
@@ -114,7 +114,7 @@ fn is_vertex_outside_frustum(vertex : &Point4<f32>) -> bool {
     x_out_of_range || y_out_of_range || z_out_of_range
 }
 
-pub fn is_triangle_outside_frustum(triangle : &Triangle4) -> bool {
+fn is_triangle_outside_frustum(triangle : &Triangle4) -> bool {
     let (v0, v1, v2) = triangle.vertices();
 
     let lx = v0.x <= -v0.w && v1.x <= -v1.w && v2.x <= -v2.w;
@@ -125,6 +125,35 @@ pub fn is_triangle_outside_frustum(triangle : &Triangle4) -> bool {
     let gz = v0.z >=  v0.w && v1.z >=  v1.w && v2.z >=  v2.w;
 
     lx || gx || ly || gy || lz || gz
+}
+
+fn calculate_clip_space_near_plane_intersection(a: Point4<f32>, b: Point4<f32>) -> Point4<f32> {
+    let alpha = (-b.w  - b.z) / (a.z + a.w - b.w - b.z);
+    let a_vec: Vector4<f32> = a.coords;
+    let b_vec: Vector4<f32> = b.coords;
+    let intersection = alpha * a_vec + (1.0 - alpha) * b_vec;
+    Point4::from(intersection)
+}
+
+fn clip_triangle(triangle: &Triangle4) -> Vec<Triangle4> {
+    if is_triangle_outside_frustum(triangle) {
+        return Vec::new();
+    }
+
+    let (a, b, c) = triangle.vertices();
+    let a_outside_plane = a.z < -a.w;
+    let b_outside_plane = b.z < -b.w;
+    let c_outside_plane = c.z < -c.w;
+
+    let count = [a_outside_plane, b_outside_plane, c_outside_plane].into_iter()
+        .filter(|b| *b)
+        .count();
+
+    if count == 1 {
+        return Vec::new();
+    }
+
+    vec!(*triangle)
 }
 
 pub fn is_point_in_triangle(pt: &Point2<f32>, triangle: &Triangle3) -> bool {
@@ -250,7 +279,7 @@ fn calculate_bounding_box(projected_triangle : &Triangle3) -> BoundingBox2<usize
 pub fn project_triangle(
         input : &Triangle3, 
         projection_matrix : &Matrix4<f32>,  
-        camera_transform : &Matrix4<f32>) -> Option<ProjectionResult> {
+        camera_transform : &Matrix4<f32>) -> Vec<ProjectionResult> {
     // Transform world coordinates to camera coordinates
     let camera_frame_triangle = transform_triangle_to_camera_coords(&input, &camera_transform);
 
@@ -260,28 +289,28 @@ pub fn project_triangle(
     // Transform the camera coordinates to clip space
     let clip_space_triangle = camera_coordinates_to_clip_space(&camera_frame_triangle, &projection_matrix);
 
-    // Clip against the near plane here. 
-    if is_triangle_outside_frustum(&clip_space_triangle) {
-        return None;
-    }
+    let clipped_triangles : Vec<Triangle4> = clip_triangle(&clip_space_triangle);
 
-    // Transform from clip space coordinates to normalized device coordinates
-    let ndc_triangle = clips_space_to_ndc(&clip_space_triangle);
+    clipped_triangles.iter()
+        .map(|clipped_triangle| {
+            // Transform from clip space coordinates to normalized device coordinates
+            let ndc_triangle = clips_space_to_ndc(clipped_triangle);
 
-    // Transform from normalized device coordinates to screen coordinates
-    let screen_triangle = ndc_to_screen(&ndc_triangle);
+            // Transform from normalized device coordinates to screen coordinates
+            let screen_triangle = ndc_to_screen(&ndc_triangle);
 
-    // Get bounding box of the projected triangle
-    let bounding_box = calculate_bounding_box(&screen_triangle);
+            // Get bounding box of the projected triangle
+            let bounding_box = calculate_bounding_box(&screen_triangle);
 
-    let result = ProjectionResult {
-        camera_frame_triangle: camera_frame_triangle,
-        clip_space_triangle: clip_space_triangle,
-        ndc_triangle: ndc_triangle,
-        screen_triangle: screen_triangle,
-        screen_bounding_box: bounding_box,
-        normal: normal
-    };
+            let result = ProjectionResult {
+                camera_frame_triangle: camera_frame_triangle,
+                clip_space_triangle: clip_space_triangle,
+                ndc_triangle: ndc_triangle,
+                screen_triangle: screen_triangle,
+                screen_bounding_box: bounding_box,
+                normal: normal
+            };
 
-    Some(result)
+            result
+        }).collect()
 }
