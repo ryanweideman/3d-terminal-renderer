@@ -56,18 +56,18 @@ pub fn print_debug_info(
     queue!(
         stdout,
         SetBackgroundColor(Color::AnsiValue(0)),
-        Print(format!("total loop time elapsed ms: {:3.0}", total_time_elapsed.as_secs_f64() * 1000.0))
+        Print(format!("total loop time elapsed ms: {:3.0}", total_time_elapsed.as_secs_f32() * 1000.0))
     ).unwrap();
     queue!(stdout, MoveTo(1, (SCREEN_HEIGHT + 1) as u16)).unwrap();
     /*
     queue!(
         stdout,
         SetBackgroundColor(Color::AnsiValue(0)),
-        Print(format!("processing time elapsed ms: {:3.0}", processed_time_elapsed.as_secs_f64() * 1000.0))
+        Print(format!("processing time elapsed ms: {:3.0}", processed_time_elapsed.as_secs_f32() * 1000.0))
     ).unwrap();
     queue!(stdout, MoveTo(1, (SCREEN_HEIGHT + 2) as u16)).unwrap();
     */
-
+/*
     for i in 0..projection_results.len() {
         let result = projection_results[i];
         let (c0, c1, c2) = result.camera_frame_triangle.vertices();
@@ -94,15 +94,15 @@ pub fn print_debug_info(
             SetBackgroundColor(Color::AnsiValue(0)),
             Print(format!("ndc    {} {} {}", n0, n1, n2))
         ).unwrap();
-    }
+    }*/
     
-    /*
-            queue!(
+    
+        queue!(
             stdout,
             SetBackgroundColor(Color::AnsiValue(0)),
-            Print(format!("num triangles in frame: {:5}", i))
+            Print(format!("num triangles in frame: {:5}", projection_results.len()))
         ).unwrap();
-    */
+    
 
 }
 

@@ -98,11 +98,15 @@ pub fn render_geometry(
             };
 
             let color = projection_result.screen_triangle.color;
+            
             let r = correct_color(color.r);
             let g = correct_color(color.g);
             let b = correct_color(color.b);
 
             screen_buffer[y][x] = graphics::rgb_to_ansi256(r, g, b);
+            
+            //screen_buffer[y][x] = graphics::rgb_to_ansi256(color.r, color.g, color.b);
+
         }
     }
 
