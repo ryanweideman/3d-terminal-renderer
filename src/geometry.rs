@@ -127,68 +127,109 @@ fn is_triangle_fully_outside_frustum(triangle : &Triangle4) -> bool {
     lx || gx || ly || gy || lz || gz
 }
 
-fn calculate_clip_space_near_plane_intersection(a: &Point4<f32>, b: &Point4<f32>) -> Point4<f32> {
-    let alpha = (-b.w  - b.z) / (a.z + a.w - b.w - b.z);
-    let a_vec: Vector4<f32> = a.coords;
-    let b_vec: Vector4<f32> = b.coords;
-    let intersection = alpha * a_vec + (1.0 - alpha) * b_vec;
+#[derive(Copy, Clone)]
+enum FrustumPlane {
+    Near,
+    Far,
+    Left,
+    Right,
+    Top,
+    Bottom
+}
+
+fn calculate_clip_space_plane_intersection(plane: FrustumPlane, a: &Point4<f32>, b: &Point4<f32>) -> Point4<f32> {
+    let alpha = match plane {
+        FrustumPlane::Near => {
+            (-b.w - b.z) / (a.z + a.w - b.w - b.z)
+        },
+        FrustumPlane::Left => {
+            (-b.w - b.x) / (a.x + a.w - b.w - b.x)
+        },
+        FrustumPlane::Right => {
+            (b.w - b.x) / (a.x - a.w + b.w - b.x)
+        },
+        _ => 0.0
+    };
+    let intersection = alpha * a.coords + (1.0 - alpha) * b.coords;
     Point4::from(intersection)
 }
 
-fn clip_triangle(triangle: &Triangle4) -> Vec<Triangle4> {
+fn clip_triangle_against_plane(plane: FrustumPlane, triangles: &Vec<Triangle4>) -> Vec<Triangle4> {
+    triangles.iter()
+        .map(|triangle| {
+            let vertices: Vec<(&Point4<f32>, bool)> = triangle.vertices.iter()
+                .map(|v| {
+                    match plane {
+                        FrustumPlane::Near => (v, v.z > -v.w),
+                        FrustumPlane::Left => (v, v.x > -v.w),
+                        FrustumPlane::Right => (v, v.x < v.w),
+                        _ => (v, false)
+                    }
+                })
+                .collect();
+
+            let index = vertices.iter()
+                .position(|&(_, inside)| inside)
+                .unwrap_or(usize::MAX);
+
+            // None of the vertices are within the near plane
+            if index == usize::MAX {
+                return Vec::new();
+            }
+
+            // Vertice A is gauranteed within the near plane
+            let a = vertices[index];
+            let b = vertices[(index + 1) % 3];
+            let c = vertices[(index + 2) % 3];
+
+            let b_inside: bool = b.1;
+            let c_inside: bool = c.1;
+
+            match (b_inside, c_inside) {
+                // Triangle is already fully within the near plane
+                (true, true) => vec![*triangle],
+                // Triangle is clipped into two triangles
+                (true, false) => {
+                    let i1 = calculate_clip_space_plane_intersection(plane, a.0, c.0);
+                    let i2 = calculate_clip_space_plane_intersection(plane, b.0, c.0);
+                    vec![
+                        Triangle4 { vertices: [*a.0, *b.0, i1], color: triangle.color }, 
+                        Triangle4 { vertices: [*b.0, i2, i1], color: triangle.color }
+                    ]
+                }
+                // Triangle is clipped into two triangles
+                (false, true) => {
+                    let i1 = calculate_clip_space_plane_intersection(plane, a.0, b.0);
+                    let i2 = calculate_clip_space_plane_intersection(plane, b.0, c.0);
+                    vec![
+                        Triangle4 { vertices: [*a.0, i1, *c.0], color: triangle.color }, 
+                        Triangle4 { vertices: [*c.0, i1, i2], color: triangle.color }
+                    ]      
+                }
+                // Triangle is clipped into one smaller triangle
+                (false, false) => {
+                    let i1 = calculate_clip_space_plane_intersection(plane, a.0, b.0);
+                    let i2 = calculate_clip_space_plane_intersection(plane, a.0, c.0);
+                    vec![Triangle4 { vertices: [*a.0, i1, i2], color: triangle.color }]
+                }
+            }
+        })
+        .flat_map(|triangle| triangle)
+        .collect()
+}
+
+fn clip_triangle_to_frustum(triangle: &Triangle4) -> Vec<Triangle4> {
     if is_triangle_fully_outside_frustum(triangle) {
         return Vec::new();
     }
 
-    let vertices: Vec<(&Point4<f32>, bool)> = triangle.vertices.iter()
-        .map(|v| (v, v.z > -v.w))
-        .collect();
+    let near_clipped_triangles = clip_triangle_against_plane(FrustumPlane::Near, &vec![*triangle]);
+    let left_clipped_triangles = clip_triangle_against_plane(FrustumPlane::Left, &near_clipped_triangles);
+    let right_clipped_triangles = clip_triangle_against_plane(FrustumPlane::Right, &left_clipped_triangles);
+    
+    //clip_triangle_against_plane(FrustumPlane::Right, &vec![*triangle])
+    right_clipped_triangles
 
-    let index = vertices.iter()
-        .position(|&(_, inside)| inside)
-        .unwrap_or(usize::MAX);
-
-    // None of the vertices are within the near plane
-    if index == usize::MAX {
-        return Vec::new();
-    }
-
-     // Vertice A is gauranteed within the near plane
-    let a = vertices[index];
-    let b = vertices[(index + 1) % 3];
-    let c = vertices[(index + 2) % 3];
-
-    let b_inside: bool = b.1;
-    let c_inside: bool = c.1;
-
-    match (b_inside, c_inside) {
-        // Triangle is already fully within the near plane
-        (true, true) => vec![*triangle],
-        // Triangle is clipped into two triangles
-        (true, false) => {
-            let i1 = calculate_clip_space_near_plane_intersection(a.0, c.0);
-            let i2 = calculate_clip_space_near_plane_intersection(b.0, c.0);
-            vec![
-                Triangle4 { vertices: [*a.0, *b.0, i1], color: triangle.color }, 
-                Triangle4 { vertices: [*b.0, i2, i1], color: triangle.color }
-            ]
-        }
-        // Triangle is clipped into two triangles
-        (false, true) => {
-            let i1 = calculate_clip_space_near_plane_intersection(a.0, b.0);
-            let i2 = calculate_clip_space_near_plane_intersection(b.0, c.0);
-            vec![
-                Triangle4 { vertices: [*a.0, i1, *c.0], color: triangle.color }, 
-                Triangle4 { vertices: [*c.0, i1, i2], color: triangle.color }
-            ]      
-        }
-        // Triangle is clipped into one smaller triangle
-        (false, false) => {
-            let i1 = calculate_clip_space_near_plane_intersection(a.0, b.0);
-            let i2 = calculate_clip_space_near_plane_intersection(a.0, c.0);
-            vec![Triangle4 { vertices: [*a.0, i1, i2], color: triangle.color }]
-        }
-    }
 }
 
 pub fn is_point_in_triangle(pt: &Point2<f32>, triangle: &Triangle3) -> bool {
@@ -324,12 +365,17 @@ pub fn project_triangle(
     // Transform the camera coordinates to clip space
     let clip_space_triangle = camera_coordinates_to_clip_space(&camera_frame_triangle, &projection_matrix);
 
-    let clipped_triangles : Vec<Triangle4> = clip_triangle(&clip_space_triangle);
+    let clipped_triangles : Vec<Triangle4> = clip_triangle_to_frustum(&clip_space_triangle);
 
     clipped_triangles.iter()
         .map(|clipped_triangle| {
             // Transform from clip space coordinates to normalized device coordinates
             let ndc_triangle = clips_space_to_ndc(clipped_triangle);
+/*
+            for v in &ndc_triangle.vertices {
+                assert!(v.z > -1.001);
+            }
+            */
 
             // Transform from normalized device coordinates to screen coordinates
             let screen_triangle = ndc_to_screen(&ndc_triangle);

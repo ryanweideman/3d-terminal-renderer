@@ -105,7 +105,7 @@ pub fn render_geometry(
 
             screen_buffer[y][x] = graphics::rgb_to_ansi256(r, g, b);
             
-            //screen_buffer[y][x] = graphics::rgb_to_ansi256(color.r, color.g, color.b);
+            screen_buffer[y][x] = graphics::rgb_to_ansi256(color.r, color.g, color.b);
 
         }
     }
