@@ -8,14 +8,14 @@ pub enum Entity<'a> {
 }
 
 impl<'a> Entity<'a> {
-    pub fn update(&mut self, dt: f32) {
+    pub fn update(&mut self, dt: f64) {
         match self {
             Entity::SpinningCube(cube) => cube.update(dt),
             _ => {}
         }
     }
 
-    pub fn get_origin(&self) -> Point3<f32> {
+    pub fn get_origin(&self) -> Point3<f64> {
         match self {
             Entity::Square(square) => square.origin,
             Entity::SpinningCube(cube) => cube.origin,
@@ -23,7 +23,7 @@ impl<'a> Entity<'a> {
         }
     }
 
-    pub fn get_rotation(&self) -> Rotation3<f32> {
+    pub fn get_rotation(&self) -> Rotation3<f64> {
         match self {
             Entity::Square(square) => square.rotation,
             Entity::SpinningCube(cube) => {
@@ -35,7 +35,7 @@ impl<'a> Entity<'a> {
         }
     }
 
-    pub fn get_scale(&self) -> Matrix4<f32> {
+    pub fn get_scale(&self) -> Matrix4<f64> {
         match self {
             Entity::Square(square) => square.scale,
             Entity::SpinningCube(cube) => cube.scale,
@@ -60,53 +60,53 @@ impl<'a> Entity<'a> {
 }
 
 trait Updatable {
-    fn update(&mut self, dt: f32);
+    fn update(&mut self, dt: f64);
 }
 
 trait WorldLight {}
 
 #[derive(Copy, Clone)]
 pub struct Cube {
-    pub origin: Point3<f32>,
-    pub rotation: Rotation3<f32>
+    pub origin: Point3<f64>,
+    pub rotation: Rotation3<f64>
 }
 
 #[derive(Copy, Clone)]
 pub struct Square<'a> {
     pub model: &'a Model,
-    pub origin: Point3<f32>,
-    pub rotation: Rotation3<f32>,
-    pub scale: Matrix4<f32>
+    pub origin: Point3<f64>,
+    pub rotation: Rotation3<f64>,
+    pub scale: Matrix4<f64>
 }
 
 #[derive(Copy, Clone)]
 pub struct Rectangle<'a> {
     pub model: &'a Model,
-    pub origin: Point3<f32>,
-    pub rotation: Rotation3<f32>,
-    pub scale: Matrix4<f32>,
+    pub origin: Point3<f64>,
+    pub rotation: Rotation3<f64>,
+    pub scale: Matrix4<f64>,
     pub color: Color
 }
 
 #[derive(Copy, Clone)]
 pub struct SpinningCube<'a> {
     pub model: &'a Model,
-    pub origin: Point3<f32>,
-    pub rotation_axis: Vector3<f32>,
-    pub rotation_angle: f32,
-    pub rotation_velocity: f32,
-    pub scale: Matrix4<f32>
+    pub origin: Point3<f64>,
+    pub rotation_axis: Vector3<f64>,
+    pub rotation_angle: f64,
+    pub rotation_velocity: f64,
+    pub scale: Matrix4<f64>
 }
 
 impl Updatable for SpinningCube<'_> {
-    fn update(&mut self, _dt: f32) {
+    fn update(&mut self, _dt: f64) {
         self.rotation_angle += self.rotation_velocity;
     }
 }
 
 #[derive(Copy, Clone)]
 pub struct PointLight {
-    pub origin: Point3<f32>
+    pub origin: Point3<f64>
 }
 
 impl WorldLight for PointLight {}

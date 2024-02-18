@@ -37,7 +37,7 @@ fn main() {
     stdout.execute(EnterAlternateScreen).expect("Could not enter terminal alternative mode");
     queue!(stdout, Hide).unwrap();
 
-    let mut camera = camera::Camera::new(Point3::new(0.0, 0.0, 0.0));
+    let mut camera = camera::Camera::new(Point3::new(0.0, 0.0, 3.0));
     let mut keyboard = keyboard::Keyboard::new();
 
     let model_loader = model_loader::ModelLoader::new("models/");

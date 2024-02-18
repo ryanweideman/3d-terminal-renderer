@@ -2,13 +2,13 @@ use nalgebra::{Matrix4, Point3, Rotation3, Vector3};
 use crate::keyboard::{Keyboard, Keys}; 
 
 pub struct Camera {
-    origin: Point3<f32>,
-    yaw: f32,
-    pitch: f32
+    origin: Point3<f64>,
+    yaw: f64,
+    pitch: f64
 }
 
 impl Camera {
-    pub fn new(origin: Point3<f32>) -> Self {
+    pub fn new(origin: Point3<f64>) -> Self {
         Camera {
             origin: origin,
             yaw: 0.0,
@@ -16,7 +16,7 @@ impl Camera {
         }
     }
 
-    pub fn get_transform(&self) -> Matrix4<f32> {
+    pub fn get_transform(&self) -> Matrix4<f64> {
         // TODO: Needs fix. This is incorrect especially when pitch is close to -90/90 deg
         let direction = Vector3::new(
             self.yaw.sin(),
@@ -40,11 +40,11 @@ impl Camera {
 
     pub fn update(&mut self, keyboard: &Keyboard) {
         let mut velocity = Vector3::new(0.0, 0.0, 0.0);
-        let mut yaw_velocity : f32 = 0.0;
-        let mut pitch_velocity : f32 = 0.0;
+        let mut yaw_velocity : f64 = 0.0;
+        let mut pitch_velocity : f64 = 0.0;
 
-        let linear_speed: f32 = 0.35;
-        let angular_speed: f32 = 0.06;
+        let linear_speed: f64 = 0.35;
+        let angular_speed: f64 = 0.06;
 
         keyboard.pressed_keys.iter()
             .for_each(|key| {

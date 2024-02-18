@@ -23,7 +23,7 @@ pub fn rgb_to_ansi256(r: u8, g: u8, b: u8) -> u16 {
 
     // Uses finer grayscale. Ignores 0 case since the deadzone is massive
     if rc != 0 && rc == gc && gc == bc {
-        return 232 + ((r as f32) * 0.09375) as u16;
+        return 232 + ((r as f64) * 0.09375) as u16;
     }
 
     (16 + 36 * rc + 6 * gc + bc).into()
@@ -56,14 +56,14 @@ pub fn print_debug_info(
     queue!(
         stdout,
         SetBackgroundColor(Color::AnsiValue(0)),
-        Print(format!("total loop time elapsed ms: {:3.0}", total_time_elapsed.as_secs_f32() * 1000.0))
+        Print(format!("total loop time elapsed ms: {:3.0}", total_time_elapsed.as_secs_f64() * 1000.0))
     ).unwrap();
     queue!(stdout, MoveTo(1, (SCREEN_HEIGHT + 1) as u16)).unwrap();
     /*
     queue!(
         stdout,
         SetBackgroundColor(Color::AnsiValue(0)),
-        Print(format!("processing time elapsed ms: {:3.0}", processed_time_elapsed.as_secs_f32() * 1000.0))
+        Print(format!("processing time elapsed ms: {:3.0}", processed_time_elapsed.as_secs_f64() * 1000.0))
     ).unwrap();
     queue!(stdout, MoveTo(1, (SCREEN_HEIGHT + 2) as u16)).unwrap();
     */
@@ -107,18 +107,18 @@ pub fn print_debug_info(
 }
 
 pub fn interpolate_attributes_at_pixel(
-    p: &Point2<f32>,
+    p: &Point2<f64>,
     projection_result: &ProjectionResult) 
-    -> (f32, f32) {
+    -> (f64, f64) {
 
     let (p0, p1, p2) = projection_result.screen_triangle.vertices();
     let (clip_v0, clip_v1, clip_v2) = projection_result.clip_space_triangle.vertices();
     let (ndc_v0, ndc_v1, ndc_v2) = projection_result.ndc_triangle.vertices();
 
-    let total_area : f32 = p0.x * (p1.y - p2.y) + p1.x * (p2.y - p0.y) + p2.x * (p0.y - p1.y);
-    let lambda0 : f32 = ((p1.y - p2.y) * (p.x - p2.x) + (p2.x - p1.x) * (p.y - p2.y)) / total_area;
-    let lambda1 : f32 = ((p2.y - p0.y) * (p.x - p2.x) + (p0.x - p2.x) * (p.y - p2.y)) / total_area;
-    let lambda2 : f32 = 1.0 - lambda0 - lambda1;
+    let total_area : f64 = p0.x * (p1.y - p2.y) + p1.x * (p2.y - p0.y) + p2.x * (p0.y - p1.y);
+    let lambda0 : f64 = ((p1.y - p2.y) * (p.x - p2.x) + (p2.x - p1.x) * (p.y - p2.y)) / total_area;
+    let lambda1 : f64 = ((p2.y - p0.y) * (p.x - p2.x) + (p0.x - p2.x) * (p.y - p2.y)) / total_area;
+    let lambda2 : f64 = 1.0 - lambda0 - lambda1;
 
     assert!(lambda0 + lambda1 + lambda2 < 1.00001 
         && lambda0 + lambda1 + lambda2 > 0.99999);

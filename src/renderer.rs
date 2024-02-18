@@ -10,19 +10,19 @@ use crate::world_objects;
 pub fn render_geometry(
         screen_buffer: &mut [[u16; SCREEN_WIDTH] ; SCREEN_HEIGHT],
         geometry: &Vec<geometry::Triangle3>, 
-        projection_matrix: &Matrix4<f32>,        
-        projection_matrix_inverse: &Matrix4<f32>, 
-        camera_transform: &Matrix4<f32>, 
+        projection_matrix: &Matrix4<f64>,        
+        projection_matrix_inverse: &Matrix4<f64>, 
+        camera_transform: &Matrix4<f64>, 
         ansi_background_color: u16) -> Vec<geometry::ProjectionResult> {
 
     let point_light = world_objects::PointLight {
-        origin: Point3::new(2.0, -2.0, 3.0)
+        origin: Point3::new(0.5, -0.5, 3.0)
     };
 
     let camera_point_light = geometry::transform_world_vertice_to_camera_coords(&point_light.origin, camera_transform);
 
-    let mut z_buffer : [[f32; SCREEN_WIDTH] ; SCREEN_HEIGHT] 
-        = [[f32::MAX ; SCREEN_WIDTH] ; SCREEN_HEIGHT]; 
+    let mut z_buffer : [[f64; SCREEN_WIDTH] ; SCREEN_HEIGHT] 
+        = [[f64::MAX ; SCREEN_WIDTH] ; SCREEN_HEIGHT]; 
     let mut projection_buffer : [[usize; SCREEN_WIDTH] ; SCREEN_HEIGHT] 
         = [[usize::MAX ; SCREEN_WIDTH] ; SCREEN_HEIGHT]; 
     let mut cached_projection_results = Vec::with_capacity(geometry.len());
@@ -44,8 +44,8 @@ pub fn render_geometry(
             // Rasterize
             for y in y_min..y_max {
                 for x in x_min..x_max {
-                    let px = (x as f32) + 0.5;
-                    let py = (y as f32) + 0.5;
+                    let px = (x as f64) + 0.5;
+                    let py = (y as f64) + 0.5;
                     let pixel = Point2::new(px, py);
 
                     if !geometry::is_point_in_triangle(&pixel, &projection_result.screen_triangle) {
@@ -77,8 +77,8 @@ pub fn render_geometry(
             let projection_result = &cached_projection_results[projection_result_index];
 
             let pixel = Point3::new(
-                (x as f32) + 0.5, 
-                (y as f32) + 0.5, 
+                (x as f64) + 0.5, 
+                (y as f64) + 0.5, 
                 z_buffer[y][x]);
 
             let p_ndc = geometry::screen_to_ndc(&pixel).to_homogeneous();
@@ -86,15 +86,23 @@ pub fn render_geometry(
             let point_camera_space = point_camera_space_homogeneous.xyz() / point_camera_space_homogeneous.w;
             let light_norm = (camera_point_light - point_camera_space).coords.normalize();
 
-            let dot = math::round_up_to_nearest_increment(
-                light_norm.dot(&projection_result.normal).max(0.0), 
-                0.2);
+            let diffuse_intensity = light_norm.dot(&projection_result.normal).max(0.0); 
+
+            let a = 0.1;
+            let b = 0.1;
+
+            // Calculate attenuation based on distance
+            let distance = (camera_point_light - point_camera_space).coords.magnitude();
+            let attenuation = 1.0 / (1.0 + a * distance + b * distance * distance);
+            
+            // Final light intensity
+            let light_intensity = diffuse_intensity * attenuation;
 
             let correct_color = |input: u8| -> u8 {
                 if input == 0 {
                     return input;
                 } 
-                math::scale_range((input as f32) * dot, 0.0, 255.0, 95.0, 255.0) as u8
+                math::scale_range((input as f64) * light_intensity, 0.0, 255.0, 95.0, 255.0) as u8
             };
 
             let color = projection_result.screen_triangle.color;
@@ -104,9 +112,7 @@ pub fn render_geometry(
             let b = correct_color(color.b);
 
             screen_buffer[y][x] = graphics::rgb_to_ansi256(r, g, b);
-            
-            screen_buffer[y][x] = graphics::rgb_to_ansi256(color.r, color.g, color.b);
-
+        
         }
     }
 

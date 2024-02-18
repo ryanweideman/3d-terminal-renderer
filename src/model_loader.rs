@@ -42,7 +42,7 @@ struct GeometryData {
 
 #[derive(Deserialize, Debug)]
 struct Triangle {
-    vertices: [[f32; 3]; 3],
+    vertices: [[f64; 3]; 3],
     color: [u8; 3],
 }
 
