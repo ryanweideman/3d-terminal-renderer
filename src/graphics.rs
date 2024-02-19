@@ -1,7 +1,7 @@
 use crate::constants::{SCREEN_WIDTH, SCREEN_HEIGHT};
 use crate::geometry;
 
-use crossterm::{queue, style::{Color, Print, SetBackgroundColor}, cursor::MoveTo};
+use crossterm::{queue, style::{Color, Print, SetBackgroundColor}, cursor::MoveTo, terminal::Clear, terminal::ClearType};
 
 use nalgebra::{Point2};
 use geometry::{ProjectionResult};
@@ -29,6 +29,12 @@ pub fn rgb_to_ansi256(r: u8, g: u8, b: u8) -> u16 {
     (16 + 36 * rc + 6 * gc + bc).into()
 }
 
+pub fn clear_screen(stdout : &mut std::io::Stdout) {
+    queue!(
+        stdout,
+        Clear(ClearType::All)
+    ).ok();
+}
 
 pub fn output_screen_buffer(stdout : &mut std::io::Stdout, screen_buffer : &[[u16; SCREEN_WIDTH] ; SCREEN_HEIGHT]) {
     queue!(stdout, MoveTo(1, 1)).unwrap();
@@ -74,28 +80,37 @@ pub fn print_debug_info(
         let (cl0, cl1, cl2) = result.clip_space_triangle.vertices();
         let (n0, n1, n2) = result.ndc_triangle.vertices();
 
-        queue!(stdout, MoveTo(1, (SCREEN_HEIGHT + i*3) as u16)).unwrap();
+        queue!(stdout, MoveTo(1, (SCREEN_HEIGHT + i*4) as u16)).unwrap();
         queue!(
             stdout,
             SetBackgroundColor(Color::AnsiValue(0)),
-            Print(format!("camera {} {} {}", c0, c1, c2))
+            Print(format!(
+                "camera [{:.2} {:.2} {:.2}] [{:.2} {:.2} {:.2}] [{:.2} {:.2} {:.2}]",
+                c0.x, c0.y, c0.z, c1.x, c1.y, c1.z, c2.x, c2.y, c2.z
+            ))
         ).unwrap();
 
-        queue!(stdout, MoveTo(1, (SCREEN_HEIGHT + i*3 + 1) as u16)).unwrap();
+        queue!(stdout, MoveTo(1, (SCREEN_HEIGHT + i*4 + 1) as u16)).unwrap();
         queue!(
             stdout,
             SetBackgroundColor(Color::AnsiValue(0)),
-            Print(format!("clip   {} {} {}", cl0, cl1, cl2))
+            Print(format!(
+                "clip   [{:.2} {:.2} {:.2} {:.2}] [{:.2} {:.2} {:.2} {:.2}] [{:.2} {:.2} {:.2} {:.2}]",
+                cl0.x, cl0.y, cl0.z, cl0.w, cl1.x, cl1.y, cl1.z, cl1.w, cl2.x, cl2.y, cl2.z, cl2.w
+            ))
         ).unwrap();
 
-        queue!(stdout, MoveTo(1, (SCREEN_HEIGHT + i*3 + 2) as u16)).unwrap();
+        queue!(stdout, MoveTo(1, (SCREEN_HEIGHT + i*4 + 2) as u16)).unwrap();
         queue!(
             stdout,
             SetBackgroundColor(Color::AnsiValue(0)),
-            Print(format!("ndc    {} {} {}", n0, n1, n2))
+            Print(format!(
+                "ndc    [{:.2} {:.2} {:.2}] [{:.2} {:.2} {:.2}] [{:.2} {:.2} {:.2}]",
+                n0.x, n0.y, n0.z, n1.x, n1.y, n1.z, n2.x, n2.y, n2.z
+            ))
         ).unwrap();
-    }*/
-    
+    }
+    */
     
         queue!(
             stdout,
@@ -109,10 +124,9 @@ pub fn print_debug_info(
 pub fn interpolate_attributes_at_pixel(
     p: &Point2<f64>,
     projection_result: &ProjectionResult) 
-    -> (f64, f64) {
+    -> f64 {
 
     let (p0, p1, p2) = projection_result.screen_triangle.vertices();
-    let (clip_v0, clip_v1, clip_v2) = projection_result.clip_space_triangle.vertices();
     let (ndc_v0, ndc_v1, ndc_v2) = projection_result.ndc_triangle.vertices();
 
     let total_area : f64 = p0.x * (p1.y - p2.y) + p1.x * (p2.y - p0.y) + p2.x * (p0.y - p1.y);
@@ -123,16 +137,10 @@ pub fn interpolate_attributes_at_pixel(
     assert!(lambda0 + lambda1 + lambda2 < 1.00001 
         && lambda0 + lambda1 + lambda2 > 0.99999);
 
-    let wp0 = 1.0 / clip_v0.w;
-    let wp1 = 1.0 / clip_v1.w;
-    let wp2 = 1.0 / clip_v2.w;
+    let iz0 = 1.0 / ndc_v0.z;
+    let iz1 = 1.0 / ndc_v1.z;
+    let iz2 = 1.0 / ndc_v2.z;
 
-    let den = wp0 * lambda0 + wp1 * lambda1 + wp2 * lambda2;
-    let lambdap0 = lambda0 * wp0 / den;
-    let lambdap1 = lambda1 * wp1 / den;
-    let lambdap2 = lambda2 * wp2 / den;
-
-    let z = ndc_v0.z * lambdap0 + ndc_v1.z * lambdap1 + ndc_v2.z * lambdap2;
-    let w = 1.0 / den;
-    (z, w)
+    let z = 1.0 / (iz0 * lambda0 + iz1 * lambda1 + iz2 * lambda2);
+    z
 }

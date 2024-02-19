@@ -61,6 +61,8 @@ fn main() {
         }
         start_time = time::Instant::now();
 
+        //graphics::clear_screen(&mut stdout);
+
         camera.update(&keyboard);
         let mut screen_buffer = [[ansi_background_color ; SCREEN_WIDTH] ; SCREEN_HEIGHT]; 
 

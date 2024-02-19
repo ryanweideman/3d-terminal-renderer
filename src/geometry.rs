@@ -3,12 +3,14 @@ use nalgebra::{Matrix4, Point2, Point3, Point4, Perspective3, Vector3, Vector4};
 use crate::constants::{ASPECT_RATIO, FOV, NEAR_PLANE, FAR_PLANE, SCREEN_WIDTH, SCREEN_HEIGHT};
 use crate::world_objects::{Entity};
 
+use rand::Rng;
+
 #[derive(Clone)]
 pub struct Model {
     pub geometry: Vec<Triangle3>
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Color { 
     pub r: u8,
     pub g: u8,
@@ -21,7 +23,7 @@ impl Color {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Triangle3 {
     pub vertices: [Point3<f64> ; 3],
     pub color: Color
@@ -33,7 +35,7 @@ impl Triangle3 {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Triangle4 {
     pub vertices: [Point4<f64> ; 3],
     pub color: Color
@@ -140,29 +142,15 @@ enum FrustumPlane {
 fn calculate_clip_space_plane_intersection(plane: FrustumPlane, a: &Point4<f64>, b: &Point4<f64>) -> Point4<f64> {
     let alpha = match plane {
         FrustumPlane::Near   => (-b.w - b.z) / (a.z + a.w - b.w - b.z),
-        FrustumPlane::Far    => (b.w - b.z)  / (a.z - a.w + b.w - b.z),
+        FrustumPlane::Far    => ( b.w - b.z) / (a.z - a.w + b.w - b.z),
         FrustumPlane::Left   => (-b.w - b.x) / (a.x + a.w - b.w - b.x),
-        FrustumPlane::Right  => (b.w - b.x)  / (a.x - a.w + b.w - b.x),
+        FrustumPlane::Right  => ( b.w - b.x) / (a.x - a.w + b.w - b.x),
         FrustumPlane::Bottom => (-b.w - b.y) / (a.y + a.w - b.w - b.y),
-        FrustumPlane::Top    => (b.w - b.y)  / (a.y - a.w + b.w - b.y)
+        FrustumPlane::Top    => ( b.w - b.y) / (a.y - a.w + b.w - b.y)
     };
     let intersection = alpha * a.coords + (1.0 - alpha) * b.coords;
     Point4::from(intersection)
 }
-/*
-fn calculate_clip_space_plane_intersection(plane: FrustumPlane, a: &Point4<f64>, b: &Point4<f64>) -> Point4<f64> {
-    let alpha = match plane {
-        FrustumPlane::Near => (-b.w - b.z) / (a.z + a.w - b.w - b.z),
-        FrustumPlane::Far => (b.w - b.z) / (a.z - a.w - b.z + b.w),
-        FrustumPlane::Left => (-b.w - b.x) / (a.x + a.w - b.w - b.x),
-        FrustumPlane::Right => (b.w + b.x) / (a.x - a.w - b.x + b.w),
-        FrustumPlane::Bottom => (-b.w - b.y) / (a.y + a.w - b.w - b.y),
-        FrustumPlane::Top => (b.w + b.y) / (a.y - a.w - b.y + b.w),
-    };
-    let intersection = alpha * a.coords + (1.0 - alpha) * b.coords;
-    Point4::from(intersection)
-}
-*/
 
 fn clip_triangle_against_plane(plane: FrustumPlane, triangles: &Vec<Triangle4>) -> Vec<Triangle4> {
     triangles.iter()
@@ -170,12 +158,12 @@ fn clip_triangle_against_plane(plane: FrustumPlane, triangles: &Vec<Triangle4>) 
             let vertices: Vec<(&Point4<f64>, bool)> = triangle.vertices.iter()
                 .map(|v| {
                     match plane {
-                        FrustumPlane::Near => (v, v.z > -v.w),
-                        FrustumPlane::Far => (v, v.z < v.w),
-                        FrustumPlane::Left => (v, v.x > -v.w),
-                        FrustumPlane::Right => (v, v.x < v.w),
-                        FrustumPlane::Bottom => (v, v.y > -v.w),
-                        FrustumPlane::Top => (v, v.y < v.w)
+                        FrustumPlane::Near   => (v, v.z >= -v.w),
+                        FrustumPlane::Far    => (v, v.z <=  v.w),
+                        FrustumPlane::Left   => (v, v.x >= -v.w),
+                        FrustumPlane::Right  => (v, v.x <=  v.w),
+                        FrustumPlane::Bottom => (v, v.y >= -v.w),
+                        FrustumPlane::Top    => (v, v.y <=  v.w)
                     }
                 })
                 .collect();
@@ -197,6 +185,13 @@ fn clip_triangle_against_plane(plane: FrustumPlane, triangles: &Vec<Triangle4>) 
             let b_inside: bool = b.1;
             let c_inside: bool = c.1;
 
+            let rcolor_1 = triangle.color;//Color::new(rng.gen(), rng.gen(), rng.gen());
+            let rcolor_2 = triangle.color;//Color::new(rng.gen(), rng.gen(), rng.gen());
+/*
+            let mut rng = rand::thread_rng();
+            let rcolor_1 = Color::new(rng.gen(), rng.gen(), rng.gen());
+            let rcolor_2 = Color::new(rng.gen(), rng.gen(), rng.gen());
+*/
             match (b_inside, c_inside) {
                 // Triangle is already fully within the near plane
                 (true, true) => vec![*triangle],
@@ -205,25 +200,25 @@ fn clip_triangle_against_plane(plane: FrustumPlane, triangles: &Vec<Triangle4>) 
                     let i1 = calculate_clip_space_plane_intersection(plane, a.0, c.0);
                     let i2 = calculate_clip_space_plane_intersection(plane, b.0, c.0);
                     vec![
-                        Triangle4 { vertices: [*a.0, *b.0, i1], color: triangle.color }, 
-                        Triangle4 { vertices: [*b.0, i2, i1], color: triangle.color }
+                        Triangle4 { vertices: [*a.0, *b.0, i2], color: rcolor_1 }, 
+                        Triangle4 { vertices: [*a.0, i2, i1], color: rcolor_2 }
                     ]
                 }
                 // Triangle is clipped into two triangles
                 (false, true) => {
                     let i1 = calculate_clip_space_plane_intersection(plane, a.0, b.0);
-                    let i2 = calculate_clip_space_plane_intersection(plane, b.0, c.0);
+                    let i2 = calculate_clip_space_plane_intersection(plane, c.0, b.0);
                     vec![
-                        Triangle4 { vertices: [*a.0, i1, *c.0], color: triangle.color }, 
-                        Triangle4 { vertices: [*c.0, i1, i2], color: triangle.color }
+                        Triangle4 { vertices: [*a.0, i1, *c.0], color: rcolor_1 }, 
+                        Triangle4 { vertices: [*c.0, i1, i2], color: rcolor_2 }
                     ]      
                 }
                 // Triangle is clipped into one smaller triangle
                 (false, false) => {
                     let i1 = calculate_clip_space_plane_intersection(plane, a.0, b.0);
                     let i2 = calculate_clip_space_plane_intersection(plane, a.0, c.0);
-                    vec![Triangle4 { vertices: [*a.0, i1, i2], color: triangle.color }]
-                }
+                    vec![Triangle4 { vertices: [*a.0, i1, i2], color: rcolor_2 }]
+                },
             }
         })
         .flat_map(|triangle| triangle)
@@ -231,9 +226,9 @@ fn clip_triangle_against_plane(plane: FrustumPlane, triangles: &Vec<Triangle4>) 
 }
 
 fn clip_triangle_to_frustum(triangle: &Triangle4) -> Vec<Triangle4> {
-    if is_triangle_fully_outside_frustum(triangle) {
-        return Vec::new();
-    }
+    //if is_triangle_fully_outside_frustum(triangle) {
+    //    return Vec::new();
+   // }
     //return vec![*triangle];
 
     let near_clipped_triangles   = clip_triangle_against_plane(FrustumPlane::Near,   &vec![*triangle]);
@@ -313,8 +308,8 @@ fn clips_space_to_ndc(clip_space_triangle: &Triangle4) -> Triangle3 {
 fn ndc_to_screen(ndc_triangle : &Triangle3) -> Triangle3 {
     let transform = |ndc: &Point3<f64>| -> Point3<f64> {
         let px = (ndc.x + 1.0) / 2.0 * (SCREEN_WIDTH as f64);
-        let py = (ndc.y + 1.0) / 2.0 * (SCREEN_HEIGHT as f64);
-        Point3::new(px, py, ndc.z)
+        let py = (1.0 - (ndc.y + 1.0) / 2.0) * (SCREEN_HEIGHT as f64);
+        Point3::new(px + 0.5, py + 0.5, ndc.z)
     };
     let (ndc_v0, ndc_v1, ndc_v2) = ndc_triangle.vertices();
     let v0 = transform(ndc_v0);
@@ -329,7 +324,7 @@ fn ndc_to_screen(ndc_triangle : &Triangle3) -> Triangle3 {
 
 pub fn screen_to_ndc(screen: &Point3<f64>) -> Point3<f64> {
     let x_ndc = (screen.x / (SCREEN_WIDTH as f64)) * 2.0 - 1.0;
-    let y_ndc = (screen.y / (SCREEN_HEIGHT as f64)) * 2.0 - 1.0;
+    let y_ndc = 1.0 - (screen.y / (SCREEN_HEIGHT as f64)) * 2.0;
     let z_ndc = screen.z; 
 
     Point3::new(x_ndc, y_ndc, z_ndc)
@@ -391,6 +386,24 @@ pub fn project_triangle(
             }
             */
 
+            // Calculating the normal of the clipped triangle
+            let projection_matrix_inverse = projection_matrix.try_inverse().unwrap();
+            let (v1, v2, v3) = clipped_triangle.vertices();
+            let point_camera_space_homogeneous_v1 = projection_matrix_inverse * v1;
+            let point_camera_space_homogeneous_v2 = projection_matrix_inverse * v2;
+            let point_camera_space_homogeneous_v3 = projection_matrix_inverse * v3;
+            let point_camera_space_v1 = point_camera_space_homogeneous_v1.xyz() / point_camera_space_homogeneous_v1.w;
+            let point_camera_space_v2 = point_camera_space_homogeneous_v2.xyz() / point_camera_space_homogeneous_v2.w;
+            let point_camera_space_v3 = point_camera_space_homogeneous_v3.xyz() / point_camera_space_homogeneous_v3.w;
+            let n = calculate_triangle_normal(&Triangle3 {
+                vertices: [point_camera_space_v1, point_camera_space_v2, point_camera_space_v3],
+                color: Color::new(0,0,0)
+            });
+        
+            // Compute the dot product
+            let dot_product = n.dot(&normal);
+            assert!(dot_product > 0.999, "{} {} {} {} {} {}", dot_product, n, normal, v1, v2, v3);
+
             // Transform from normalized device coordinates to screen coordinates
             let screen_triangle = ndc_to_screen(&ndc_triangle);
 
@@ -408,4 +421,130 @@ pub fn project_triangle(
 
             result
         }).collect()
+}
+
+#[cfg(test)]
+mod tests {
+    //use super::*;
+
+    use crate::geometry::{Color, Triangle3, Triangle4, clip_triangle_against_plane, FrustumPlane, transform_triangle_to_camera_coords};
+    use nalgebra::{Point3, Point4, Vector3, Matrix4};
+
+    #[test]
+    fn test_transform_triangle_to_camera_coords() {
+        let world_triangle = Triangle3 {
+            vertices: [
+                Point3::new(0.0, 10.0, 10.0), 
+                Point3::new(0.0, -10.0, -10.0), 
+                Point3::new(1.0, 3.0, 0.0)
+            ],
+            color: Color::new(255, 255, 255)
+        };
+
+
+        let origin = Point3::new(0.0, 0.0, 0.0);
+        let direction = Vector3::new(
+            0.0,
+            0.0,
+            -1.0,
+        );
+
+        let global_up = Vector3::new(0.0, 1.0, 0.0);
+        let right = direction.cross(&global_up).normalize();
+        let up = right.cross(&direction);
+
+        let view_matrix = Matrix4::look_at_rh(
+            &origin,
+            &(origin + direction),
+            &up,
+        );
+
+        let result = transform_triangle_to_camera_coords(&world_triangle, &view_matrix);
+
+        let expected_triangle = Triangle3 {
+            vertices: [
+                Point3::new(0.0, 10.0, 10.0), 
+                Point3::new(0.0, -10.0, -10.0), 
+                Point3::new(1.0, 3.0, 0.0)
+            ],
+            color: Color::new(255, 255, 255),
+        };
+
+        assert_eq!(result, expected_triangle);
+    }
+
+    #[test]
+    fn test_near_plane_one_clip() {
+        let triangle = Triangle4 {
+            vertices: [
+                Point4::new(0.0, 0.0, 0.0, 1.0), 
+                Point4::new(0.0, 0.0, -2.0, 1.0), 
+                Point4::new(1.0, 0.0, -2.0, 1.0)
+            ],
+            color: Color::new(255, 255, 255)
+        };
+
+        let near_clipped_triangles = clip_triangle_against_plane(FrustumPlane::Near, &vec![triangle]);
+
+        let expected_triangles = vec![Triangle4 {
+            vertices: [
+                Point4::new(0.0, 0.0, 0.0, 1.0),
+                Point4::new(0.0, 0.0, -1.0, 1.0),
+                Point4::new(0.5, 0.0, -1.0, 1.0),
+            ],
+            color: Color::new(255, 255, 255),
+        }];
+
+        assert_eq!(near_clipped_triangles, expected_triangles);
+    }
+
+    #[test]
+    fn test_right_plane_one_clip() {
+        let triangle = Triangle4 {
+            vertices: [
+                Point4::new(0.0, 0.0, 0.0, 1.0), 
+                Point4::new(2.0, 0.0, 0.0, 1.0), 
+                Point4::new(2.0, 0.0, -1.0, 1.0)
+            ],
+            color: Color::new(255, 255, 255)
+        };
+
+        let near_clipped_triangles = clip_triangle_against_plane(FrustumPlane::Right, &vec![triangle]);
+
+        let expected_triangles = vec![Triangle4 {
+            vertices: [
+                Point4::new(0.0, 0.0, 0.0, 1.0),
+                Point4::new(1.0, 0.0, 0.0, 1.0),
+                Point4::new(1.0, 0.0, -0.5, 1.0),
+            ],
+            color: Color::new(255, 255, 255),
+        }];
+
+        assert_eq!(near_clipped_triangles, expected_triangles);
+    }
+
+    #[test]
+    fn test_top_plane_one_clip() {
+        let triangle = Triangle4 {
+            vertices: [
+                Point4::new(0.0, 0.0, 0.0, 1.0), 
+                Point4::new(0.0, 2.0, 0.0, 1.0), 
+                Point4::new(0.0, 2.0, -1.0, 1.0)
+            ],
+            color: Color::new(255, 255, 255)
+        };
+
+        let near_clipped_triangles = clip_triangle_against_plane(FrustumPlane::Top, &vec![triangle]);
+
+        let expected_triangles = vec![Triangle4 {
+            vertices: [
+                Point4::new(0.0, 0.0, 0.0, 1.0),
+                Point4::new(0.0, 1.0, 0.0, 1.0),
+                Point4::new(0.0, 1.0, -0.5, 1.0),
+            ],
+            color: Color::new(255, 255, 255),
+        }];
+
+        assert_eq!(near_clipped_triangles, expected_triangles);
+    }
 }

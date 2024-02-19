@@ -18,12 +18,19 @@ impl Camera {
 
     pub fn get_transform(&self) -> Matrix4<f64> {
         // TODO: Needs fix. This is incorrect especially when pitch is close to -90/90 deg
+        
         let direction = Vector3::new(
             self.yaw.sin(),
             self.pitch.sin(),
             -self.yaw.cos() * self.pitch.cos(),
         );
-
+        /*
+        let direction = Vector3::new(
+            self.yaw.sin(),
+            0.0,
+            -self.yaw.cos(),
+        );
+*/
         let global_up = Vector3::new(0.0, 1.0, 0.0);
 
         let right = direction.cross(&global_up).normalize();
@@ -53,12 +60,12 @@ impl Camera {
                     Keys::A => velocity += Vector3::new(-linear_speed, 0.0, 0.0),
                     Keys::S => velocity += Vector3::new(0.0, 0.0, linear_speed),
                     Keys::D => velocity += Vector3::new(linear_speed, 0.0, 0.0),
-                    Keys::C => velocity += Vector3::new(0.0, linear_speed, 0.0),
-                    Keys::Space => velocity += Vector3::new(0.0, -linear_speed, 0.0),
+                    Keys::C => velocity += Vector3::new(0.0, -linear_speed, 0.0),
+                    Keys::Space => velocity += Vector3::new(0.0, linear_speed, 0.0),
                     Keys::Left  => yaw_velocity   += -angular_speed,
                     Keys::Right => yaw_velocity   += angular_speed,
-                    Keys::Up    => pitch_velocity += -angular_speed,
-                    Keys::Down  => pitch_velocity += angular_speed,
+                    Keys::Up    => pitch_velocity += angular_speed,
+                    Keys::Down  => pitch_velocity += -angular_speed,
                     _ => {}
                 }
             });

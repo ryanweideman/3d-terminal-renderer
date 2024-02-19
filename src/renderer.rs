@@ -16,7 +16,7 @@ pub fn render_geometry(
         ansi_background_color: u16) -> Vec<geometry::ProjectionResult> {
 
     let point_light = world_objects::PointLight {
-        origin: Point3::new(0.5, -0.5, 3.0)
+        origin: Point3::new(0.5, 0.5, 1.8)
     };
 
     let camera_point_light = geometry::transform_world_vertice_to_camera_coords(&point_light.origin, camera_transform);
@@ -52,11 +52,11 @@ pub fn render_geometry(
                         continue;
                     }
 
-                    let (z, _w) = graphics::interpolate_attributes_at_pixel(
+                    let z = graphics::interpolate_attributes_at_pixel(
                         &pixel, &projection_result);
 
                     // pixel in this triangle is behind another triangle
-                    if z >= z_buffer[y][x] {
+                    if z > z_buffer[y][x] {
                         continue;
                     }
                     
@@ -88,28 +88,29 @@ pub fn render_geometry(
 
             let diffuse_intensity = light_norm.dot(&projection_result.normal).max(0.0); 
 
-            let a = 0.1;
-            let b = 0.1;
+            let a = 0.5;
+            let b = 0.3;
 
             // Calculate attenuation based on distance
             let distance = (camera_point_light - point_camera_space).coords.magnitude();
             let attenuation = 1.0 / (1.0 + a * distance + b * distance * distance);
             
             // Final light intensity
-            let light_intensity = diffuse_intensity * attenuation;
+            let light_intensity = diffuse_intensity * attenuation;           
 
-            let correct_color = |input: u8| -> u8 {
-                if input == 0 {
-                    return input;
+            let correct_color = |input: f64| -> u8 {
+                if input == 0.0 {
+                    return input as u8;
                 } 
-                math::scale_range((input as f64) * light_intensity, 0.0, 255.0, 95.0, 255.0) as u8
+                math::scale_range(input * light_intensity, 0.0, 255.0, 95.0, 255.0) as u8
+
             };
 
             let color = projection_result.screen_triangle.color;
             
-            let r = correct_color(color.r);
-            let g = correct_color(color.g);
-            let b = correct_color(color.b);
+            let r = correct_color(color.r as f64);
+            let g = correct_color(color.g as f64);
+            let b = correct_color(color.b as f64);
 
             screen_buffer[y][x] = graphics::rgb_to_ansi256(r, g, b);
         
