@@ -185,8 +185,8 @@ fn clip_triangle_against_plane(plane: FrustumPlane, triangles: &Vec<Triangle4>) 
             let b_inside: bool = b.1;
             let c_inside: bool = c.1;
 
-            let rcolor_1 = triangle.color;//Color::new(rng.gen(), rng.gen(), rng.gen());
-            let rcolor_2 = triangle.color;//Color::new(rng.gen(), rng.gen(), rng.gen());
+            let rcolor_1 = triangle.color;
+            let rcolor_2 = triangle.color;
 /*
             let mut rng = rand::thread_rng();
             let rcolor_1 = Color::new(rng.gen(), rng.gen(), rng.gen());
@@ -226,11 +226,6 @@ fn clip_triangle_against_plane(plane: FrustumPlane, triangles: &Vec<Triangle4>) 
 }
 
 fn clip_triangle_to_frustum(triangle: &Triangle4) -> Vec<Triangle4> {
-    //if is_triangle_fully_outside_frustum(triangle) {
-    //    return Vec::new();
-   // }
-    //return vec![*triangle];
-
     let near_clipped_triangles   = clip_triangle_against_plane(FrustumPlane::Near,   &vec![*triangle]);
     let far_clipped_triangles    = clip_triangle_against_plane(FrustumPlane::Far,    &near_clipped_triangles);
     let left_clipped_triangles   = clip_triangle_against_plane(FrustumPlane::Left,   &far_clipped_triangles);
@@ -380,29 +375,6 @@ pub fn project_triangle(
         .map(|clipped_triangle| {
             // Transform from clip space coordinates to normalized device coordinates
             let ndc_triangle = clips_space_to_ndc(clipped_triangle);
-/*
-            for v in &ndc_triangle.vertices {
-                assert!(v.z > -1.001);
-            }
-            */
-
-            // Calculating the normal of the clipped triangle
-            let projection_matrix_inverse = projection_matrix.try_inverse().unwrap();
-            let (v1, v2, v3) = clipped_triangle.vertices();
-            let point_camera_space_homogeneous_v1 = projection_matrix_inverse * v1;
-            let point_camera_space_homogeneous_v2 = projection_matrix_inverse * v2;
-            let point_camera_space_homogeneous_v3 = projection_matrix_inverse * v3;
-            let point_camera_space_v1 = point_camera_space_homogeneous_v1.xyz() / point_camera_space_homogeneous_v1.w;
-            let point_camera_space_v2 = point_camera_space_homogeneous_v2.xyz() / point_camera_space_homogeneous_v2.w;
-            let point_camera_space_v3 = point_camera_space_homogeneous_v3.xyz() / point_camera_space_homogeneous_v3.w;
-            let n = calculate_triangle_normal(&Triangle3 {
-                vertices: [point_camera_space_v1, point_camera_space_v2, point_camera_space_v3],
-                color: Color::new(0,0,0)
-            });
-        
-            // Compute the dot product
-            let dot_product = n.dot(&normal);
-            assert!(dot_product > 0.999, "{} {} {} {} {} {}", dot_product, n, normal, v1, v2, v3);
 
             // Transform from normalized device coordinates to screen coordinates
             let screen_triangle = ndc_to_screen(&ndc_triangle);
@@ -425,8 +397,6 @@ pub fn project_triangle(
 
 #[cfg(test)]
 mod tests {
-    //use super::*;
-
     use crate::geometry::{Color, Triangle3, Triangle4, clip_triangle_against_plane, FrustumPlane, transform_triangle_to_camera_coords};
     use nalgebra::{Point3, Point4, Vector3, Matrix4};
 
@@ -440,7 +410,6 @@ mod tests {
             ],
             color: Color::new(255, 255, 255)
         };
-
 
         let origin = Point3::new(0.0, 0.0, 0.0);
         let direction = Vector3::new(
