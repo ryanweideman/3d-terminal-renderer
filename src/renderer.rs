@@ -56,7 +56,7 @@ pub fn render_geometry(
                         &pixel, &projection_result);
 
                     // pixel in this triangle is behind another triangle
-                    if z > z_buffer[y][x] {
+                    if z >= z_buffer[y][x] {
                         continue;
                     }
                     
@@ -112,8 +112,11 @@ pub fn render_geometry(
             let g = correct_color(color.g as f64);
             let b = correct_color(color.b as f64);
 
+            //let r = color.r as u8;
+            //let g = color.g as u8;
+            //let b = color.b as u8;
+
             screen_buffer[y][x] = graphics::rgb_to_ansi256(r, g, b);
-        
         }
     }
 

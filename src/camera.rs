@@ -1,6 +1,8 @@
 use nalgebra::{Matrix4, Point3, Rotation3, Vector3};
 use crate::keyboard::{Keyboard, Keys}; 
 
+use std::f64::consts::PI;
+
 pub struct Camera {
     origin: Point3<f64>,
     yaw: f64,
@@ -11,19 +13,18 @@ impl Camera {
     pub fn new(origin: Point3<f64>) -> Self {
         Camera {
             origin: origin,
-            yaw: 0.0,
+            yaw: -PI / 2.0,
             pitch: 0.0
         }
     }
 
     pub fn get_transform(&self) -> Matrix4<f64> {
-        // TODO: Needs fix. This is incorrect especially when pitch is close to -90/90 deg
         let direction = Vector3::new(
-            self.yaw.sin(),
+            self.yaw.cos() * self.pitch.cos(),
             self.pitch.sin(),
-            -self.yaw.cos() * self.pitch.cos(),
+            self.yaw.sin() * self.pitch.cos(),
         );
-        
+
         let global_up = Vector3::new(0.0, 1.0, 0.0);
 
         let right = direction.cross(&global_up).normalize();
@@ -65,9 +66,9 @@ impl Camera {
 
         self.yaw   += yaw_velocity;
         self.pitch += pitch_velocity;
-        self.pitch = self.pitch.clamp(-1.1, 1.1);
+        self.pitch = self.pitch.clamp(-1.5, 1.5);
 
-        let rotation = Rotation3::from_euler_angles(0.0, -self.yaw, 0.0);
+        let rotation = Rotation3::from_euler_angles(0.0, -self.yaw - PI / 2.0, 0.0);
 
         self.origin += rotation * velocity;
     }
