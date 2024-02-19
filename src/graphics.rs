@@ -1,11 +1,17 @@
-use crate::constants::{SCREEN_WIDTH, SCREEN_HEIGHT};
+use crate::constants::{SCREEN_HEIGHT, SCREEN_WIDTH};
 use crate::geometry;
 
-use crossterm::{queue, style::{Color, Print, SetBackgroundColor}, cursor::MoveTo, terminal::Clear, terminal::ClearType};
+use crossterm::{
+    cursor::MoveTo,
+    queue,
+    style::{Color, Print, SetBackgroundColor},
+    terminal::Clear,
+    terminal::ClearType,
+};
 
-use nalgebra::{Point2};
-use geometry::{ProjectionResult};
-use std::{time};
+use geometry::ProjectionResult;
+use nalgebra::Point2;
+use std::time;
 
 fn rgb_channel_to_ansi_index(v: u8) -> u8 {
     // the ansi rgb values are on the scale 0-5
@@ -29,14 +35,14 @@ pub fn rgb_to_ansi256(r: u8, g: u8, b: u8) -> u16 {
     (16 + 36 * rc + 6 * gc + bc).into()
 }
 
-pub fn clear_screen(stdout : &mut std::io::Stdout) {
-    queue!(
-        stdout,
-        Clear(ClearType::All)
-    ).ok();
+pub fn clear_screen(stdout: &mut std::io::Stdout) {
+    queue!(stdout, Clear(ClearType::All)).ok();
 }
 
-pub fn output_screen_buffer(stdout : &mut std::io::Stdout, screen_buffer : &[[u16; SCREEN_WIDTH] ; SCREEN_HEIGHT]) {
+pub fn output_screen_buffer(
+    stdout: &mut std::io::Stdout,
+    screen_buffer: &[[u16; SCREEN_WIDTH]; SCREEN_HEIGHT],
+) {
     queue!(stdout, MoveTo(1, 1)).unwrap();
     for y in 0..SCREEN_HEIGHT {
         for x in 0..SCREEN_WIDTH {
@@ -44,26 +50,29 @@ pub fn output_screen_buffer(stdout : &mut std::io::Stdout, screen_buffer : &[[u1
                 stdout,
                 SetBackgroundColor(Color::AnsiValue(screen_buffer[y][x] as u8)),
                 Print("  ")
-            ).unwrap();
+            )
+            .unwrap();
         }
-        queue!(
-            stdout,
-            MoveTo(1, (y+1) as u16)
-        ).unwrap();
+        queue!(stdout, MoveTo(1, (y + 1) as u16)).unwrap();
     }
 }
 
 pub fn print_debug_info(
-        stdout : &mut std::io::Stdout, 
-        total_time_elapsed: &time::Duration, 
-        processed_time_elapsed: &time::Duration,
-        projection_results: &Vec<ProjectionResult>) {
+    stdout: &mut std::io::Stdout,
+    total_time_elapsed: &time::Duration,
+    processed_time_elapsed: &time::Duration,
+    projection_results: &Vec<ProjectionResult>,
+) {
     queue!(stdout, MoveTo(1, (SCREEN_HEIGHT) as u16)).unwrap();
     queue!(
         stdout,
         SetBackgroundColor(Color::AnsiValue(0)),
-        Print(format!("total loop time elapsed ms: {:3.0}", total_time_elapsed.as_secs_f64() * 1000.0))
-    ).unwrap();
+        Print(format!(
+            "total loop time elapsed ms: {:3.0}",
+            total_time_elapsed.as_secs_f64() * 1000.0
+        ))
+    )
+    .unwrap();
     queue!(stdout, MoveTo(1, (SCREEN_HEIGHT + 1) as u16)).unwrap();
     /*
     queue!(
@@ -73,7 +82,7 @@ pub fn print_debug_info(
     ).unwrap();
     queue!(stdout, MoveTo(1, (SCREEN_HEIGHT + 2) as u16)).unwrap();
     */
-/*
+    /*
     for i in 0..projection_results.len() {
         let result = projection_results[i];
         let (c0, c1, c2) = result.camera_frame_triangle.vertices();
@@ -111,31 +120,31 @@ pub fn print_debug_info(
         ).unwrap();
     }
     */
-    
-        queue!(
-            stdout,
-            SetBackgroundColor(Color::AnsiValue(0)),
-            Print(format!("num triangles in frame: {:5}", projection_results.len()))
-        ).unwrap();
-    
 
+    queue!(
+        stdout,
+        SetBackgroundColor(Color::AnsiValue(0)),
+        Print(format!(
+            "num triangles in frame: {:5}",
+            projection_results.len()
+        ))
+    )
+    .unwrap();
 }
 
 pub fn interpolate_attributes_at_pixel(
     p: &Point2<f64>,
-    projection_result: &ProjectionResult) 
-    -> f64 {
-
+    projection_result: &ProjectionResult,
+) -> f64 {
     let (p0, p1, p2) = projection_result.screen_triangle.vertices();
     let (ndc_v0, ndc_v1, ndc_v2) = projection_result.ndc_triangle.vertices();
 
-    let total_area : f64 = p0.x * (p1.y - p2.y) + p1.x * (p2.y - p0.y) + p2.x * (p0.y - p1.y);
-    let lambda0 : f64 = ((p1.y - p2.y) * (p.x - p2.x) + (p2.x - p1.x) * (p.y - p2.y)) / total_area;
-    let lambda1 : f64 = ((p2.y - p0.y) * (p.x - p2.x) + (p0.x - p2.x) * (p.y - p2.y)) / total_area;
-    let lambda2 : f64 = 1.0 - lambda0 - lambda1;
+    let total_area: f64 = p0.x * (p1.y - p2.y) + p1.x * (p2.y - p0.y) + p2.x * (p0.y - p1.y);
+    let lambda0: f64 = ((p1.y - p2.y) * (p.x - p2.x) + (p2.x - p1.x) * (p.y - p2.y)) / total_area;
+    let lambda1: f64 = ((p2.y - p0.y) * (p.x - p2.x) + (p0.x - p2.x) * (p.y - p2.y)) / total_area;
+    let lambda2: f64 = 1.0 - lambda0 - lambda1;
 
-    assert!(lambda0 + lambda1 + lambda2 < 1.00001 
-        && lambda0 + lambda1 + lambda2 > 0.99999);
+    assert!(lambda0 + lambda1 + lambda2 < 1.00001 && lambda0 + lambda1 + lambda2 > 0.99999);
 
     let iz0 = 1.0 / ndc_v0.z;
     let iz1 = 1.0 / ndc_v1.z;

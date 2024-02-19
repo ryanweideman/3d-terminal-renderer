@@ -1,32 +1,32 @@
-use nalgebra::{Matrix4, Point2, Point3, Point4, Perspective3, Vector3, Vector4};
+use nalgebra::{Matrix4, Perspective3, Point2, Point3, Point4, Vector3, Vector4};
 
-use crate::constants::{ASPECT_RATIO, FOV, NEAR_PLANE, FAR_PLANE, SCREEN_WIDTH, SCREEN_HEIGHT};
-use crate::world_objects::{Entity};
+use crate::constants::{ASPECT_RATIO, FAR_PLANE, FOV, NEAR_PLANE, SCREEN_HEIGHT, SCREEN_WIDTH};
+use crate::world_objects::Entity;
 
 use rand::Rng;
 
 #[derive(Clone)]
 pub struct Model {
-    pub geometry: Vec<Triangle3>
+    pub geometry: Vec<Triangle3>,
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
-pub struct Color { 
+pub struct Color {
     pub r: u8,
     pub g: u8,
-    pub b: u8
+    pub b: u8,
 }
 
 impl Color {
     pub fn new(r: u8, g: u8, b: u8) -> Self {
-        Self {r, g, b}
+        Self { r, g, b }
     }
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Triangle3 {
-    pub vertices: [Point3<f64> ; 3],
-    pub color: Color
+    pub vertices: [Point3<f64>; 3],
+    pub color: Color,
 }
 
 impl Triangle3 {
@@ -37,8 +37,8 @@ impl Triangle3 {
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Triangle4 {
-    pub vertices: [Point4<f64> ; 3],
-    pub color: Color
+    pub vertices: [Point4<f64>; 3],
+    pub color: Color,
 }
 
 impl Triangle4 {
@@ -52,20 +52,20 @@ pub struct BoundingBox2<T> {
     pub x_min: T,
     pub y_min: T,
     pub x_max: T,
-    pub y_max: T
+    pub y_max: T,
 }
 
 #[derive(Copy, Clone)]
 pub struct ProjectionResult {
     pub camera_frame_triangle: Triangle3,
     pub normal: Vector3<f64>,
-    pub clip_space_triangle: Triangle4, 
+    pub clip_space_triangle: Triangle4,
     pub ndc_triangle: Triangle3,
     pub screen_triangle: Triangle3,
-    pub screen_bounding_box: BoundingBox2<usize>
+    pub screen_bounding_box: BoundingBox2<usize>,
 }
 
-/* 
+/*
     Perspective3 produces a symmetric frustum identical to that used by OpenGL
     Perspective matrix :
 
@@ -77,12 +77,7 @@ pub struct ProjectionResult {
     where f = 1 / tan(fov / 2)
 */
 pub fn get_projection_matrix() -> Matrix4<f64> {
-    Perspective3::new(
-        ASPECT_RATIO, 
-        FOV, 
-        NEAR_PLANE,
-        FAR_PLANE)
-        .to_homogeneous()
+    Perspective3::new(ASPECT_RATIO, FOV, NEAR_PLANE, FAR_PLANE).to_homogeneous()
 }
 
 pub fn transform_entity_model(entity: &Entity) -> Vec<Triangle3> {
@@ -92,22 +87,34 @@ pub fn transform_entity_model(entity: &Entity) -> Vec<Triangle3> {
 
     let transform = translation * rotation * scale;
 
-    let transformed_triangles_vec: Vec<Triangle3> = entity.get_model_geometry().iter().map(|triangle| {
-        let transformed_vertices = triangle.vertices.iter().map(|vertex| {
-            transform.transform_point(&vertex)
-        }).collect::<Vec<Point3<f64>>>();
-        
-        Triangle3 {
-            vertices: [transformed_vertices[0], transformed_vertices[1], transformed_vertices[2]],
-            color: entity.get_maybe_color().unwrap_or_else(|| triangle.color.clone())
-        }
-    }).collect();
+    let transformed_triangles_vec: Vec<Triangle3> = entity
+        .get_model_geometry()
+        .iter()
+        .map(|triangle| {
+            let transformed_vertices = triangle
+                .vertices
+                .iter()
+                .map(|vertex| transform.transform_point(&vertex))
+                .collect::<Vec<Point3<f64>>>();
+
+            Triangle3 {
+                vertices: [
+                    transformed_vertices[0],
+                    transformed_vertices[1],
+                    transformed_vertices[2],
+                ],
+                color: entity
+                    .get_maybe_color()
+                    .unwrap_or_else(|| triangle.color.clone()),
+            }
+        })
+        .collect();
 
     transformed_triangles_vec
 }
 
 #[allow(dead_code)]
-fn is_vertex_outside_frustum(vertex : &Point4<f64>) -> bool {
+fn is_vertex_outside_frustum(vertex: &Point4<f64>) -> bool {
     let w = vertex.w;
     let x_out_of_range = vertex.x <= -w || vertex.x >= w;
     let y_out_of_range = vertex.y <= -w || vertex.y >= w;
@@ -116,15 +123,15 @@ fn is_vertex_outside_frustum(vertex : &Point4<f64>) -> bool {
     x_out_of_range || y_out_of_range || z_out_of_range
 }
 
-fn is_triangle_fully_outside_frustum(triangle : &Triangle4) -> bool {
+fn is_triangle_fully_outside_frustum(triangle: &Triangle4) -> bool {
     let (v0, v1, v2) = triangle.vertices();
 
     let lx = v0.x <= -v0.w && v1.x <= -v1.w && v2.x <= -v2.w;
-    let gx = v0.x >=  v0.w && v1.x >=  v1.w && v2.x >=  v2.w;
+    let gx = v0.x >= v0.w && v1.x >= v1.w && v2.x >= v2.w;
     let ly = v0.y <= -v0.w && v1.y <= -v1.w && v2.y <= -v2.w;
-    let gy = v0.y >=  v0.w && v1.y >=  v1.w && v2.y >=  v2.w;
+    let gy = v0.y >= v0.w && v1.y >= v1.w && v2.y >= v2.w;
     let lz = v0.z <= -v0.w && v1.z <= -v1.w && v2.z <= -v2.w;
-    let gz = v0.z >=  v0.w && v1.z >=  v1.w && v2.z >=  v2.w;
+    let gz = v0.z >= v0.w && v1.z >= v1.w && v2.z >= v2.w;
 
     lx || gx || ly || gy || lz || gz
 }
@@ -136,39 +143,45 @@ enum FrustumPlane {
     Left,
     Right,
     Top,
-    Bottom
+    Bottom,
 }
 
-fn calculate_clip_space_plane_intersection(plane: FrustumPlane, a: &Point4<f64>, b: &Point4<f64>) -> Point4<f64> {
+fn calculate_clip_space_plane_intersection(
+    plane: FrustumPlane,
+    a: &Point4<f64>,
+    b: &Point4<f64>,
+) -> Point4<f64> {
     let alpha = match plane {
-        FrustumPlane::Near   => (-b.w - b.z) / (a.z + a.w - b.w - b.z),
-        FrustumPlane::Far    => ( b.w - b.z) / (a.z - a.w + b.w - b.z),
-        FrustumPlane::Left   => (-b.w - b.x) / (a.x + a.w - b.w - b.x),
-        FrustumPlane::Right  => ( b.w - b.x) / (a.x - a.w + b.w - b.x),
+        FrustumPlane::Near => (-b.w - b.z) / (a.z + a.w - b.w - b.z),
+        FrustumPlane::Far => (b.w - b.z) / (a.z - a.w + b.w - b.z),
+        FrustumPlane::Left => (-b.w - b.x) / (a.x + a.w - b.w - b.x),
+        FrustumPlane::Right => (b.w - b.x) / (a.x - a.w + b.w - b.x),
         FrustumPlane::Bottom => (-b.w - b.y) / (a.y + a.w - b.w - b.y),
-        FrustumPlane::Top    => ( b.w - b.y) / (a.y - a.w + b.w - b.y)
+        FrustumPlane::Top => (b.w - b.y) / (a.y - a.w + b.w - b.y),
     };
     let intersection = alpha * a.coords + (1.0 - alpha) * b.coords;
     Point4::from(intersection)
 }
 
 fn clip_triangle_against_plane(plane: FrustumPlane, triangles: &Vec<Triangle4>) -> Vec<Triangle4> {
-    triangles.iter()
+    triangles
+        .iter()
         .map(|triangle| {
-            let vertices: Vec<(&Point4<f64>, bool)> = triangle.vertices.iter()
-                .map(|v| {
-                    match plane {
-                        FrustumPlane::Near   => (v, v.z >= -v.w),
-                        FrustumPlane::Far    => (v, v.z <=  v.w),
-                        FrustumPlane::Left   => (v, v.x >= -v.w),
-                        FrustumPlane::Right  => (v, v.x <=  v.w),
-                        FrustumPlane::Bottom => (v, v.y >= -v.w),
-                        FrustumPlane::Top    => (v, v.y <=  v.w)
-                    }
+            let vertices: Vec<(&Point4<f64>, bool)> = triangle
+                .vertices
+                .iter()
+                .map(|v| match plane {
+                    FrustumPlane::Near => (v, v.z >= -v.w),
+                    FrustumPlane::Far => (v, v.z <= v.w),
+                    FrustumPlane::Left => (v, v.x >= -v.w),
+                    FrustumPlane::Right => (v, v.x <= v.w),
+                    FrustumPlane::Bottom => (v, v.y >= -v.w),
+                    FrustumPlane::Top => (v, v.y <= v.w),
                 })
                 .collect();
 
-            let index = vertices.iter()
+            let index = vertices
+                .iter()
                 .position(|&(_, inside)| inside)
                 .unwrap_or(usize::MAX);
 
@@ -187,11 +200,11 @@ fn clip_triangle_against_plane(plane: FrustumPlane, triangles: &Vec<Triangle4>) 
 
             let rcolor_1 = triangle.color;
             let rcolor_2 = triangle.color;
-/*
-            let mut rng = rand::thread_rng();
-            let rcolor_1 = Color::new(rng.gen(), rng.gen(), rng.gen());
-            let rcolor_2 = Color::new(rng.gen(), rng.gen(), rng.gen());
-*/
+            /*
+                        let mut rng = rand::thread_rng();
+                        let rcolor_1 = Color::new(rng.gen(), rng.gen(), rng.gen());
+                        let rcolor_2 = Color::new(rng.gen(), rng.gen(), rng.gen());
+            */
             match (b_inside, c_inside) {
                 // Triangle is already fully within the near plane
                 (true, true) => vec![*triangle],
@@ -200,8 +213,14 @@ fn clip_triangle_against_plane(plane: FrustumPlane, triangles: &Vec<Triangle4>) 
                     let i1 = calculate_clip_space_plane_intersection(plane, a.0, c.0);
                     let i2 = calculate_clip_space_plane_intersection(plane, b.0, c.0);
                     vec![
-                        Triangle4 { vertices: [*a.0, *b.0, i2], color: rcolor_1 }, 
-                        Triangle4 { vertices: [*a.0, i2, i1], color: rcolor_2 }
+                        Triangle4 {
+                            vertices: [*a.0, *b.0, i2],
+                            color: rcolor_1,
+                        },
+                        Triangle4 {
+                            vertices: [*a.0, i2, i1],
+                            color: rcolor_2,
+                        },
                     ]
                 }
                 // Triangle is clipped into two triangles
@@ -209,16 +228,25 @@ fn clip_triangle_against_plane(plane: FrustumPlane, triangles: &Vec<Triangle4>) 
                     let i1 = calculate_clip_space_plane_intersection(plane, a.0, b.0);
                     let i2 = calculate_clip_space_plane_intersection(plane, c.0, b.0);
                     vec![
-                        Triangle4 { vertices: [*a.0, i1, *c.0], color: rcolor_1 }, 
-                        Triangle4 { vertices: [*c.0, i1, i2], color: rcolor_2 }
-                    ]      
+                        Triangle4 {
+                            vertices: [*a.0, i1, *c.0],
+                            color: rcolor_1,
+                        },
+                        Triangle4 {
+                            vertices: [*c.0, i1, i2],
+                            color: rcolor_2,
+                        },
+                    ]
                 }
                 // Triangle is clipped into one smaller triangle
                 (false, false) => {
                     let i1 = calculate_clip_space_plane_intersection(plane, a.0, b.0);
                     let i2 = calculate_clip_space_plane_intersection(plane, a.0, c.0);
-                    vec![Triangle4 { vertices: [*a.0, i1, i2], color: rcolor_2 }]
-                },
+                    vec![Triangle4 {
+                        vertices: [*a.0, i1, i2],
+                        color: rcolor_2,
+                    }]
+                }
             }
         })
         .flat_map(|triangle| triangle)
@@ -226,12 +254,17 @@ fn clip_triangle_against_plane(plane: FrustumPlane, triangles: &Vec<Triangle4>) 
 }
 
 fn clip_triangle_to_frustum(triangle: &Triangle4) -> Vec<Triangle4> {
-    let near_clipped_triangles   = clip_triangle_against_plane(FrustumPlane::Near,   &vec![*triangle]);
-    let far_clipped_triangles    = clip_triangle_against_plane(FrustumPlane::Far,    &near_clipped_triangles);
-    let left_clipped_triangles   = clip_triangle_against_plane(FrustumPlane::Left,   &far_clipped_triangles);
-    let right_clipped_triangles  = clip_triangle_against_plane(FrustumPlane::Right,  &left_clipped_triangles);
-    let bottom_clipped_triangles = clip_triangle_against_plane(FrustumPlane::Bottom, &right_clipped_triangles);
-    let top_clipped_triangles    = clip_triangle_against_plane(FrustumPlane::Top,    &bottom_clipped_triangles);
+    let near_clipped_triangles = clip_triangle_against_plane(FrustumPlane::Near, &vec![*triangle]);
+    let far_clipped_triangles =
+        clip_triangle_against_plane(FrustumPlane::Far, &near_clipped_triangles);
+    let left_clipped_triangles =
+        clip_triangle_against_plane(FrustumPlane::Left, &far_clipped_triangles);
+    let right_clipped_triangles =
+        clip_triangle_against_plane(FrustumPlane::Right, &left_clipped_triangles);
+    let bottom_clipped_triangles =
+        clip_triangle_against_plane(FrustumPlane::Bottom, &right_clipped_triangles);
+    let top_clipped_triangles =
+        clip_triangle_against_plane(FrustumPlane::Top, &bottom_clipped_triangles);
 
     top_clipped_triangles
 }
@@ -256,14 +289,17 @@ pub fn is_point_in_triangle(pt: &Point2<f64>, triangle: &Triangle3) -> bool {
 }
 
 pub fn transform_world_vertice_to_camera_coords(
-        point: &Point3<f64>, 
-        camera_transform: &Matrix4<f64>) -> Point3<f64> {
+    point: &Point3<f64>,
+    camera_transform: &Matrix4<f64>,
+) -> Point3<f64> {
     let t = camera_transform * point.to_homogeneous();
     (t.xyz() / t.w).into()
 }
 
-fn transform_triangle_to_camera_coords(triangle: &Triangle3, camera_transform: &Matrix4<f64>) 
-        -> Triangle3 {
+fn transform_triangle_to_camera_coords(
+    triangle: &Triangle3,
+    camera_transform: &Matrix4<f64>,
+) -> Triangle3 {
     let (world_v0, world_v1, world_v2) = triangle.vertices();
 
     let camera_v0 = transform_world_vertice_to_camera_coords(world_v0, camera_transform);
@@ -272,20 +308,23 @@ fn transform_triangle_to_camera_coords(triangle: &Triangle3, camera_transform: &
 
     Triangle3 {
         vertices: [camera_v0, camera_v1, camera_v2],
-        color: triangle.color
+        color: triangle.color,
     }
 }
 
-fn camera_coordinates_to_clip_space(camera_triangle: &Triangle3, projection_matrix: &Matrix4<f64>) -> Triangle4 {
+fn camera_coordinates_to_clip_space(
+    camera_triangle: &Triangle3,
+    projection_matrix: &Matrix4<f64>,
+) -> Triangle4 {
     let (camera_v0, camera_v1, camera_v2) = camera_triangle.vertices();
-    
+
     let v0 = Point4::from(projection_matrix * camera_v0.to_homogeneous());
     let v1 = Point4::from(projection_matrix * camera_v1.to_homogeneous());
     let v2 = Point4::from(projection_matrix * camera_v2.to_homogeneous());
 
     Triangle4 {
-        vertices : [v0, v1, v2],
-        color: camera_triangle.color
+        vertices: [v0, v1, v2],
+        color: camera_triangle.color,
     }
 }
 
@@ -296,11 +335,11 @@ fn clips_space_to_ndc(clip_space_triangle: &Triangle4) -> Triangle3 {
     let v2 = Point3::from(clip_space_v2.xyz() / clip_space_v2.w);
     Triangle3 {
         vertices: [v0, v1, v2],
-        color: clip_space_triangle.color
+        color: clip_space_triangle.color,
     }
 }
 
-fn ndc_to_screen(ndc_triangle : &Triangle3) -> Triangle3 {
+fn ndc_to_screen(ndc_triangle: &Triangle3) -> Triangle3 {
     let transform = |ndc: &Point3<f64>| -> Point3<f64> {
         let px = (ndc.x + 1.0) / 2.0 * (SCREEN_WIDTH as f64);
         let py = (1.0 - (ndc.y + 1.0) / 2.0) * (SCREEN_HEIGHT as f64);
@@ -313,37 +352,41 @@ fn ndc_to_screen(ndc_triangle : &Triangle3) -> Triangle3 {
 
     Triangle3 {
         vertices: [v0, v1, v2],
-        color: ndc_triangle.color
+        color: ndc_triangle.color,
     }
 }
 
 pub fn screen_to_ndc(screen: &Point3<f64>) -> Point3<f64> {
     let x_ndc = (screen.x / (SCREEN_WIDTH as f64)) * 2.0 - 1.0;
     let y_ndc = 1.0 - (screen.y / (SCREEN_HEIGHT as f64)) * 2.0;
-    let z_ndc = screen.z; 
+    let z_ndc = screen.z;
 
     Point3::new(x_ndc, y_ndc, z_ndc)
 }
 
 fn calculate_triangle_normal(triangle: &Triangle3) -> Vector3<f64> {
     let (v0, v1, v2) = triangle.vertices();
-    (v1 - v0).cross(&(v2 - v0)).normalize() 
+    (v1 - v0).cross(&(v2 - v0)).normalize()
 }
 
-fn calculate_bounding_box(projected_triangle : &Triangle3) -> BoundingBox2<usize> {
-    let x_min = projected_triangle.vertices[0].x
+fn calculate_bounding_box(projected_triangle: &Triangle3) -> BoundingBox2<usize> {
+    let x_min = projected_triangle.vertices[0]
+        .x
         .min(projected_triangle.vertices[1].x)
         .min(projected_triangle.vertices[2].x)
         .floor() as usize;
-    let y_min = projected_triangle.vertices[0].y
+    let y_min = projected_triangle.vertices[0]
+        .y
         .min(projected_triangle.vertices[1].y)
         .min(projected_triangle.vertices[2].y)
         .floor() as usize;
-    let x_max = projected_triangle.vertices[0].x
+    let x_max = projected_triangle.vertices[0]
+        .x
         .max(projected_triangle.vertices[1].x)
         .max(projected_triangle.vertices[2].x)
         .ceil() as usize;
-    let y_max = projected_triangle.vertices[0].y
+    let y_max = projected_triangle.vertices[0]
+        .y
         .max(projected_triangle.vertices[1].y)
         .max(projected_triangle.vertices[2].y)
         .ceil() as usize;
@@ -352,14 +395,15 @@ fn calculate_bounding_box(projected_triangle : &Triangle3) -> BoundingBox2<usize
         x_min: x_min,
         y_min: y_min,
         x_max: x_max,
-        y_max: y_max
+        y_max: y_max,
     }
 }
 
 pub fn project_triangle(
-        input : &Triangle3, 
-        projection_matrix : &Matrix4<f64>,  
-        camera_transform : &Matrix4<f64>) -> Vec<ProjectionResult> {
+    input: &Triangle3,
+    projection_matrix: &Matrix4<f64>,
+    camera_transform: &Matrix4<f64>,
+) -> Vec<ProjectionResult> {
     // Transform world coordinates to camera coordinates
     let camera_frame_triangle = transform_triangle_to_camera_coords(&input, &camera_transform);
 
@@ -367,11 +411,13 @@ pub fn project_triangle(
     let normal = calculate_triangle_normal(&camera_frame_triangle);
 
     // Transform the camera coordinates to clip space
-    let clip_space_triangle = camera_coordinates_to_clip_space(&camera_frame_triangle, &projection_matrix);
+    let clip_space_triangle =
+        camera_coordinates_to_clip_space(&camera_frame_triangle, &projection_matrix);
 
-    let clipped_triangles : Vec<Triangle4> = clip_triangle_to_frustum(&clip_space_triangle);
+    let clipped_triangles: Vec<Triangle4> = clip_triangle_to_frustum(&clip_space_triangle);
 
-    clipped_triangles.iter()
+    clipped_triangles
+        .iter()
         .map(|clipped_triangle| {
             // Transform from clip space coordinates to normalized device coordinates
             let ndc_triangle = clips_space_to_ndc(clipped_triangle);
@@ -388,53 +434,49 @@ pub fn project_triangle(
                 ndc_triangle: ndc_triangle,
                 screen_triangle: screen_triangle,
                 screen_bounding_box: bounding_box,
-                normal: normal
+                normal: normal,
             };
 
             result
-        }).collect()
+        })
+        .collect()
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::geometry::{Color, Triangle3, Triangle4, clip_triangle_against_plane, FrustumPlane, transform_triangle_to_camera_coords};
-    use nalgebra::{Point3, Point4, Vector3, Matrix4};
+    use crate::geometry::{
+        clip_triangle_against_plane, transform_triangle_to_camera_coords, Color, FrustumPlane,
+        Triangle3, Triangle4,
+    };
+    use nalgebra::{Matrix4, Point3, Point4, Vector3};
 
     #[test]
     fn test_transform_triangle_to_camera_coords() {
         let world_triangle = Triangle3 {
             vertices: [
-                Point3::new(0.0, 10.0, 10.0), 
-                Point3::new(0.0, -10.0, -10.0), 
-                Point3::new(1.0, 3.0, 0.0)
+                Point3::new(0.0, 10.0, 10.0),
+                Point3::new(0.0, -10.0, -10.0),
+                Point3::new(1.0, 3.0, 0.0),
             ],
-            color: Color::new(255, 255, 255)
+            color: Color::new(255, 255, 255),
         };
 
         let origin = Point3::new(0.0, 0.0, 0.0);
-        let direction = Vector3::new(
-            0.0,
-            0.0,
-            -1.0,
-        );
+        let direction = Vector3::new(0.0, 0.0, -1.0);
 
         let global_up = Vector3::new(0.0, 1.0, 0.0);
         let right = direction.cross(&global_up).normalize();
         let up = right.cross(&direction);
 
-        let view_matrix = Matrix4::look_at_rh(
-            &origin,
-            &(origin + direction),
-            &up,
-        );
+        let view_matrix = Matrix4::look_at_rh(&origin, &(origin + direction), &up);
 
         let result = transform_triangle_to_camera_coords(&world_triangle, &view_matrix);
 
         let expected_triangle = Triangle3 {
             vertices: [
-                Point3::new(0.0, 10.0, 10.0), 
-                Point3::new(0.0, -10.0, -10.0), 
-                Point3::new(1.0, 3.0, 0.0)
+                Point3::new(0.0, 10.0, 10.0),
+                Point3::new(0.0, -10.0, -10.0),
+                Point3::new(1.0, 3.0, 0.0),
             ],
             color: Color::new(255, 255, 255),
         };
@@ -446,14 +488,15 @@ mod tests {
     fn test_near_plane_one_clip() {
         let triangle = Triangle4 {
             vertices: [
-                Point4::new(0.0, 0.0, 0.0, 1.0), 
-                Point4::new(0.0, 0.0, -2.0, 1.0), 
-                Point4::new(1.0, 0.0, -2.0, 1.0)
+                Point4::new(0.0, 0.0, 0.0, 1.0),
+                Point4::new(0.0, 0.0, -2.0, 1.0),
+                Point4::new(1.0, 0.0, -2.0, 1.0),
             ],
-            color: Color::new(255, 255, 255)
+            color: Color::new(255, 255, 255),
         };
 
-        let near_clipped_triangles = clip_triangle_against_plane(FrustumPlane::Near, &vec![triangle]);
+        let near_clipped_triangles =
+            clip_triangle_against_plane(FrustumPlane::Near, &vec![triangle]);
 
         let expected_triangles = vec![Triangle4 {
             vertices: [
@@ -471,14 +514,15 @@ mod tests {
     fn test_right_plane_one_clip() {
         let triangle = Triangle4 {
             vertices: [
-                Point4::new(0.0, 0.0, 0.0, 1.0), 
-                Point4::new(2.0, 0.0, 0.0, 1.0), 
-                Point4::new(2.0, 0.0, -1.0, 1.0)
+                Point4::new(0.0, 0.0, 0.0, 1.0),
+                Point4::new(2.0, 0.0, 0.0, 1.0),
+                Point4::new(2.0, 0.0, -1.0, 1.0),
             ],
-            color: Color::new(255, 255, 255)
+            color: Color::new(255, 255, 255),
         };
 
-        let near_clipped_triangles = clip_triangle_against_plane(FrustumPlane::Right, &vec![triangle]);
+        let near_clipped_triangles =
+            clip_triangle_against_plane(FrustumPlane::Right, &vec![triangle]);
 
         let expected_triangles = vec![Triangle4 {
             vertices: [
@@ -496,14 +540,15 @@ mod tests {
     fn test_top_plane_one_clip() {
         let triangle = Triangle4 {
             vertices: [
-                Point4::new(0.0, 0.0, 0.0, 1.0), 
-                Point4::new(0.0, 2.0, 0.0, 1.0), 
-                Point4::new(0.0, 2.0, -1.0, 1.0)
+                Point4::new(0.0, 0.0, 0.0, 1.0),
+                Point4::new(0.0, 2.0, 0.0, 1.0),
+                Point4::new(0.0, 2.0, -1.0, 1.0),
             ],
-            color: Color::new(255, 255, 255)
+            color: Color::new(255, 255, 255),
         };
 
-        let near_clipped_triangles = clip_triangle_against_plane(FrustumPlane::Top, &vec![triangle]);
+        let near_clipped_triangles =
+            clip_triangle_against_plane(FrustumPlane::Top, &vec![triangle]);
 
         let expected_triangles = vec![Triangle4 {
             vertices: [

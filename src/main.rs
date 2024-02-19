@@ -2,39 +2,33 @@ mod camera;
 mod constants;
 mod geometry;
 mod graphics;
+mod keyboard;
 mod math;
 mod model_loader;
-mod keyboard;
 mod renderer;
 mod world_loader;
 mod world_objects;
 
 use crossterm::{
-    terminal::{
-        disable_raw_mode, 
-        enable_raw_mode, 
-        EnterAlternateScreen, 
-        LeaveAlternateScreen
-    }, 
-    queue, 
-    ExecutableCommand, 
-    cursor::{
-        Show,
-        Hide
-    }
+    cursor::{Hide, Show},
+    queue,
+    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
+    ExecutableCommand,
 };
 
-use nalgebra::{Point3};
-use std::{time};
-use std::io::{Write};
-use std::{io};
+use nalgebra::Point3;
+use std::io;
+use std::io::Write;
+use std::time;
 
-use constants::{SCREEN_WIDTH, SCREEN_HEIGHT, TARGET_FPS};
+use constants::{SCREEN_HEIGHT, SCREEN_WIDTH, TARGET_FPS};
 
 fn main() {
     enable_raw_mode().expect("Could not enter terminal raw mode");
     let mut stdout = io::stdout();
-    stdout.execute(EnterAlternateScreen).expect("Could not enter terminal alternative mode");
+    stdout
+        .execute(EnterAlternateScreen)
+        .expect("Could not enter terminal alternative mode");
     queue!(stdout, Hide).unwrap();
 
     let mut camera = camera::Camera::new(Point3::new(0.0, 0.01, 3.0));
@@ -62,31 +56,37 @@ fn main() {
         start_time = time::Instant::now();
 
         camera.update(&keyboard);
-        let mut screen_buffer = [[ansi_background_color ; SCREEN_WIDTH] ; SCREEN_HEIGHT]; 
+        let mut screen_buffer = [[ansi_background_color; SCREEN_WIDTH]; SCREEN_HEIGHT];
 
         let camera_transform = camera.get_transform();
 
-        entities.iter_mut()
-            .for_each(|entity| entity.update(0.0));
-        let world_geometry = entities.iter()
+        entities.iter_mut().for_each(|entity| entity.update(0.0));
+        let world_geometry = entities
+            .iter()
             .map(|entity| geometry::transform_entity_model(&entity))
             .flat_map(|v| v)
             .collect();
 
         let projection_results = renderer::render_geometry(
             &mut screen_buffer,
-            &world_geometry, 
+            &world_geometry,
             &lights,
-            &projection_matrix, 
-            &projection_matrix_inverse, 
-            &camera_transform, 
-            ansi_background_color);
+            &projection_matrix,
+            &projection_matrix_inverse,
+            &camera_transform,
+            ansi_background_color,
+        );
         let processing_time_elapsed = start_time.elapsed();
 
         graphics::output_screen_buffer(&mut stdout, &screen_buffer);
         let total_time_elapsed = start_time.elapsed();
 
-        graphics::print_debug_info(&mut stdout, &total_time_elapsed, &processing_time_elapsed, &projection_results);
+        graphics::print_debug_info(
+            &mut stdout,
+            &total_time_elapsed,
+            &processing_time_elapsed,
+            &projection_results,
+        );
         stdout.flush().unwrap();
         keyboard.clear_all_keys();
     }
@@ -94,4 +94,4 @@ fn main() {
     queue!(stdout, Show).unwrap();
     disable_raw_mode().unwrap();
     stdout.execute(LeaveAlternateScreen).unwrap();
-} 
+}

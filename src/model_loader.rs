@@ -1,11 +1,11 @@
-use crate:: geometry::{Color, Model, Triangle3};
-use nalgebra::{Point3};
-use serde::{Deserialize};
-use std::fs;
+use crate::geometry::{Color, Model, Triangle3};
+use nalgebra::Point3;
+use serde::Deserialize;
 use std::collections::HashMap;
+use std::fs;
 
 pub struct ModelLoader {
-    models: HashMap<String, Model>
+    models: HashMap<String, Model>,
 }
 
 impl ModelLoader {
@@ -25,13 +25,13 @@ impl ModelLoader {
             models.insert(file_name.to_string(), model_geometry);
         }
 
-        ModelLoader { 
-            models 
-        }
+        ModelLoader { models }
     }
 
     pub fn get_model(&self, model_name: &str) -> &Model {
-        self.models.get(model_name).unwrap_or_else(|| panic!("Could not get model of name {}", model_name))
+        self.models
+            .get(model_name)
+            .unwrap_or_else(|| panic!("Could not get model of name {}", model_name))
     }
 }
 
@@ -47,19 +47,21 @@ struct Triangle {
 }
 
 fn load_model(path: &str) -> Model {
-    let file_content = fs::read_to_string(path)
-        .unwrap_or_else(|_| panic!("Failed to read file at path {}", path));
+    let file_content =
+        fs::read_to_string(path).unwrap_or_else(|_| panic!("Failed to read file at path {}", path));
 
     let geometry_data: GeometryData = serde_json::from_str(&file_content)
         .unwrap_or_else(|_| panic!("Failed to deserialize json at path {}", path));
-    
-    let model_geometry : Model = convert_geometry_data(&geometry_data);
+
+    let model_geometry: Model = convert_geometry_data(&geometry_data);
 
     model_geometry
 }
 
 fn convert_geometry_data(geometry_data: &GeometryData) -> Model {
-    let geometry : Vec::<Triangle3> = geometry_data.geometry.iter()
+    let geometry: Vec<Triangle3> = geometry_data
+        .geometry
+        .iter()
         .map(|triangle| {
             let vertices = triangle.vertices;
             let color = triangle.color;
@@ -67,18 +69,16 @@ fn convert_geometry_data(geometry_data: &GeometryData) -> Model {
                 vertices: [
                     Point3::new(vertices[0][0], vertices[0][1], vertices[0][2]),
                     Point3::new(vertices[1][0], vertices[1][1], vertices[1][2]),
-                    Point3::new(vertices[2][0], vertices[2][1], vertices[2][2])
+                    Point3::new(vertices[2][0], vertices[2][1], vertices[2][2]),
                 ],
                 color: Color {
                     r: color[0],
                     g: color[1],
-                    b: color[2]
-                }
+                    b: color[2],
+                },
             }
         })
         .collect();
 
-    Model {
-        geometry: geometry
-    }
+    Model { geometry: geometry }
 }

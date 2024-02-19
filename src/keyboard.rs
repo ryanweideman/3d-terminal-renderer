@@ -1,4 +1,4 @@
-use crossterm::event::{self, Event, KeyEvent, KeyCode, KeyModifiers};
+use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyModifiers};
 
 use std::time::Duration;
 
@@ -14,17 +14,17 @@ pub enum Keys {
     Up,
     Down,
     Left,
-    Right
+    Right,
 }
 
 pub struct Keyboard {
-    pub pressed_keys : Vec<Keys>
+    pub pressed_keys: Vec<Keys>,
 }
 
 impl Keyboard {
     pub fn new() -> Self {
         Self {
-            pressed_keys: Vec::new()
+            pressed_keys: Vec::new(),
         }
     }
 
@@ -33,7 +33,7 @@ impl Keyboard {
             match event::read().expect("Failed to read event") {
                 Event::Key(key_event) => {
                     self.process_key_event(key_event);
-                },
+                }
                 _ => {}
             }
         }
@@ -53,10 +53,10 @@ impl Keyboard {
             KeyCode::Char('d') | KeyCode::Char('D') => self.pressed_keys.push(Keys::D),
             KeyCode::Char('a') | KeyCode::Char('A') => self.pressed_keys.push(Keys::A),
             KeyCode::Char(' ') => self.pressed_keys.push(Keys::Space),
-            KeyCode::Left      => self.pressed_keys.push(Keys::Left),
-            KeyCode::Right     => self.pressed_keys.push(Keys::Right),
-            KeyCode::Up        => self.pressed_keys.push(Keys::Up),
-            KeyCode::Down      => self.pressed_keys.push(Keys::Down),
+            KeyCode::Left => self.pressed_keys.push(Keys::Left),
+            KeyCode::Right => self.pressed_keys.push(Keys::Right),
+            KeyCode::Up => self.pressed_keys.push(Keys::Up),
+            KeyCode::Down => self.pressed_keys.push(Keys::Down),
             _ => {}
         }
     }
