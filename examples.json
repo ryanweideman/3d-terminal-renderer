@@ -249,3 +249,80 @@
             "angular_velocity": -0.15,
             "scale": 0.5
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        {
+            "type": "Rectangle",
+            "model": "square.json",
+            "origin": [0.0, 0.0, -1.5],
+            "rotation_axis": [0.0, 1.0, 0.0],
+            "rotation_angle": 0.0,
+            "width": 3.0,
+            "height": 3.0,
+            "color": [255, 255, 255]
+        },
+        {
+            "type": "Rectangle",
+            "model": "square.json",
+            "origin": [1.5, 0.0, 0.0],
+            "rotation_axis": [0.0, 1.0, 0.0],
+            "rotation_angle": -1.57079632679,
+            "width": 3.0,
+            "height": 3.0,
+            "color": [255, 255, 255]
+        },
+        {
+            "type": "Rectangle",
+            "model": "square.json",
+            "origin": [-1.5, 0.0, 0.0],
+            "rotation_axis": [0.0, 1.0, 0.0],
+            "rotation_angle": 1.57079632679,
+            "width": 3.0,
+            "height": 3.0,
+            "color": [255, 255, 255]
+        },
+        {
+            "type": "Rectangle",
+            "model": "square.json",
+            "origin": [0, 1.5, 0.0],
+            "rotation_axis": [1.0, 0.0, 0.0],
+            "rotation_angle": 1.57079632679,
+            "width": 3.0,
+            "height": 3.0,
+            "color": [255, 255, 255]
+        },
+        {
+            "type": "Rectangle",
+            "model": "square.json",
+            "origin": [0, -1.5, 0.0],
+            "rotation_axis": [1.0, 0.0, 0.0],
+            "rotation_angle": -1.57079632679,
+            "width": 3.0,
+            "height": 3.0,
+            "color": [255, 255, 255]
+        },        
+        {
+            "type": "SpinningCube",
+            "model": "cube.json",
+            "origin": [0.0, -0.8, 0.74],
+            "rotation_axis": [1.7, 3.0, 0.0],
+            "rotation_angle": 0.0,
+            "angular_velocity": -0.15,
+            "scale": 0.5
+        }
+
+

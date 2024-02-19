@@ -104,9 +104,34 @@ impl Updatable for SpinningCube<'_> {
     }
 }
 
-#[derive(Copy, Clone)]
-pub struct PointLight {
-    pub origin: Point3<f64>
+pub enum Light {
+    PointLight(PointLight)
 }
 
-impl WorldLight for PointLight {}
+impl Light {
+    pub fn get_origin(&self) -> Point3<f64> {
+        match self {
+            Light::PointLight(point_light) => point_light.origin
+        }
+    }
+
+    pub fn get_intensity(&self) -> f64 {
+        match self {
+            Light::PointLight(point_light) => point_light.intensity
+        }
+    }
+
+    pub fn get_color(&self) -> Color {
+        match self {
+            Light::PointLight(point_light) => point_light.color
+        }
+    }
+}
+
+#[derive(Copy, Clone)]
+pub struct PointLight {
+    pub origin: Point3<f64>,
+    pub intensity: f64,
+    pub color: Color,
+
+}

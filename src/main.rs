@@ -37,11 +37,11 @@ fn main() {
     stdout.execute(EnterAlternateScreen).expect("Could not enter terminal alternative mode");
     queue!(stdout, Hide).unwrap();
 
-    let mut camera = camera::Camera::new(Point3::new(0.0, 0.0, 3.0));
+    let mut camera = camera::Camera::new(Point3::new(0.0, 0.01, 3.0));
     let mut keyboard = keyboard::Keyboard::new();
 
     let model_loader = model_loader::ModelLoader::new("models/");
-    let mut entities = world_loader::load_world("world.json", &model_loader);
+    let (mut entities, lights) = world_loader::load_world("world.json", &model_loader);
 
     let mut start_time = time::Instant::now();
     let delay_duration = time::Duration::from_millis((1000.0 / TARGET_FPS) as u64);
@@ -61,10 +61,10 @@ fn main() {
         }
         start_time = time::Instant::now();
 
-        //graphics::clear_screen(&mut stdout);
-
         camera.update(&keyboard);
         let mut screen_buffer = [[ansi_background_color ; SCREEN_WIDTH] ; SCREEN_HEIGHT]; 
+
+        let camera_transform = camera.get_transform();
 
         entities.iter_mut()
             .for_each(|entity| entity.update(0.0));
@@ -73,11 +73,10 @@ fn main() {
             .flat_map(|v| v)
             .collect();
 
-        let camera_transform = camera.get_transform();
-
         let projection_results = renderer::render_geometry(
             &mut screen_buffer,
             &world_geometry, 
+            &lights,
             &projection_matrix, 
             &projection_matrix_inverse, 
             &camera_transform, 

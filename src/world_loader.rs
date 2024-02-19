@@ -43,21 +43,22 @@ enum JsonObject {
 
 #[derive(Deserialize, Debug)]
 #[serde(tag = "type")]
-#[allow(dead_code)]
 enum JsonLight {
-    Point {
-        origin: [[f64; 3]; 3]
+    PointLight {
+        origin: [f64; 3],
+        intensity: f64,
+        color: [u8; 3]
     }
 }
 
-pub fn load_world<'a>(world_path: &'a str, model_loader: &'a ModelLoader) -> Vec<world_objects::Entity<'a>> {
+pub fn load_world<'a>(world_path: &'a str, model_loader: &'a ModelLoader) -> (Vec<world_objects::Entity<'a>>, Vec<world_objects::Light>) {
     let file_content = fs::read_to_string(world_path)
         .unwrap_or_else(|_| panic!("Failed to read file at path {}", world_path));
 
     let json_world_data: JsonWorldData = serde_json::from_str(&file_content)
         .unwrap_or_else(|_| panic!("Failed to deserialize json at path {}", world_path));
     
-    json_world_data.objects.iter()
+    let objects = json_world_data.objects.iter()
         .map(|object| {
             match object {
                 JsonObject::Square {
@@ -113,5 +114,24 @@ pub fn load_world<'a>(world_path: &'a str, model_loader: &'a ModelLoader) -> Vec
                     })
                 },
             }
-        }).collect()
+        }).collect();
+
+    let lights = json_world_data.lights.iter()
+        .map(|light| {
+            match light {
+                JsonLight::PointLight {
+                    origin,
+                    intensity,
+                    color,
+                } => {
+                    world_objects::Light::PointLight(world_objects::PointLight {
+                        origin: Point3::<f64>::new(origin[0], origin[1], origin[2]),
+                        intensity: *intensity,
+                        color: Color::new(color[0], color[1], color[2])
+                    })
+                }
+           }
+        }).collect();
+
+    (objects, lights)
 }

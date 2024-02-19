@@ -5,21 +5,30 @@ use crate::constants::{SCREEN_WIDTH, SCREEN_HEIGHT};
 use crate::graphics;
 use crate::math;
 use crate::geometry;
-use crate::world_objects;
+use crate::world_objects::{Light, PointLight};
 
 pub fn render_geometry(
         screen_buffer: &mut [[u16; SCREEN_WIDTH] ; SCREEN_HEIGHT],
         geometry: &Vec<geometry::Triangle3>, 
+        world_lights: &Vec<Light>,
         projection_matrix: &Matrix4<f64>,        
         projection_matrix_inverse: &Matrix4<f64>, 
         camera_transform: &Matrix4<f64>, 
         ansi_background_color: u16) -> Vec<geometry::ProjectionResult> {
 
-    let point_light = world_objects::PointLight {
-        origin: Point3::new(0.5, 0.5, 1.8)
-    };
-
-    let camera_point_light = geometry::transform_world_vertice_to_camera_coords(&point_light.origin, camera_transform);
+    let lights: Vec<Light> = world_lights.iter()
+        .map(|world_light| {
+            let origin = geometry::transform_world_vertice_to_camera_coords(&world_light.get_origin(), camera_transform);
+            match world_light {
+                Light::PointLight(point_light) => {
+                    Light::PointLight(PointLight {
+                        origin,
+                        intensity: point_light.intensity,
+                        color: point_light.color
+                    })
+                }
+            }
+        }).collect();
 
     let mut z_buffer : [[f64; SCREEN_WIDTH] ; SCREEN_HEIGHT] 
         = [[f64::MAX ; SCREEN_WIDTH] ; SCREEN_HEIGHT]; 
@@ -84,26 +93,33 @@ pub fn render_geometry(
             let p_ndc = geometry::screen_to_ndc(&pixel).to_homogeneous();
             let point_camera_space_homogeneous = projection_matrix_inverse * p_ndc;
             let point_camera_space = point_camera_space_homogeneous.xyz() / point_camera_space_homogeneous.w;
-            let light_norm = (camera_point_light - point_camera_space).coords.normalize();
 
-            let diffuse_intensity = light_norm.dot(&projection_result.normal).max(0.0); 
-
-            let a = 0.5;
-            let b = 0.3;
-
-            // Calculate attenuation based on distance
-            let distance = (camera_point_light - point_camera_space).coords.magnitude();
-            let attenuation = 1.0 / (1.0 + a * distance + b * distance * distance);
-            
-            // Final light intensity
-            let light_intensity = diffuse_intensity * attenuation;           
+            let light_intensity = lights.iter()
+                .map(|light| {
+                    let origin = light.get_origin();
+                    match light {
+                        Light::PointLight(point_light) => {
+                            let light_norm = (origin - point_camera_space).coords.normalize();
+                            let diffuse_intensity = light_norm.dot(&projection_result.normal).max(0.0); 
+                
+                            let a = 0.5;
+                            let b = 0.3;
+                
+                            let distance = (origin - point_camera_space).coords.magnitude();
+                            let attenuation = 1.0 / (1.0 + a * distance + b * distance * distance);
+                            
+                            diffuse_intensity * attenuation * light.get_intensity()
+                        }
+                    }
+                })
+                .sum::<f64>()
+                .min(1.0);           
 
             let correct_color = |input: f64| -> u8 {
                 if input == 0.0 {
                     return input as u8;
                 } 
                 math::scale_range(input * light_intensity, 0.0, 255.0, 95.0, 255.0) as u8
-
             };
 
             let color = projection_result.screen_triangle.color;
