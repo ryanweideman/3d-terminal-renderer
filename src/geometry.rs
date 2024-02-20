@@ -1,4 +1,4 @@
-use nalgebra::{Matrix4, Perspective3, Point2, Point3, Point4, Vector3, Vector4};
+use nalgebra::{Matrix4, Perspective3, Point2, Point3, Point4, Vector3};
 
 use crate::constants::{ASPECT_RATIO, FAR_PLANE, FOV, NEAR_PLANE, SCREEN_HEIGHT, SCREEN_WIDTH};
 use crate::world_objects::Entity;

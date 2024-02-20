@@ -5,7 +5,7 @@ use crate::constants::{SCREEN_HEIGHT, SCREEN_WIDTH};
 use crate::geometry;
 use crate::graphics;
 use crate::math;
-use crate::world_objects::{Light, PointLight};
+use crate::world_objects::{Light, PointLight, AmbientLight};
 
 pub fn render_geometry(
     screen_buffer: &mut [[u16; SCREEN_WIDTH]; SCREEN_HEIGHT],
@@ -19,16 +19,24 @@ pub fn render_geometry(
     let lights: Vec<Light> = world_lights
         .iter()
         .map(|world_light| {
-            let origin = geometry::transform_world_vertice_to_camera_coords(
-                &world_light.get_origin(),
-                camera_transform,
-            );
             match world_light {
-                Light::PointLight(point_light) => Light::PointLight(PointLight {
-                    origin,
-                    intensity: point_light.intensity,
-                    color: point_light.color,
-                }),
+                Light::PointLight(point_light) => {
+                    let origin = geometry::transform_world_vertice_to_camera_coords(
+                        &point_light.get_origin(),
+                        camera_transform,
+                    );
+                    Light::PointLight(PointLight {
+                        origin,
+                        intensity: point_light.intensity,
+                        color: point_light.color,
+                    })
+                },
+                Light::AmbientLight(ambient_light) => {
+                    Light::AmbientLight(AmbientLight {
+                        intensity: ambient_light.intensity,
+                        color: ambient_light.color,
+                    })
+                },
             }
         })
         .collect();
@@ -98,9 +106,9 @@ pub fn render_geometry(
             let light_intensity = lights
                 .iter()
                 .map(|light| {
-                    let origin = light.get_origin();
                     match light {
                         Light::PointLight(point_light) => {
+                            let origin = point_light.get_origin();
                             let light_norm = (origin - point_camera_space).coords.normalize();
                             let diffuse_intensity =
                                 light_norm.dot(&projection_result.normal).max(0.0);
@@ -112,12 +120,15 @@ pub fn render_geometry(
                             let attenuation = 1.0 / (1.0 + a * distance + b * distance * distance);
 
                             diffuse_intensity * attenuation * light.get_intensity()
+                        },
+                        Light::AmbientLight(ambient_light) => {
+                            light.get_intensity()
                         }
                     }
                 })
                 .sum::<f64>()
                 .min(1.0);
-
+                
             let correct_color = |input: f64| -> u8 {
                 if input == 0.0 {
                     return input as u8;
