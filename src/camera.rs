@@ -35,13 +35,13 @@ impl Camera {
         view_matrix
     }
 
-    pub fn update(&mut self, keyboard: &Keyboard) {
+    pub fn update(&mut self, keyboard: &Keyboard, delta_time: f64) {
         let mut velocity = Vector3::new(0.0, 0.0, 0.0);
         let mut yaw_velocity: f64 = 0.0;
         let mut pitch_velocity: f64 = 0.0;
 
-        let linear_speed: f64 = 0.35;
-        let angular_speed: f64 = 0.06;
+        let linear_speed: f64 = 1.5;
+        let angular_speed: f64 = 1.0;
 
         keyboard.pressed_keys.iter().for_each(|key| match key {
             Keys::W => velocity += Vector3::new(0.0, 0.0, -linear_speed),
@@ -57,12 +57,12 @@ impl Camera {
             _ => {}
         });
 
-        self.yaw += yaw_velocity;
-        self.pitch += pitch_velocity;
+        self.yaw += yaw_velocity * delta_time;
+        self.pitch += pitch_velocity * delta_time;
         self.pitch = self.pitch.clamp(-1.5, 1.5);
 
         let rotation = Rotation3::from_euler_angles(0.0, -self.yaw - PI / 2.0, 0.0);
 
-        self.origin += rotation * velocity;
+        self.origin += rotation * velocity * delta_time;
     }
 }

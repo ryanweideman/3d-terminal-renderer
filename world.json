@@ -56,7 +56,7 @@
             "origin": [0.0, -0.8, 0.74],
             "rotation_axis": [1.7, 3.0, 0.0],
             "rotation_angle": 0.0,
-            "angular_velocity": -0.15,
+            "angular_velocity": -0.95,
             "scale": 0.5
         }
     ],

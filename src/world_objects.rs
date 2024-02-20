@@ -102,8 +102,8 @@ pub struct SpinningCube<'a> {
 }
 
 impl Updatable for SpinningCube<'_> {
-    fn update(&mut self, _dt: f64) {
-        self.rotation_angle += self.rotation_velocity;
+    fn update(&mut self, delta_time: f64) {
+        self.rotation_angle += self.rotation_velocity * delta_time;
     }
 }
 

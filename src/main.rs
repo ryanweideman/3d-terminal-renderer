@@ -53,14 +53,16 @@ fn main() {
         if start_time.elapsed() < delay_duration {
             continue;
         }
-        start_time = time::Instant::now();
+        let current_time = time::Instant::now();
+        let delta_time = current_time.duration_since(start_time).as_secs_f64();
+        start_time = current_time;
 
-        camera.update(&keyboard);
+        camera.update(&keyboard, delta_time);
         let mut screen_buffer = [[ansi_background_color; SCREEN_WIDTH]; SCREEN_HEIGHT];
 
         let camera_transform = camera.get_transform();
 
-        entities.iter_mut().for_each(|entity| entity.update(0.0));
+        entities.iter_mut().for_each(|entity| entity.update(delta_time));
         let world_geometry = entities
             .iter()
             .map(|entity| geometry::transform_entity_model(&entity))
