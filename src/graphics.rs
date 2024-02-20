@@ -26,12 +26,12 @@ pub fn rgb_to_ansi256(r: u8, g: u8, b: u8) -> u16 {
     let rc = rgb_channel_to_ansi_index(r);
     let gc = rgb_channel_to_ansi_index(g);
     let bc = rgb_channel_to_ansi_index(b);
-
+/*
     // Uses finer grayscale. Ignores 0 case since the deadzone is massive
     if rc != 0 && rc == gc && gc == bc {
         return 232 + ((r as f64) * 0.09375) as u16;
     }
-
+*/
     (16 + 36 * rc + 6 * gc + bc).into()
 }
 

@@ -39,7 +39,7 @@ fn main() {
 
     let mut start_time = time::Instant::now();
     let delay_duration = time::Duration::from_millis((1000.0 / TARGET_FPS) as u64);
-    let ansi_background_color = graphics::rgb_to_ansi256(200, 200, 200);
+    let ansi_background_color = graphics::rgb_to_ansi256(100, 100, 100);
 
     let projection_matrix = geometry::get_projection_matrix();
     let projection_matrix_inverse = projection_matrix.try_inverse().unwrap();

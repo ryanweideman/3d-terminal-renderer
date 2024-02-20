@@ -87,6 +87,13 @@ pub fn render_geometry(
         }
     }
 
+    let mut r_dithering_errors: [[i16; SCREEN_WIDTH]; SCREEN_HEIGHT] =
+        [[0; SCREEN_WIDTH]; SCREEN_HEIGHT];
+    let mut g_dithering_errors: [[i16; SCREEN_WIDTH]; SCREEN_HEIGHT] =
+        [[0; SCREEN_WIDTH]; SCREEN_HEIGHT];
+    let mut b_dithering_errors: [[i16; SCREEN_WIDTH]; SCREEN_HEIGHT] =
+        [[0; SCREEN_WIDTH]; SCREEN_HEIGHT];
+
     for y in 0..SCREEN_HEIGHT {
         for x in 0..SCREEN_WIDTH {
             let projection_result_index = projection_buffer[y][x];
@@ -138,15 +145,85 @@ pub fn render_geometry(
 
             let color = projection_result.screen_triangle.color;
 
-            let r = correct_color(color.r as f64);
-            let g = correct_color(color.g as f64);
-            let b = correct_color(color.b as f64);
+            let use_dithering = false;
+            if (use_dithering) {
+                let r: i16 = (correct_color(color.r as f64) as i16) + r_dithering_errors[y][x];
+                let g: i16 = (correct_color(color.g as f64) as i16) + g_dithering_errors[y][x];
+                let b: i16 = (correct_color(color.b as f64) as i16) + b_dithering_errors[y][x];
 
-            //let r = color.r as u8;
-            //let g = color.g as u8;
-            //let b = color.b as u8;
+                let calculate_error = |v: i16| -> i16 {
+                    let a = if v < 95 { return 0; } else { (1 + (v - 95) / 40).min(5)};
+                    let c = (a - 1) * 40 + 95;    
+                    v - c
+                };
+                
 
-            screen_buffer[y][x] = graphics::rgb_to_ansi256(r, g, b);
+                /* Burkess Dithering
+                            X   8   4 
+                    2   4   8   4   2
+                */
+
+                let re = calculate_error(r);
+                let ge = calculate_error(g);
+                let be = calculate_error(b);
+
+                let ra = r.min(255).max(0) as u8;
+                let ga = g.min(255).max(0) as u8;
+                let ba = b.min(255).max(0) as u8;
+
+                let in_bounds = |x: i16, y: i16| -> bool {
+                    x >= 0 && y >= 0 && x < ((SCREEN_WIDTH) as i16) && y < ((SCREEN_HEIGHT) as i16)
+                };
+
+                // Diffuse errors to neighboring pixels according to the dithering pattern
+                let cx = x as i16;
+                let cy = y as i16;
+                if in_bounds((cx + 1), cy) {
+                    r_dithering_errors[y][x + 1] += re / 4;
+                    g_dithering_errors[y][x + 1] += ge / 4;
+                    b_dithering_errors[y][x + 1] += be / 4;
+                }
+                if in_bounds(cx + 2, cy) {
+                    r_dithering_errors[y][x + 2] += re / 8;
+                    g_dithering_errors[y][x + 2] += ge / 8;
+                    b_dithering_errors[y][x + 2] += be / 8;
+                }
+                if in_bounds(cx - 2, cy + 1) {
+                    r_dithering_errors[y + 1][x - 2] += re / 16;
+                    g_dithering_errors[y + 1][x - 2] += ge / 16;
+                    b_dithering_errors[y + 1][x - 2] += be / 16;
+                }
+                if in_bounds(cx - 1, cy + 1) {
+                    r_dithering_errors[y + 1][x - 1] += re / 8;
+                    g_dithering_errors[y + 1][x - 1] += ge / 8;
+                    b_dithering_errors[y + 1][x - 1] += be / 8;
+                }
+                if in_bounds(cx, cy + 1) {
+                    r_dithering_errors[y + 1][x] += re / 4;
+                    g_dithering_errors[y + 1][x] += ge / 4;
+                    b_dithering_errors[y + 1][x] += be / 4;
+                }
+                if in_bounds(cx + 1, cy + 1) {
+                    r_dithering_errors[y + 1][x + 1] += re / 8;
+                    g_dithering_errors[y + 1][x + 1] += ge / 8;
+                    b_dithering_errors[y + 1][x + 1] += be / 8;
+                }
+                if in_bounds(cx + 2, cy + 1) {
+                    r_dithering_errors[y + 1][x + 2] += re / 16;
+                    g_dithering_errors[y + 1][x + 2] += ge / 16;
+                    b_dithering_errors[y + 1][x + 2] += be / 16;
+                }
+
+                screen_buffer[y][x] = graphics::rgb_to_ansi256(ra, ga, ba);
+            } else {
+                //let r = color.r as u8;
+                //let g = color.g as u8;
+                //let b = color.b as u8;
+                let r = correct_color(color.r as f64);
+                let g = correct_color(color.g as f64);
+                let b = correct_color(color.b as f64);
+                screen_buffer[y][x] = graphics::rgb_to_ansi256(r, g, b);
+            }
         }
     }
 
