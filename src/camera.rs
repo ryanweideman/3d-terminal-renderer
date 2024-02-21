@@ -57,6 +57,7 @@ impl Camera {
             _ => {}
         });
 
+        /*
         self.yaw += yaw_velocity * delta_time;
         self.pitch += pitch_velocity * delta_time;
         self.pitch = self.pitch.clamp(-1.5, 1.5);
@@ -64,5 +65,20 @@ impl Camera {
         let rotation = Rotation3::from_euler_angles(0.0, -self.yaw - PI / 2.0, 0.0);
 
         self.origin += rotation * velocity * delta_time;
+        */
+        //self.yaw += angular_speed * delta_time / 2.0;
+        //self.pitch += pitch_velocity * delta_time;
+        //self.pitch = self.pitch.clamp(-1.5, 1.5);
+        //let rotation = Rotation3::from_euler_angles(0.0, -self.yaw - PI / 2.0, 0.0);
+
+        //self.origin = rotation * Vector3::new(linear_speed, 0.0, 0.0) * delta_time;
+        
+        self.yaw += angular_speed * delta_time / 4.0;
+        self.pitch = -PI / 8.0;
+
+        //let rotation = Rotation3::from_euler_angles(0.0, -self.yaw - PI / 2.0, 0.0);
+
+        let d = (self.origin.x * self.origin.x + self.origin.z * self.origin.z).sqrt();
+        self.origin = Point3::new(d * (self.yaw + PI).cos(), self.origin.y, d * (self.yaw + PI).sin());//Vector3::new(linear_speed, 0.0, 0.0);
     }
 }
