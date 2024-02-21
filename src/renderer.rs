@@ -6,6 +6,7 @@ use crate::geometry;
 use crate::graphics;
 use crate::math;
 use crate::world_objects::{Light, PointLight, AmbientLight};
+use rand::Rng;
 
 pub fn render_geometry(
     screen_buffer: &mut [[u16; SCREEN_WIDTH]; SCREEN_HEIGHT],
@@ -120,15 +121,17 @@ pub fn render_geometry(
                             let diffuse_intensity =
                                 light_norm.dot(&projection_result.normal).max(0.0);
 
-                            let a = 0.5;
-                            let b = 0.3;
+                            //let a = 0.5;
+                            //let b = 0.3;
+                            let a = 0.1;
+                            let b = 0.5;
 
                             let distance = (origin - point_camera_space).coords.magnitude();
                             let attenuation = 1.0 / (1.0 + a * distance + b * distance * distance);
 
-                            diffuse_intensity * attenuation * light.get_intensity()
+                            diffuse_intensity// * attenuation * light.get_intensity()
                         },
-                        Light::AmbientLight(ambient_light) => {
+                        Light::AmbientLight(_) => {
                             light.get_intensity()
                         }
                     }
@@ -145,8 +148,8 @@ pub fn render_geometry(
 
             let color = projection_result.screen_triangle.color;
 
-            let use_dithering = false;
-            if (use_dithering) {
+            let use_dithering = true;
+            if use_dithering {
                 let r: i16 = (correct_color(color.r as f64) as i16) + r_dithering_errors[y][x];
                 let g: i16 = (correct_color(color.g as f64) as i16) + g_dithering_errors[y][x];
                 let b: i16 = (correct_color(color.b as f64) as i16) + b_dithering_errors[y][x];
@@ -178,7 +181,7 @@ pub fn render_geometry(
                 // Diffuse errors to neighboring pixels according to the dithering pattern
                 let cx = x as i16;
                 let cy = y as i16;
-                if in_bounds((cx + 1), cy) {
+                if in_bounds(cx + 1, cy) {
                     r_dithering_errors[y][x + 1] += re / 4;
                     g_dithering_errors[y][x + 1] += ge / 4;
                     b_dithering_errors[y][x + 1] += be / 4;
@@ -216,12 +219,27 @@ pub fn render_geometry(
 
                 screen_buffer[y][x] = graphics::rgb_to_ansi256(ra, ga, ba);
             } else {
-                //let r = color.r as u8;
-                //let g = color.g as u8;
-                //let b = color.b as u8;
+                
+                // Uniform noise dithering experiment
+                let mut rng = rand::thread_rng();
+                //let a = (rng.gen::<f64>() * 8. - 4.) as i16;
+                //let b = (rng.gen::<f64>() * 8. - 4.) as i16;
+                //let c = (rng.gen::<f64>() * 8. - 4.) as i16;
+                /*
+                let r = (correct_color(color.r as f64) as i16) + a;
+                let g = (correct_color(color.g as f64) as i16) + b;
+                let b = (correct_color(color.b as f64) as i16) + c;
+                screen_buffer[y][x] = graphics::rgb_to_ansi256(r.min(255).max(0) as u8, g.min(255).max(0) as u8, b.min(255).max(0) as u8);
+                */
+/*
+                let r = color.r as u8;
+                let g = color.g as u8;
+                let b = color.b as u8;
+                */
                 let r = correct_color(color.r as f64);
                 let g = correct_color(color.g as f64);
                 let b = correct_color(color.b as f64);
+                
                 screen_buffer[y][x] = graphics::rgb_to_ansi256(r, g, b);
             }
         }

@@ -26,15 +26,16 @@ pub fn rgb_to_ansi256(r: u8, g: u8, b: u8) -> u16 {
     let rc = rgb_channel_to_ansi_index(r);
     let gc = rgb_channel_to_ansi_index(g);
     let bc = rgb_channel_to_ansi_index(b);
-/*
+
     // Uses finer grayscale. Ignores 0 case since the deadzone is massive
-    if rc != 0 && rc == gc && gc == bc {
-        return 232 + ((r as f64) * 0.09375) as u16;
-    }
-*/
+    //if rc != 0 && rc == gc && gc == bc {
+    //    return 232 + ((r as f64) * 0.09375) as u16;
+    //}
+
     (16 + 36 * rc + 6 * gc + bc).into()
 }
 
+#[allow(dead_code)]
 pub fn clear_screen(stdout: &mut std::io::Stdout) {
     queue!(stdout, Clear(ClearType::All)).ok();
 }
@@ -57,10 +58,11 @@ pub fn output_screen_buffer(
     }
 }
 
+#[allow(dead_code)]
 pub fn print_debug_info(
     stdout: &mut std::io::Stdout,
     total_time_elapsed: &time::Duration,
-    processed_time_elapsed: &time::Duration,
+    _processed_time_elapsed: &time::Duration,
     projection_results: &Vec<ProjectionResult>,
 ) {
     queue!(stdout, MoveTo(1, (SCREEN_HEIGHT) as u16)).unwrap();

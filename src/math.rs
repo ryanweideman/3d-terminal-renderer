@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 pub fn round_up_to_nearest_increment(value: f64, increment: f64) -> f64 {
     let scaled = value / increment;
     let rounded = scaled.ceil();

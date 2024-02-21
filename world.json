@@ -52,12 +52,12 @@
         },        
         {
             "type": "SpinningCube",
-            "model": "cube.json",
-            "origin": [0.0, -0.8, 0.0],
+            "model": "octahedron.json",
+            "origin": [0.0, -0.3, -0.3],
             "rotation_axis": [1.7, 3.0, 0.0],
             "rotation_angle": 0.0,
             "angular_velocity": -0.95,
-            "scale": 0.75
+            "scale": 1.0
         }
     ],
     "lights": [

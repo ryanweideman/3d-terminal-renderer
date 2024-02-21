@@ -3,14 +3,14 @@ use nalgebra::{Matrix4, Point3, Rotation3, Unit, Vector3};
 
 pub enum Entity<'a> {
     Square(Square<'a>),
-    SpinningCube(SpinningCube<'a>),
+    SpinningObject(SpinningObject<'a>),
     Rectangle(Rectangle<'a>),
 }
 
 impl<'a> Entity<'a> {
     pub fn update(&mut self, dt: f64) {
         match self {
-            Entity::SpinningCube(cube) => cube.update(dt),
+            Entity::SpinningObject(object) => object.update(dt),
             _ => {}
         }
     }
@@ -18,7 +18,7 @@ impl<'a> Entity<'a> {
     pub fn get_origin(&self) -> Point3<f64> {
         match self {
             Entity::Square(square) => square.origin,
-            Entity::SpinningCube(cube) => cube.origin,
+            Entity::SpinningObject(object) => object.origin,
             Entity::Rectangle(rectangle) => rectangle.origin,
         }
     }
@@ -26,13 +26,13 @@ impl<'a> Entity<'a> {
     pub fn get_rotation(&self) -> Rotation3<f64> {
         match self {
             Entity::Square(square) => square.rotation,
-            Entity::SpinningCube(cube) => Rotation3::from_axis_angle(
+            Entity::SpinningObject(object) => Rotation3::from_axis_angle(
                 &Unit::new_normalize(Vector3::new(
-                    cube.rotation_axis[0],
-                    cube.rotation_axis[1],
-                    cube.rotation_axis[2],
+                    object.rotation_axis[0],
+                    object.rotation_axis[1],
+                    object.rotation_axis[2],
                 )),
-                cube.rotation_angle,
+                object.rotation_angle,
             ),
             Entity::Rectangle(rectangle) => rectangle.rotation,
         }
@@ -41,7 +41,7 @@ impl<'a> Entity<'a> {
     pub fn get_scale(&self) -> Matrix4<f64> {
         match self {
             Entity::Square(square) => square.scale,
-            Entity::SpinningCube(cube) => cube.scale,
+            Entity::SpinningObject(object) => object.scale,
             Entity::Rectangle(rectangle) => rectangle.scale,
         }
     }
@@ -49,7 +49,7 @@ impl<'a> Entity<'a> {
     pub fn get_model_geometry(&self) -> Vec<Triangle3> {
         match self {
             Entity::Square(square) => square.model.geometry.clone(),
-            Entity::SpinningCube(cube) => cube.model.geometry.clone(),
+            Entity::SpinningObject(object) => object.model.geometry.clone(),
             Entity::Rectangle(rectangle) => rectangle.model.geometry.clone(),
         }
     }
@@ -92,7 +92,7 @@ pub struct Rectangle<'a> {
 }
 
 #[derive(Copy, Clone)]
-pub struct SpinningCube<'a> {
+pub struct SpinningObject<'a> {
     pub model: &'a Model,
     pub origin: Point3<f64>,
     pub rotation_axis: Vector3<f64>,
@@ -101,7 +101,7 @@ pub struct SpinningCube<'a> {
     pub scale: Matrix4<f64>,
 }
 
-impl Updatable for SpinningCube<'_> {
+impl Updatable for SpinningObject<'_> {
     fn update(&mut self, delta_time: f64) {
         self.rotation_angle += self.rotation_velocity * delta_time;
     }
@@ -120,6 +120,7 @@ impl Light {
         }
     }
 
+    #[allow(dead_code)]
     pub fn get_color(&self) -> Color {
         match self {
             Light::PointLight(point_light) => point_light.color,

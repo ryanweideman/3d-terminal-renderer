@@ -35,7 +35,7 @@ fn main() {
     let mut keyboard = keyboard::Keyboard::new();
 
     let model_loader = model_loader::ModelLoader::new("models/");
-    let (mut entities, lights) = world_loader::load_world("world.json", &model_loader);
+    let (mut entities, lights) = world_loader::load_world("demo.json", &model_loader);
 
     let mut start_time = time::Instant::now();
     let delay_duration = time::Duration::from_millis((1000.0 / TARGET_FPS) as u64);
@@ -69,7 +69,7 @@ fn main() {
             .flat_map(|v| v)
             .collect();
 
-        let projection_results = renderer::render_geometry(
+        let _projection_results = renderer::render_geometry(
             &mut screen_buffer,
             &world_geometry,
             &lights,
@@ -78,17 +78,17 @@ fn main() {
             &camera_transform,
             ansi_background_color,
         );
-        let processing_time_elapsed = start_time.elapsed();
+        let _processing_time_elapsed = start_time.elapsed();
 
         graphics::output_screen_buffer(&mut stdout, &screen_buffer);
-        let total_time_elapsed = start_time.elapsed();
+        let _total_time_elapsed = start_time.elapsed();
 
-        graphics::print_debug_info(
+        /*graphics::print_debug_info(
             &mut stdout,
             &total_time_elapsed,
             &processing_time_elapsed,
             &projection_results,
-        );
+        );*/
         stdout.flush().unwrap();
         keyboard.clear_all_keys();
     }

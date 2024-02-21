@@ -3,7 +3,7 @@ use nalgebra::{Matrix4, Perspective3, Point2, Point3, Point4, Vector3};
 use crate::constants::{ASPECT_RATIO, FAR_PLANE, FOV, NEAR_PLANE, SCREEN_HEIGHT, SCREEN_WIDTH};
 use crate::world_objects::Entity;
 
-use rand::Rng;
+//use rand::Rng;
 
 #[derive(Clone)]
 pub struct Model {
@@ -123,6 +123,7 @@ fn is_vertex_outside_frustum(vertex: &Point4<f64>) -> bool {
     x_out_of_range || y_out_of_range || z_out_of_range
 }
 
+#[allow(dead_code)]
 fn is_triangle_fully_outside_frustum(triangle: &Triangle4) -> bool {
     let (v0, v1, v2) = triangle.vertices();
 

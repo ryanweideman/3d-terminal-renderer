@@ -31,7 +31,7 @@ enum JsonObject {
         height: f64,
         color: [u8; 3],
     },
-    SpinningCube {
+    SpinningObject {
         model: String,
         origin: [f64; 3],
         rotation_axis: [f64; 3],
@@ -110,14 +110,14 @@ pub fn load_world<'a>(
                 scale: Matrix4::<f64>::new_nonuniform_scaling(&Vector3::new(*width, *height, 1.0)),
                 color: Color::new(color[0], color[1], color[2]),
             }),
-            JsonObject::SpinningCube {
+            JsonObject::SpinningObject {
                 model,
                 origin,
                 rotation_axis,
                 rotation_angle,
                 angular_velocity,
                 scale,
-            } => world_objects::Entity::SpinningCube(world_objects::SpinningCube {
+            } => world_objects::Entity::SpinningObject(world_objects::SpinningObject {
                 model: &model_loader.get_model(model),
                 origin: Point3::<f64>::new(origin[0], origin[1], origin[2]),
                 rotation_axis: Vector3::<f64>::new(
