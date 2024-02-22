@@ -35,7 +35,7 @@
             "rotation_axis": [-1.0, -1.0, 0.0],
             "rotation_angle": 0.0,
             "angular_velocity": 3,
-            "scale": 1.0
+            "scale": 0.8
         }
     ],
     "lights": [

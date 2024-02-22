@@ -7,6 +7,7 @@ pub struct Camera {
     origin: Point3<f64>,
     yaw: f64,
     pitch: f64,
+    orbit_mode: bool
 }
 
 impl Camera {
@@ -15,6 +16,7 @@ impl Camera {
             origin: origin,
             yaw: -PI / 2.0,
             pitch: 0.0,
+            orbit_mode: true,
         }
     }
 
@@ -43,6 +45,10 @@ impl Camera {
         let linear_speed: f64 = 1.5;
         let angular_speed: f64 = 1.0;
 
+        if !keyboard.pressed_keys.is_empty() {
+            self.orbit_mode = false;
+        }
+
         keyboard.pressed_keys.iter().for_each(|key| match key {
             Keys::W => velocity += Vector3::new(0.0, 0.0, -linear_speed),
             Keys::A => velocity += Vector3::new(-linear_speed, 0.0, 0.0),
@@ -57,28 +63,18 @@ impl Camera {
             _ => {}
         });
 
-        /*
-        self.yaw += yaw_velocity * delta_time;
-        self.pitch += pitch_velocity * delta_time;
-        self.pitch = self.pitch.clamp(-1.5, 1.5);
-
-        let rotation = Rotation3::from_euler_angles(0.0, -self.yaw - PI / 2.0, 0.0);
-
-        self.origin += rotation * velocity * delta_time;
-        */
-        //self.yaw += angular_speed * delta_time / 2.0;
-        //self.pitch += pitch_velocity * delta_time;
-        //self.pitch = self.pitch.clamp(-1.5, 1.5);
-        //let rotation = Rotation3::from_euler_angles(0.0, -self.yaw - PI / 2.0, 0.0);
-
-        //self.origin = rotation * Vector3::new(linear_speed, 0.0, 0.0) * delta_time;
-        
-        self.yaw += angular_speed * delta_time / 4.0;
-        self.pitch = -PI / 8.0;
-
-        //let rotation = Rotation3::from_euler_angles(0.0, -self.yaw - PI / 2.0, 0.0);
-
-        let d = (self.origin.x * self.origin.x + self.origin.z * self.origin.z).sqrt();
-        self.origin = Point3::new(d * (self.yaw + PI).cos(), self.origin.y, d * (self.yaw + PI).sin());//Vector3::new(linear_speed, 0.0, 0.0);
+        if self.orbit_mode {
+            self.yaw += angular_speed * delta_time / 4.0;
+            self.pitch = -PI / 8.0;
+            let d = (self.origin.x * self.origin.x + self.origin.z * self.origin.z).sqrt();
+            self.origin = Point3::new(d * (self.yaw + PI).cos(), self.origin.y, d * (self.yaw + PI).sin());
+        } else {
+            self.yaw += yaw_velocity * delta_time;
+            self.pitch += pitch_velocity * delta_time;
+            self.pitch = self.pitch.clamp(-1.5, 1.5);
+            
+            let rotation = Rotation3::from_euler_angles(0.0, -self.yaw - PI / 2.0, 0.0);
+            self.origin += rotation * velocity * delta_time;
+        }
     }
 }
