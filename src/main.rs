@@ -41,9 +41,6 @@ fn main() {
     let delay_duration = time::Duration::from_millis((1000.0 / TARGET_FPS) as u64);
     let ansi_background_color = graphics::rgb_to_ansi256(100, 100, 100);
 
-    let projection_matrix = geometry::get_projection_matrix();
-    let projection_matrix_inverse = projection_matrix.try_inverse().unwrap();
-
     loop {
         keyboard.update();
         if keyboard.is_ctrl_c_pressed() {
@@ -60,9 +57,9 @@ fn main() {
         camera.update(&keyboard, delta_time);
         let mut screen_buffer = [[ansi_background_color; SCREEN_WIDTH]; SCREEN_HEIGHT];
 
-        let camera_transform = camera.get_transform();
-
-        entities.iter_mut().for_each(|entity| entity.update(delta_time));
+        entities
+            .iter_mut()
+            .for_each(|entity| entity.update(delta_time));
         let world_geometry = entities
             .iter()
             .map(|entity| geometry::transform_entity_model(&entity))
@@ -73,9 +70,7 @@ fn main() {
             &mut screen_buffer,
             &world_geometry,
             &lights,
-            &projection_matrix,
-            &projection_matrix_inverse,
-            &camera_transform,
+            &camera,
             ansi_background_color,
         );
         let _processing_time_elapsed = start_time.elapsed();

@@ -136,7 +136,7 @@ pub struct PointLight {
     pub color: Color,
 }
 
-impl PointLight { 
+impl PointLight {
     pub fn get_origin(&self) -> Point3<f64> {
         self.origin
     }

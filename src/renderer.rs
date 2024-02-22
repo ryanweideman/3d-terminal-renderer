@@ -2,45 +2,21 @@ use nalgebra::{Matrix4, Point2, Point3};
 
 use crate::constants::{SCREEN_HEIGHT, SCREEN_WIDTH};
 
+use crate::camera::Camera;
 use crate::geometry;
 use crate::graphics;
 use crate::math;
-use crate::world_objects::{Light, PointLight, AmbientLight};
-use rand::Rng;
+use crate::world_objects::Light;
 
 pub fn render_geometry(
     screen_buffer: &mut [[u16; SCREEN_WIDTH]; SCREEN_HEIGHT],
     geometry: &Vec<geometry::Triangle3>,
     world_lights: &Vec<Light>,
-    projection_matrix: &Matrix4<f64>,
-    projection_matrix_inverse: &Matrix4<f64>,
-    camera_transform: &Matrix4<f64>,
+    camera: &Camera,
     ansi_background_color: u16,
 ) -> Vec<geometry::ProjectionResult> {
-    let lights: Vec<Light> = world_lights
-        .iter()
-        .map(|world_light| {
-            match world_light {
-                Light::PointLight(point_light) => {
-                    let origin = geometry::transform_world_vertice_to_camera_coords(
-                        &point_light.get_origin(),
-                        camera_transform,
-                    );
-                    Light::PointLight(PointLight {
-                        origin,
-                        intensity: point_light.intensity,
-                        color: point_light.color,
-                    })
-                },
-                Light::AmbientLight(ambient_light) => {
-                    Light::AmbientLight(AmbientLight {
-                        intensity: ambient_light.intensity,
-                        color: ambient_light.color,
-                    })
-                },
-            }
-        })
-        .collect();
+    let view_projection_matrix: Matrix4<f64> = camera.get_view_projection_matrix();
+    let view_projection_matrix_inverse = view_projection_matrix.try_inverse().unwrap();
 
     let mut z_buffer: [[f64; SCREEN_WIDTH]; SCREEN_HEIGHT] =
         [[f64::MAX; SCREEN_WIDTH]; SCREEN_HEIGHT];
@@ -50,18 +26,20 @@ pub fn render_geometry(
 
     for triangle in geometry {
         // world cords -> camera coords -> ndc -> screen coords
-        let projection_results =
-            geometry::project_triangle(triangle, &projection_matrix, &camera_transform);
+        let projection_results = geometry::project_triangle(
+            triangle,
+            &view_projection_matrix,
+            SCREEN_WIDTH,
+            SCREEN_HEIGHT,
+        );
 
         for projection_result in &projection_results {
             cached_projection_results.push(*projection_result);
             let projection_result_index = cached_projection_results.len() - 1;
 
-            let bounding_box = &projection_result.screen_bounding_box;
-            let x_min = bounding_box.x_min.max(0);
-            let y_min = bounding_box.y_min.max(0);
-            let x_max = bounding_box.x_max.min(SCREEN_WIDTH);
-            let y_max = bounding_box.y_max.min(SCREEN_HEIGHT);
+            let (x_min, y_min, x_max, y_max) = projection_result
+                .screen_bounding_box
+                .get_screen_constrained_bounds(SCREEN_WIDTH, SCREEN_HEIGHT);
 
             // Rasterize
             for y in y_min..y_max {
@@ -106,12 +84,13 @@ pub fn render_geometry(
 
             let pixel = Point3::new((x as f64) + 0.5, (y as f64) + 0.5, z_buffer[y][x]);
 
-            let p_ndc = geometry::screen_to_ndc(&pixel).to_homogeneous();
-            let point_camera_space_homogeneous = projection_matrix_inverse * p_ndc;
+            let p_ndc =
+                geometry::screen_to_ndc(&pixel, SCREEN_WIDTH, SCREEN_HEIGHT).to_homogeneous();
+            let point_camera_space_homogeneous = view_projection_matrix_inverse * p_ndc;
             let point_camera_space =
                 point_camera_space_homogeneous.xyz() / point_camera_space_homogeneous.w;
 
-            let light_intensity = lights
+            let light_intensity = world_lights
                 .iter()
                 .map(|light| {
                     match light {
@@ -124,21 +103,19 @@ pub fn render_geometry(
                             //let a = 0.5;
                             //let b = 0.3;
                             let a = 0.1;
-                            let b = 0.5;
+                            let b = 0.1;
 
                             let distance = (origin - point_camera_space).coords.magnitude();
                             let attenuation = 1.0 / (1.0 + a * distance + b * distance * distance);
 
-                            diffuse_intensity// * attenuation * light.get_intensity()
-                        },
-                        Light::AmbientLight(_) => {
-                            light.get_intensity()
+                            diffuse_intensity * attenuation * light.get_intensity()
                         }
+                        Light::AmbientLight(_) => light.get_intensity(),
                     }
                 })
                 .sum::<f64>()
                 .min(1.0);
-                
+
             let correct_color = |input: f64| -> u8 {
                 if input == 0.0 {
                     return input as u8;
@@ -155,14 +132,17 @@ pub fn render_geometry(
                 let b: i16 = (correct_color(color.b as f64) as i16) + b_dithering_errors[y][x];
 
                 let calculate_error = |v: i16| -> i16 {
-                    let a = if v < 95 { return 0; } else { (1 + (v - 95) / 40).min(5)};
-                    let c = (a - 1) * 40 + 95;    
+                    let a = if v < 95 {
+                        return 0;
+                    } else {
+                        (1 + (v - 95) / 40).min(5)
+                    };
+                    let c = (a - 1) * 40 + 95;
                     v - c
                 };
-                
 
                 /* Burkess Dithering
-                            X   8   4 
+                            X   8   4
                     2   4   8   4   2
                 */
 
@@ -224,19 +204,7 @@ pub fn render_geometry(
                     screen_buffer[y][x] = graphics::rgb_to_ansi256(ra, ga, ba);
                 }
             } else {
-                
-                // Uniform noise dithering experiment
-                let mut rng = rand::thread_rng();
-                //let a = (rng.gen::<f64>() * 8. - 4.) as i16;
-                //let b = (rng.gen::<f64>() * 8. - 4.) as i16;
-                //let c = (rng.gen::<f64>() * 8. - 4.) as i16;
                 /*
-                let r = (correct_color(color.r as f64) as i16) + a;
-                let g = (correct_color(color.g as f64) as i16) + b;
-                let b = (correct_color(color.b as f64) as i16) + c;
-                screen_buffer[y][x] = graphics::rgb_to_ansi256(r.min(255).max(0) as u8, g.min(255).max(0) as u8, b.min(255).max(0) as u8);
-                */
-/*
                 let r = color.r as u8;
                 let g = color.g as u8;
                 let b = color.b as u8;
@@ -244,7 +212,7 @@ pub fn render_geometry(
                 let r = correct_color(color.r as f64);
                 let g = correct_color(color.g as f64);
                 let b = correct_color(color.b as f64);
-                
+
                 screen_buffer[y][x] = graphics::rgb_to_ansi256(r, g, b);
             }
         }

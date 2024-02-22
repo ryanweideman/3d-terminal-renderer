@@ -1,6 +1,5 @@
-use nalgebra::{Matrix4, Perspective3, Point2, Point3, Point4, Vector3};
+use nalgebra::{Matrix4, Point2, Point3, Point4, Vector3};
 
-use crate::constants::{ASPECT_RATIO, FAR_PLANE, FOV, NEAR_PLANE, SCREEN_HEIGHT, SCREEN_WIDTH};
 use crate::world_objects::Entity;
 
 //use rand::Rng;
@@ -48,36 +47,35 @@ impl Triangle4 {
 }
 
 #[derive(Copy, Clone)]
-pub struct BoundingBox2<T> {
-    pub x_min: T,
-    pub y_min: T,
-    pub x_max: T,
-    pub y_max: T,
+pub struct BoundingBox2 {
+    pub x_min: f64,
+    pub y_min: f64,
+    pub x_max: f64,
+    pub y_max: f64,
+}
+
+impl BoundingBox2 {
+    pub fn get_screen_constrained_bounds(
+        &self,
+        screen_width: usize,
+        screen_height: usize,
+    ) -> (usize, usize, usize, usize) {
+        (
+            (self.x_min.floor() as usize).max(0),
+            (self.y_min.floor() as usize).max(0),
+            (self.x_max.ceil() as usize).min(screen_width),
+            (self.y_max.ceil() as usize).min(screen_height),
+        )
+    }
 }
 
 #[derive(Copy, Clone)]
 pub struct ProjectionResult {
-    pub camera_frame_triangle: Triangle3,
     pub normal: Vector3<f64>,
     pub clip_space_triangle: Triangle4,
     pub ndc_triangle: Triangle3,
     pub screen_triangle: Triangle3,
-    pub screen_bounding_box: BoundingBox2<usize>,
-}
-
-/*
-    Perspective3 produces a symmetric frustum identical to that used by OpenGL
-    Perspective matrix :
-
-    |  f / aspect  0                              0                                 0  |
-    |  0           f                              0                                 0  |
-    |  0           0   -(far + near) / (far - near)    -2 * far * near / (far - near)  |
-    |  0           0                             -1                                 0  |
-
-    where f = 1 / tan(fov / 2)
-*/
-pub fn get_projection_matrix() -> Matrix4<f64> {
-    Perspective3::new(ASPECT_RATIO, FOV, NEAR_PLANE, FAR_PLANE).to_homogeneous()
+    pub screen_bounding_box: BoundingBox2,
 }
 
 pub fn transform_entity_model(entity: &Entity) -> Vec<Triangle3> {
@@ -298,6 +296,7 @@ pub fn transform_world_vertice_to_camera_coords(
     (t.xyz() / t.w).into()
 }
 
+#[allow(dead_code)]
 fn transform_triangle_to_camera_coords(
     triangle: &Triangle3,
     camera_transform: &Matrix4<f64>,
@@ -314,6 +313,7 @@ fn transform_triangle_to_camera_coords(
     }
 }
 
+#[allow(dead_code)]
 fn camera_coordinates_to_clip_space(
     camera_triangle: &Triangle3,
     projection_matrix: &Matrix4<f64>,
@@ -330,6 +330,22 @@ fn camera_coordinates_to_clip_space(
     }
 }
 
+fn transform_world_space_to_clip_space(
+    world_triangle: &Triangle3,
+    view_projection_matrix: &Matrix4<f64>,
+) -> Triangle4 {
+    let (world_v0, world_v1, world_v2) = world_triangle.vertices();
+
+    let v0 = Point4::from(view_projection_matrix * world_v0.to_homogeneous());
+    let v1 = Point4::from(view_projection_matrix * world_v1.to_homogeneous());
+    let v2 = Point4::from(view_projection_matrix * world_v2.to_homogeneous());
+
+    Triangle4 {
+        vertices: [v0, v1, v2],
+        color: world_triangle.color,
+    }
+}
+
 fn clips_space_to_ndc(clip_space_triangle: &Triangle4) -> Triangle3 {
     let (clip_space_v0, clip_space_v1, clip_space_v2) = clip_space_triangle.vertices();
     let v0 = Point3::from(clip_space_v0.xyz() / clip_space_v0.w);
@@ -341,10 +357,10 @@ fn clips_space_to_ndc(clip_space_triangle: &Triangle4) -> Triangle3 {
     }
 }
 
-fn ndc_to_screen(ndc_triangle: &Triangle3) -> Triangle3 {
+fn ndc_to_screen(ndc_triangle: &Triangle3, screen_width: usize, screen_height: usize) -> Triangle3 {
     let transform = |ndc: &Point3<f64>| -> Point3<f64> {
-        let px = (ndc.x + 1.0) / 2.0 * (SCREEN_WIDTH as f64);
-        let py = (1.0 - (ndc.y + 1.0) / 2.0) * (SCREEN_HEIGHT as f64);
+        let px = (ndc.x + 1.0) / 2.0 * (screen_width as f64);
+        let py = (1.0 - (ndc.y + 1.0) / 2.0) * (screen_height as f64);
         Point3::new(px, py, ndc.z)
     };
     let (ndc_v0, ndc_v1, ndc_v2) = ndc_triangle.vertices();
@@ -358,9 +374,13 @@ fn ndc_to_screen(ndc_triangle: &Triangle3) -> Triangle3 {
     }
 }
 
-pub fn screen_to_ndc(screen: &Point3<f64>) -> Point3<f64> {
-    let x_ndc = (screen.x / (SCREEN_WIDTH as f64)) * 2.0 - 1.0;
-    let y_ndc = 1.0 - (screen.y / (SCREEN_HEIGHT as f64)) * 2.0;
+pub fn screen_to_ndc(
+    screen: &Point3<f64>,
+    screen_width: usize,
+    screen_height: usize,
+) -> Point3<f64> {
+    let x_ndc = (screen.x / (screen_width as f64)) * 2.0 - 1.0;
+    let y_ndc = 1.0 - (screen.y / (screen_height as f64)) * 2.0;
     let z_ndc = screen.z;
 
     Point3::new(x_ndc, y_ndc, z_ndc)
@@ -371,27 +391,23 @@ fn calculate_triangle_normal(triangle: &Triangle3) -> Vector3<f64> {
     (v1 - v0).cross(&(v2 - v0)).normalize()
 }
 
-fn calculate_bounding_box(projected_triangle: &Triangle3) -> BoundingBox2<usize> {
+fn calculate_bounding_box(projected_triangle: &Triangle3) -> BoundingBox2 {
     let x_min = projected_triangle.vertices[0]
         .x
         .min(projected_triangle.vertices[1].x)
-        .min(projected_triangle.vertices[2].x)
-        .floor() as usize;
+        .min(projected_triangle.vertices[2].x);
     let y_min = projected_triangle.vertices[0]
         .y
         .min(projected_triangle.vertices[1].y)
-        .min(projected_triangle.vertices[2].y)
-        .floor() as usize;
+        .min(projected_triangle.vertices[2].y);
     let x_max = projected_triangle.vertices[0]
         .x
         .max(projected_triangle.vertices[1].x)
-        .max(projected_triangle.vertices[2].x)
-        .ceil() as usize;
+        .max(projected_triangle.vertices[2].x);
     let y_max = projected_triangle.vertices[0]
         .y
         .max(projected_triangle.vertices[1].y)
-        .max(projected_triangle.vertices[2].y)
-        .ceil() as usize;
+        .max(projected_triangle.vertices[2].y);
 
     BoundingBox2 {
         x_min: x_min,
@@ -403,18 +419,18 @@ fn calculate_bounding_box(projected_triangle: &Triangle3) -> BoundingBox2<usize>
 
 pub fn project_triangle(
     input: &Triangle3,
-    projection_matrix: &Matrix4<f64>,
-    camera_transform: &Matrix4<f64>,
+    view_projection_matrix: &Matrix4<f64>,
+    screen_width: usize,
+    screen_height: usize,
 ) -> Vec<ProjectionResult> {
     // Transform world coordinates to camera coordinates
-    let camera_frame_triangle = transform_triangle_to_camera_coords(&input, &camera_transform);
+    //let camera_frame_triangle = transform_triangle_to_camera_coords(&input, &camera_transform);
 
     // Calculate the normal in camera coordinates
-    let normal = calculate_triangle_normal(&camera_frame_triangle);
+    let normal = calculate_triangle_normal(&input);
 
     // Transform the camera coordinates to clip space
-    let clip_space_triangle =
-        camera_coordinates_to_clip_space(&camera_frame_triangle, &projection_matrix);
+    let clip_space_triangle = transform_world_space_to_clip_space(&input, &view_projection_matrix);
 
     let clipped_triangles: Vec<Triangle4> = clip_triangle_to_frustum(&clip_space_triangle);
 
@@ -425,13 +441,12 @@ pub fn project_triangle(
             let ndc_triangle = clips_space_to_ndc(clipped_triangle);
 
             // Transform from normalized device coordinates to screen coordinates
-            let screen_triangle = ndc_to_screen(&ndc_triangle);
+            let screen_triangle = ndc_to_screen(&ndc_triangle, screen_width, screen_height);
 
             // Get bounding box of the projected triangle
             let bounding_box = calculate_bounding_box(&screen_triangle);
 
             let result = ProjectionResult {
-                camera_frame_triangle: camera_frame_triangle,
                 clip_space_triangle: *clipped_triangle,
                 ndc_triangle: ndc_triangle,
                 screen_triangle: screen_triangle,

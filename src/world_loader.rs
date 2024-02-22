@@ -145,13 +145,12 @@ pub fn load_world<'a>(
                 intensity: *intensity,
                 color: Color::new(color[0], color[1], color[2]),
             }),
-            JsonLight::AmbientLight {
-                intensity,
-                color,
-            } => world_objects::Light::AmbientLight(world_objects::AmbientLight {
-                intensity: *intensity,
-                color: Color::new(color[0], color[1], color[2]),
-            })
+            JsonLight::AmbientLight { intensity, color } => {
+                world_objects::Light::AmbientLight(world_objects::AmbientLight {
+                    intensity: *intensity,
+                    color: Color::new(color[0], color[1], color[2]),
+                })
+            }
         })
         .collect();
 

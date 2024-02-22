@@ -1,26 +1,42 @@
-use crate::keyboard::{Keyboard, Keys};
-use nalgebra::{Matrix4, Point3, Rotation3, Vector3};
-
+use nalgebra::{Matrix4, Perspective3, Point3, Rotation3, Vector3};
 use std::f64::consts::PI;
+
+use crate::constants::{ASPECT_RATIO, FAR_PLANE, FOV, NEAR_PLANE};
+use crate::keyboard::{Keyboard, Keys};
 
 pub struct Camera {
     origin: Point3<f64>,
     yaw: f64,
     pitch: f64,
-    orbit_mode: bool
+    orbit_mode: bool,
+    projection_matrix: Matrix4<f64>,
 }
 
+/*
+    Perspective3 produces a symmetric frustum identical to that used by OpenGL
+    Perspective matrix :
+
+    |  f / aspect  0                              0                                 0  |
+    |  0           f                              0                                 0  |
+    |  0           0   -(far + near) / (far - near)    -2 * far * near / (far - near)  |
+    |  0           0                             -1                                 0  |
+
+    where f = 1 / tan(fov / 2)
+*/
 impl Camera {
     pub fn new(origin: Point3<f64>) -> Self {
+        let projection_matrix =
+            Perspective3::new(ASPECT_RATIO, FOV, NEAR_PLANE, FAR_PLANE).to_homogeneous();
         Camera {
             origin: origin,
             yaw: -PI / 2.0,
             pitch: 0.0,
             orbit_mode: true,
+            projection_matrix: projection_matrix,
         }
     }
 
-    pub fn get_transform(&self) -> Matrix4<f64> {
+    pub fn get_view_projection_matrix(&self) -> Matrix4<f64> {
         let direction = Vector3::new(
             self.yaw.cos() * self.pitch.cos(),
             self.pitch.sin(),
@@ -34,7 +50,7 @@ impl Camera {
 
         let view_matrix = Matrix4::look_at_rh(&self.origin, &(self.origin + direction), &up);
 
-        view_matrix
+        self.projection_matrix * view_matrix
     }
 
     pub fn update(&mut self, keyboard: &Keyboard, delta_time: f64) {
@@ -67,12 +83,16 @@ impl Camera {
             self.yaw += angular_speed * delta_time / 4.0;
             self.pitch = -PI / 8.0;
             let d = (self.origin.x * self.origin.x + self.origin.z * self.origin.z).sqrt();
-            self.origin = Point3::new(d * (self.yaw + PI).cos(), self.origin.y, d * (self.yaw + PI).sin());
+            self.origin = Point3::new(
+                d * (self.yaw + PI).cos(),
+                self.origin.y,
+                d * (self.yaw + PI).sin(),
+            );
         } else {
             self.yaw += yaw_velocity * delta_time;
             self.pitch += pitch_velocity * delta_time;
             self.pitch = self.pitch.clamp(-1.5, 1.5);
-            
+
             let rotation = Rotation3::from_euler_angles(0.0, -self.yaw - PI / 2.0, 0.0);
             self.origin += rotation * velocity * delta_time;
         }
