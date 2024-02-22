@@ -42,7 +42,7 @@
         {
             "type": "PointLight",
             "origin": [0.0, 0.7, 0.0],
-            "intensity": 2.0,
+            "intensity": 3.0,
             "color": [255, 255, 255]
         },
         {

@@ -154,48 +154,24 @@ pub fn render_geometry(
                 let ga = g.min(255).max(0) as u8;
                 let ba = b.min(255).max(0) as u8;
 
-                let in_bounds = |x: i16, y: i16| -> bool {
-                    x >= 0 && y >= 0 && x < ((SCREEN_WIDTH) as i16) && y < ((SCREEN_HEIGHT) as i16)
+                let mut diffuse_error = |x: i16, y: i16, r_error: i16, g_error: i16, b_error: i16, factor: i16| {
+                    if x >= 0 && y >= 0 && x < ((SCREEN_WIDTH) as i16) && y < ((SCREEN_HEIGHT) as i16) {
+                        r_dithering_errors[y as usize][x as usize] += r_error / factor;
+                        g_dithering_errors[y as usize][x as usize] += g_error / factor;
+                        b_dithering_errors[y as usize][x as usize] += b_error / factor;
+                    }
                 };
 
                 // Diffuse errors to neighboring pixels according to the dithering pattern
                 let cx = x as i16;
                 let cy = y as i16;
-                if in_bounds(cx + 1, cy) {
-                    r_dithering_errors[y][x + 1] += re / 4;
-                    g_dithering_errors[y][x + 1] += ge / 4;
-                    b_dithering_errors[y][x + 1] += be / 4;
-                }
-                if in_bounds(cx + 2, cy) {
-                    r_dithering_errors[y][x + 2] += re / 8;
-                    g_dithering_errors[y][x + 2] += ge / 8;
-                    b_dithering_errors[y][x + 2] += be / 8;
-                }
-                if in_bounds(cx - 2, cy + 1) {
-                    r_dithering_errors[y + 1][x - 2] += re / 16;
-                    g_dithering_errors[y + 1][x - 2] += ge / 16;
-                    b_dithering_errors[y + 1][x - 2] += be / 16;
-                }
-                if in_bounds(cx - 1, cy + 1) {
-                    r_dithering_errors[y + 1][x - 1] += re / 8;
-                    g_dithering_errors[y + 1][x - 1] += ge / 8;
-                    b_dithering_errors[y + 1][x - 1] += be / 8;
-                }
-                if in_bounds(cx, cy + 1) {
-                    r_dithering_errors[y + 1][x] += re / 4;
-                    g_dithering_errors[y + 1][x] += ge / 4;
-                    b_dithering_errors[y + 1][x] += be / 4;
-                }
-                if in_bounds(cx + 1, cy + 1) {
-                    r_dithering_errors[y + 1][x + 1] += re / 8;
-                    g_dithering_errors[y + 1][x + 1] += ge / 8;
-                    b_dithering_errors[y + 1][x + 1] += be / 8;
-                }
-                if in_bounds(cx + 2, cy + 1) {
-                    r_dithering_errors[y + 1][x + 2] += re / 16;
-                    g_dithering_errors[y + 1][x + 2] += ge / 16;
-                    b_dithering_errors[y + 1][x + 2] += be / 16;
-                }
+                diffuse_error(cx + 1, cy, re, ge, be, 4);
+                diffuse_error(cx + 2, cy, re, ge, be, 8);
+                diffuse_error(cx - 2, cy + 1, re, ge, be, 16);
+                diffuse_error(cx - 1, cy + 1, re, ge, be, 8);
+                diffuse_error(cx, cy + 1, re, ge, be, 4);
+                diffuse_error(cx + 1, cy + 1, re, ge, be, 8);
+                diffuse_error(cx + 2, cy + 1, re, ge, be, 16);
 
                 if color.r == color.g && color.g == color.b {
                     let u = ((ra as u16 + ga as u16 + ba as u16) / 3) as u8;
