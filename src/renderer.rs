@@ -217,7 +217,12 @@ pub fn render_geometry(
                     b_dithering_errors[y + 1][x + 2] += be / 16;
                 }
 
-                screen_buffer[y][x] = graphics::rgb_to_ansi256(ra, ga, ba);
+                if color.r == color.g && color.g == color.b {
+                    let u = ((ra as u16 + ga as u16 + ba as u16) / 3) as u8;
+                    screen_buffer[y][x] = graphics::rgb_to_ansi256(u, u, u);
+                } else {
+                    screen_buffer[y][x] = graphics::rgb_to_ansi256(ra, ga, ba);
+                }
             } else {
                 
                 // Uniform noise dithering experiment
