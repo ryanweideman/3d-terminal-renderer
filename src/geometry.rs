@@ -202,10 +202,11 @@ fn clip_triangle_against_plane(plane: FrustumPlane, triangles: &Vec<Triangle4>) 
             let rcolor_1 = triangle.color;
             let rcolor_2 = triangle.color;
             /*
-                        let mut rng = rand::thread_rng();
-                        let rcolor_1 = Color::new(rng.gen(), rng.gen(), rng.gen());
-                        let rcolor_2 = Color::new(rng.gen(), rng.gen(), rng.gen());
+                let mut rng = rand::thread_rng();
+                let rcolor_1 = Color::new(rng.gen(), rng.gen(), rng.gen());
+                let rcolor_2 = Color::new(rng.gen(), rng.gen(), rng.gen());
             */
+
             match (b_inside, c_inside) {
                 // Triangle is already fully within the near plane
                 (true, true) => vec![*triangle],
@@ -344,7 +345,7 @@ fn ndc_to_screen(ndc_triangle: &Triangle3) -> Triangle3 {
     let transform = |ndc: &Point3<f64>| -> Point3<f64> {
         let px = (ndc.x + 1.0) / 2.0 * (SCREEN_WIDTH as f64);
         let py = (1.0 - (ndc.y + 1.0) / 2.0) * (SCREEN_HEIGHT as f64);
-        Point3::new(px + 0.5, py + 0.5, ndc.z)
+        Point3::new(px, py, ndc.z)
     };
     let (ndc_v0, ndc_v1, ndc_v2) = ndc_triangle.vertices();
     let v0 = transform(ndc_v0);
