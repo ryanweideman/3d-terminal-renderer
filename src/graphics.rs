@@ -1,5 +1,4 @@
-use crate::constants::{SCREEN_HEIGHT, SCREEN_WIDTH};
-use crate::geometry;
+use std::time;
 
 use crossterm::{
     cursor::MoveTo,
@@ -9,9 +8,11 @@ use crossterm::{
     terminal::ClearType,
 };
 
+use crate::buffer::Buffer;
+use crate::geometry;
+
 use geometry::ProjectionResult;
 use nalgebra::Point2;
-use std::time;
 
 fn rgb_channel_to_ansi_index(v: u8) -> u8 {
     // the ansi rgb values are on the scale 0-5
@@ -40,13 +41,10 @@ pub fn clear_screen(stdout: &mut std::io::Stdout) {
     queue!(stdout, Clear(ClearType::All)).ok();
 }
 
-pub fn output_screen_buffer(
-    stdout: &mut std::io::Stdout,
-    screen_buffer: &[[u16; SCREEN_WIDTH]; SCREEN_HEIGHT],
-) {
+pub fn output_screen_buffer(stdout: &mut std::io::Stdout, screen_buffer: &Buffer<u16>) {
     queue!(stdout, MoveTo(1, 1)).unwrap();
-    for y in 0..SCREEN_HEIGHT {
-        for x in 0..SCREEN_WIDTH {
+    for y in 0..screen_buffer.height {
+        for x in 0..screen_buffer.width {
             queue!(
                 stdout,
                 SetBackgroundColor(Color::AnsiValue(screen_buffer[y][x] as u8)),
@@ -64,8 +62,9 @@ pub fn print_debug_info(
     total_time_elapsed: &time::Duration,
     _processed_time_elapsed: &time::Duration,
     projection_results: &Vec<ProjectionResult>,
+    screen_height: usize,
 ) {
-    queue!(stdout, MoveTo(1, (SCREEN_HEIGHT) as u16)).unwrap();
+    queue!(stdout, MoveTo(1, (screen_height) as u16)).unwrap();
     queue!(
         stdout,
         SetBackgroundColor(Color::AnsiValue(0)),
@@ -75,7 +74,7 @@ pub fn print_debug_info(
         ))
     )
     .unwrap();
-    queue!(stdout, MoveTo(1, (SCREEN_HEIGHT + 1) as u16)).unwrap();
+    queue!(stdout, MoveTo(1, (screen_height + 1) as u16)).unwrap();
     /*
     queue!(
         stdout,

@@ -1,3 +1,4 @@
+mod buffer;
 mod camera;
 mod constants;
 mod geometry;
@@ -21,6 +22,7 @@ use std::io;
 use std::io::Write;
 use std::time;
 
+use buffer::Buffer;
 use constants::{SCREEN_HEIGHT, SCREEN_WIDTH, TARGET_FPS};
 
 fn main() {
@@ -55,7 +57,8 @@ fn main() {
         start_time = current_time;
 
         camera.update(&keyboard, delta_time);
-        let mut screen_buffer = [[ansi_background_color; SCREEN_WIDTH]; SCREEN_HEIGHT];
+        let mut screen_buffer =
+            Buffer::<u16>::new(ansi_background_color, SCREEN_WIDTH, SCREEN_HEIGHT);
 
         entities
             .iter_mut()

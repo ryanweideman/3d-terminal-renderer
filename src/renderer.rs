@@ -1,26 +1,30 @@
 use nalgebra::{Matrix4, Point2, Point3, Vector3};
 
+use crate::buffer::Buffer;
 use crate::camera::Camera;
-use crate::constants::{SCREEN_HEIGHT, SCREEN_WIDTH};
 use crate::geometry;
 use crate::graphics;
 use crate::math;
 use crate::world_objects::Light;
 
 pub fn render_geometry(
-    screen_buffer: &mut [[u16; SCREEN_WIDTH]; SCREEN_HEIGHT],
+    screen_buffer: &mut Buffer<u16>,
     geometry: &Vec<geometry::Triangle3>,
     world_lights: &Vec<Light>,
     camera: &Camera,
     ansi_background_color: u16,
 ) -> Vec<geometry::ProjectionResult> {
     let view_projection_matrix: Matrix4<f64> = camera.get_view_projection_matrix();
-    let view_projection_matrix_inverse = view_projection_matrix.try_inverse().unwrap();
+    let inverse_view_projection_matrix = view_projection_matrix.try_inverse().unwrap();
 
-    let mut z_buffer: [[f64; SCREEN_WIDTH]; SCREEN_HEIGHT] =
-        [[f64::MAX; SCREEN_WIDTH]; SCREEN_HEIGHT];
-    let mut projection_buffer: [[usize; SCREEN_WIDTH]; SCREEN_HEIGHT] =
-        [[usize::MAX; SCREEN_WIDTH]; SCREEN_HEIGHT];
+    let screen_width = screen_buffer.width;
+    let screen_height = screen_buffer.height;
+    let mut z_buffer = Buffer::<f64>::new(f64::MAX, screen_width, screen_height);
+    let mut projection_buffer = Buffer::<usize>::new(usize::MAX, screen_width, screen_height);
+
+    let mut dithering_errors =
+        Buffer::<(i16, i16, i16)>::new((0, 0, 0), screen_width, screen_height);
+
     let mut cached_projection_results = Vec::with_capacity(geometry.len());
 
     for triangle in geometry {
@@ -28,8 +32,8 @@ pub fn render_geometry(
         let projection_results = geometry::project_triangle(
             triangle,
             &view_projection_matrix,
-            SCREEN_WIDTH,
-            SCREEN_HEIGHT,
+            screen_width,
+            screen_height,
         );
 
         for projection_result in &projection_results {
@@ -38,7 +42,7 @@ pub fn render_geometry(
 
             let (x_min, y_min, x_max, y_max) = projection_result
                 .screen_bounding_box
-                .get_screen_constrained_bounds(SCREEN_WIDTH, SCREEN_HEIGHT);
+                .get_screen_constrained_bounds(screen_width, screen_height);
 
             // Rasterize
             for y in y_min..y_max {
@@ -53,27 +57,18 @@ pub fn render_geometry(
 
                     let z = graphics::interpolate_attributes_at_pixel(&pixel, &projection_result);
 
-                    // pixel in this triangle is behind another triangle
-                    if z >= z_buffer[y][x] {
-                        continue;
+                    // pixel in this triangle is the closest to the camera
+                    if z < z_buffer[y][x] {
+                        z_buffer[y][x] = z;
+                        projection_buffer[y][x] = projection_result_index;
                     }
-
-                    z_buffer[y][x] = z;
-                    projection_buffer[y][x] = projection_result_index;
                 }
             }
         }
     }
 
-    let mut r_dithering_errors: [[i16; SCREEN_WIDTH]; SCREEN_HEIGHT] =
-        [[0; SCREEN_WIDTH]; SCREEN_HEIGHT];
-    let mut g_dithering_errors: [[i16; SCREEN_WIDTH]; SCREEN_HEIGHT] =
-        [[0; SCREEN_WIDTH]; SCREEN_HEIGHT];
-    let mut b_dithering_errors: [[i16; SCREEN_WIDTH]; SCREEN_HEIGHT] =
-        [[0; SCREEN_WIDTH]; SCREEN_HEIGHT];
-
-    for y in 0..SCREEN_HEIGHT {
-        for x in 0..SCREEN_WIDTH {
+    for y in 0..screen_height {
+        for x in 0..screen_width {
             let projection_result_index = projection_buffer[y][x];
             if projection_result_index == usize::MAX {
                 screen_buffer[y][x] = ansi_background_color;
@@ -87,7 +82,9 @@ pub fn render_geometry(
                 &pixel,
                 &projection_result.normal,
                 world_lights,
-                &view_projection_matrix_inverse,
+                &inverse_view_projection_matrix,
+                screen_width,
+                screen_height,
             );
 
             let correct_color = |input: f64| -> u8 {
@@ -98,12 +95,15 @@ pub fn render_geometry(
             };
 
             let color = projection_result.screen_triangle.color;
+            let r = correct_color(color.r as f64);
+            let g = correct_color(color.g as f64);
+            let b = correct_color(color.b as f64);
 
             let use_dithering = true;
             if use_dithering {
-                let r: i16 = (correct_color(color.r as f64) as i16) + r_dithering_errors[y][x];
-                let g: i16 = (correct_color(color.g as f64) as i16) + g_dithering_errors[y][x];
-                let b: i16 = (correct_color(color.b as f64) as i16) + b_dithering_errors[y][x];
+                let r: i16 = (r as i16) + dithering_errors[y][x].0;
+                let g: i16 = (g as i16) + dithering_errors[y][x].1;
+                let b: i16 = (b as i16) + dithering_errors[y][x].2;
 
                 let calculate_error = |v: i16| -> i16 {
                     let a = if v < 95 {
@@ -132,12 +132,12 @@ pub fn render_geometry(
                     |x: i16, y: i16, r_error: i16, g_error: i16, b_error: i16, factor: i16| {
                         if x >= 0
                             && y >= 0
-                            && x < ((SCREEN_WIDTH) as i16)
-                            && y < ((SCREEN_HEIGHT) as i16)
+                            && x < ((screen_width) as i16)
+                            && y < ((screen_height) as i16)
                         {
-                            r_dithering_errors[y as usize][x as usize] += r_error / factor;
-                            g_dithering_errors[y as usize][x as usize] += g_error / factor;
-                            b_dithering_errors[y as usize][x as usize] += b_error / factor;
+                            dithering_errors[y as usize][x as usize].0 += r_error / factor;
+                            dithering_errors[y as usize][x as usize].1 += g_error / factor;
+                            dithering_errors[y as usize][x as usize].2 += b_error / factor;
                         }
                     };
 
@@ -164,10 +164,6 @@ pub fn render_geometry(
                 let g = color.g as u8;
                 let b = color.b as u8;
                 */
-                let r = correct_color(color.r as f64);
-                let g = correct_color(color.g as f64);
-                let b = correct_color(color.b as f64);
-
                 screen_buffer[y][x] = graphics::rgb_to_ansi256(r, g, b);
             }
         }
@@ -180,10 +176,12 @@ fn calculate_pixel_lighting(
     pixel: &Point3<f64>,
     normal: &Vector3<f64>,
     world_lights: &Vec<Light>,
-    view_projection_matrix_inverse: &Matrix4<f64>,
+    inverse_view_projection_matrix: &Matrix4<f64>,
+    screen_width: usize,
+    screen_height: usize,
 ) -> f64 {
-    let p_ndc = geometry::screen_to_ndc(&pixel, SCREEN_WIDTH, SCREEN_HEIGHT).to_homogeneous();
-    let point_world_space_homogeneous = view_projection_matrix_inverse * p_ndc;
+    let p_ndc = geometry::screen_to_ndc(&pixel, screen_width, screen_height).to_homogeneous();
+    let point_world_space_homogeneous = inverse_view_projection_matrix * p_ndc;
     let point_world_space = point_world_space_homogeneous.xyz() / point_world_space_homogeneous.w;
 
     let light_intensity = world_lights
@@ -209,3 +207,5 @@ fn calculate_pixel_lighting(
 
     light_intensity
 }
+
+fn calculate_dithered_pixel_value() {}
