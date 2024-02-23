@@ -47,6 +47,8 @@ enum JsonLight {
     PointLight {
         origin: [f64; 3],
         intensity: f64,
+        linear_attenuation: f64,
+        quadratic_attenuation: f64,
         color: [u8; 3],
     },
     AmbientLight {
@@ -139,10 +141,14 @@ pub fn load_world<'a>(
             JsonLight::PointLight {
                 origin,
                 intensity,
+                linear_attenuation,
+                quadratic_attenuation,
                 color,
             } => world_objects::Light::PointLight(world_objects::PointLight {
                 origin: Point3::<f64>::new(origin[0], origin[1], origin[2]),
                 intensity: *intensity,
+                linear_attenuation: *linear_attenuation,
+                quadratic_attenuation: *quadratic_attenuation,
                 color: Color::new(color[0], color[1], color[2]),
             }),
             JsonLight::AmbientLight { intensity, color } => {

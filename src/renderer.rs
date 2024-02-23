@@ -86,32 +86,27 @@ pub fn render_geometry(
 
             let p_ndc =
                 geometry::screen_to_ndc(&pixel, SCREEN_WIDTH, SCREEN_HEIGHT).to_homogeneous();
-            let point_camera_space_homogeneous = view_projection_matrix_inverse * p_ndc;
-            let point_camera_space =
-                point_camera_space_homogeneous.xyz() / point_camera_space_homogeneous.w;
+            let point_world_space_homogeneous = view_projection_matrix_inverse * p_ndc;
+            let point_world_space =
+                point_world_space_homogeneous.xyz() / point_world_space_homogeneous.w;
 
             let light_intensity = world_lights
                 .iter()
-                .map(|light| {
-                    match light {
-                        Light::PointLight(point_light) => {
-                            let origin = point_light.get_origin();
-                            let light_norm = (origin - point_camera_space).coords.normalize();
-                            let diffuse_intensity =
-                                light_norm.dot(&projection_result.normal).max(0.0);
+                .map(|light| match light {
+                    Light::PointLight(point_light) => {
+                        let origin = point_light.get_origin();
+                        let light_norm = (origin - point_world_space).coords.normalize();
+                        let diffuse_intensity = light_norm.dot(&projection_result.normal).max(0.0);
 
-                            //let a = 0.5;
-                            //let b = 0.3;
-                            let a = 0.1;
-                            let b = 0.1;
+                        let distance = (origin - point_world_space).coords.magnitude();
+                        let attenuation = 1.0
+                            / (1.0
+                                + point_light.get_linear_attenuation() * distance
+                                + point_light.get_quadratic_attenuation() * distance * distance);
 
-                            let distance = (origin - point_camera_space).coords.magnitude();
-                            let attenuation = 1.0 / (1.0 + a * distance + b * distance * distance);
-
-                            diffuse_intensity * attenuation * light.get_intensity()
-                        }
-                        Light::AmbientLight(_) => light.get_intensity(),
+                        diffuse_intensity * attenuation * light.get_intensity()
                     }
+                    Light::AmbientLight(_) => light.get_intensity(),
                 })
                 .sum::<f64>()
                 .min(1.0);
@@ -154,13 +149,18 @@ pub fn render_geometry(
                 let ga = g.min(255).max(0) as u8;
                 let ba = b.min(255).max(0) as u8;
 
-                let mut diffuse_error = |x: i16, y: i16, r_error: i16, g_error: i16, b_error: i16, factor: i16| {
-                    if x >= 0 && y >= 0 && x < ((SCREEN_WIDTH) as i16) && y < ((SCREEN_HEIGHT) as i16) {
-                        r_dithering_errors[y as usize][x as usize] += r_error / factor;
-                        g_dithering_errors[y as usize][x as usize] += g_error / factor;
-                        b_dithering_errors[y as usize][x as usize] += b_error / factor;
-                    }
-                };
+                let mut diffuse_error =
+                    |x: i16, y: i16, r_error: i16, g_error: i16, b_error: i16, factor: i16| {
+                        if x >= 0
+                            && y >= 0
+                            && x < ((SCREEN_WIDTH) as i16)
+                            && y < ((SCREEN_HEIGHT) as i16)
+                        {
+                            r_dithering_errors[y as usize][x as usize] += r_error / factor;
+                            g_dithering_errors[y as usize][x as usize] += g_error / factor;
+                            b_dithering_errors[y as usize][x as usize] += b_error / factor;
+                        }
+                    };
 
                 // Diffuse errors to neighboring pixels according to the dithering pattern
                 let cx = x as i16;

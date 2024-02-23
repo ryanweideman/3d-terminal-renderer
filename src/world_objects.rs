@@ -133,12 +133,22 @@ impl Light {
 pub struct PointLight {
     pub origin: Point3<f64>,
     pub intensity: f64,
+    pub linear_attenuation: f64,
+    pub quadratic_attenuation: f64,
     pub color: Color,
 }
 
 impl PointLight {
     pub fn get_origin(&self) -> Point3<f64> {
         self.origin
+    }
+
+    pub fn get_linear_attenuation(&self) -> f64 {
+        self.linear_attenuation
+    }
+
+    pub fn get_quadratic_attenuation(&self) -> f64 {
+        self.quadratic_attenuation
     }
 }
 
