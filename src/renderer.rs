@@ -101,63 +101,17 @@ pub fn render_geometry(
 
             let use_dithering = true;
             if use_dithering {
-                let r: i16 = (r as i16) + dithering_errors[y][x].0;
-                let g: i16 = (g as i16) + dithering_errors[y][x].1;
-                let b: i16 = (b as i16) + dithering_errors[y][x].2;
-
-                let calculate_error = |v: i16| -> i16 {
-                    let a = if v < 95 {
-                        return 0;
-                    } else {
-                        (1 + (v - 95) / 40).min(5)
-                    };
-                    let c = (a - 1) * 40 + 95;
-                    v - c
-                };
-
-                /* Burkess Dithering
-                            X   8   4
-                    2   4   8   4   2
-                */
-
-                let re = calculate_error(r);
-                let ge = calculate_error(g);
-                let be = calculate_error(b);
-
-                let ra = r.min(255).max(0) as u8;
-                let ga = g.min(255).max(0) as u8;
-                let ba = b.min(255).max(0) as u8;
-
-                let mut diffuse_error =
-                    |x: i16, y: i16, r_error: i16, g_error: i16, b_error: i16, factor: i16| {
-                        if x >= 0
-                            && y >= 0
-                            && x < ((screen_width) as i16)
-                            && y < ((screen_height) as i16)
-                        {
-                            dithering_errors[y as usize][x as usize].0 += r_error / factor;
-                            dithering_errors[y as usize][x as usize].1 += g_error / factor;
-                            dithering_errors[y as usize][x as usize].2 += b_error / factor;
-                        }
-                    };
-
-                // Diffuse errors to neighboring pixels according to the dithering pattern
-                let cx = x as i16;
-                let cy = y as i16;
-                diffuse_error(cx + 1, cy, re, ge, be, 4);
-                diffuse_error(cx + 2, cy, re, ge, be, 8);
-                diffuse_error(cx - 2, cy + 1, re, ge, be, 16);
-                diffuse_error(cx - 1, cy + 1, re, ge, be, 8);
-                diffuse_error(cx, cy + 1, re, ge, be, 4);
-                diffuse_error(cx + 1, cy + 1, re, ge, be, 8);
-                diffuse_error(cx + 2, cy + 1, re, ge, be, 16);
-
-                if color.r == color.g && color.g == color.b {
-                    let u = ((ra as u16 + ga as u16 + ba as u16) / 3) as u8;
-                    screen_buffer[y][x] = graphics::rgb_to_ansi256(u, u, u);
-                } else {
-                    screen_buffer[y][x] = graphics::rgb_to_ansi256(ra, ga, ba);
-                }
+                let is_grey_scale = color.r == color.g && color.g == color.b;
+                let (dr, dg, db) = calculate_dithered_pixel_value(
+                    x,
+                    y,
+                    r,
+                    g,
+                    b,
+                    &mut dithering_errors,
+                    is_grey_scale,
+                );
+                screen_buffer[y][x] = graphics::rgb_to_ansi256(dr, dg, db);
             } else {
                 /*
                 let r = color.r as u8;
@@ -208,4 +162,70 @@ fn calculate_pixel_lighting(
     light_intensity
 }
 
-fn calculate_dithered_pixel_value() {}
+fn calculate_dithered_pixel_value(
+    x: usize,
+    y: usize,
+    r: u8,
+    g: u8,
+    b: u8,
+    dithering_errors: &mut Buffer<(i16, i16, i16)>,
+    is_grey_scale: bool,
+) -> (u8, u8, u8) {
+    let r: i16 = (r as i16) + dithering_errors[y][x].0;
+    let g: i16 = (g as i16) + dithering_errors[y][x].1;
+    let b: i16 = (b as i16) + dithering_errors[y][x].2;
+
+    let calculate_error = |v: i16| -> i16 {
+        let a = if v < 95 {
+            return 0;
+        } else {
+            (1 + (v - 95) / 40).min(5)
+        };
+        let c = (a - 1) * 40 + 95;
+        v - c
+    };
+
+    /* Burkess Dithering
+                X   8   4
+        2   4   8   4   2
+    */
+
+    let re = calculate_error(r);
+    let ge = calculate_error(g);
+    let be = calculate_error(b);
+
+    let ra = r.min(255).max(0) as u8;
+    let ga = g.min(255).max(0) as u8;
+    let ba = b.min(255).max(0) as u8;
+
+    let mut diffuse_error =
+        |x: i16, y: i16, r_error: i16, g_error: i16, b_error: i16, factor: i16| {
+            if x >= 0
+                && y >= 0
+                && x < ((dithering_errors.width) as i16)
+                && y < ((dithering_errors.height) as i16)
+            {
+                dithering_errors[y as usize][x as usize].0 += r_error / factor;
+                dithering_errors[y as usize][x as usize].1 += g_error / factor;
+                dithering_errors[y as usize][x as usize].2 += b_error / factor;
+            }
+        };
+
+    // Diffuse errors to neighboring pixels according to the dithering pattern
+    let cx = x as i16;
+    let cy = y as i16;
+    diffuse_error(cx + 1, cy, re, ge, be, 4);
+    diffuse_error(cx + 2, cy, re, ge, be, 8);
+    diffuse_error(cx - 2, cy + 1, re, ge, be, 16);
+    diffuse_error(cx - 1, cy + 1, re, ge, be, 8);
+    diffuse_error(cx, cy + 1, re, ge, be, 4);
+    diffuse_error(cx + 1, cy + 1, re, ge, be, 8);
+    diffuse_error(cx + 2, cy + 1, re, ge, be, 16);
+
+    if is_grey_scale {
+        let u = ((ra as u16 + ga as u16 + ba as u16) / 3) as u8;
+        return (u, u, u);
+    }
+
+    (ra, ga, ba)
+}
