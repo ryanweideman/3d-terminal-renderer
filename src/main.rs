@@ -15,7 +15,7 @@ use std::time;
 
 use buffer::Buffer;
 
-fn main() {
+fn main() -> io::Result<()> {
     let config = config::load_config("config.json");
     let mut camera = camera::Camera::new(&config);
     let mut keyboard = keyboard::Keyboard::new();
@@ -28,7 +28,7 @@ fn main() {
     let ansi_background_color = terminal::rgb_to_ansi256(100, 100, 100);
 
     let mut stdout = io::stdout();
-    terminal::init(&mut stdout);
+    terminal::init(&mut stdout)?;
 
     loop {
         keyboard.update();
@@ -68,12 +68,13 @@ fn main() {
         );
         let _processing_time_elapsed = start_time.elapsed();
 
-        terminal::output_screen_buffer(&mut stdout, &screen_buffer);
-        let _total_time_elapsed = start_time.elapsed();
+        terminal::output_screen_buffer(&mut stdout, &screen_buffer)?;
+        terminal::flush(&mut stdout)?;
 
-        terminal::flush(&mut stdout);
         keyboard.clear_all_keys();
+        let _total_time_elapsed = start_time.elapsed();
     }
 
-    terminal::destroy(&mut stdout);
+    terminal::destroy(&mut stdout)?;
+    Ok(())
 }

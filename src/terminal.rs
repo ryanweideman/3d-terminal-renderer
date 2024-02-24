@@ -11,6 +11,7 @@ use crossterm::{
     ExecutableCommand,
 };
 
+use std::io;
 use std::io::Write;
 
 use crate::buffer::Buffer;
@@ -40,43 +41,48 @@ pub fn rgb_to_ansi256(r: u8, g: u8, b: u8) -> u16 {
     (16 + 36 * rc + 6 * gc + bc).into()
 }
 
-pub fn init(stdout: &mut std::io::Stdout) {
-    enable_raw_mode().expect("Could not enter terminal raw mode");
+pub fn init(stdout: &mut std::io::Stdout) -> io::Result<()> {
+    enable_raw_mode()?;
 
-    stdout
-        .execute(EnterAlternateScreen)
-        .expect("Could not enter terminal alternative mode");
-    queue!(stdout, Hide).unwrap();
+    stdout.execute(EnterAlternateScreen)?;
+    queue!(stdout, Hide)?;
+    Ok(())
 }
 
-pub fn destroy(stdout: &mut std::io::Stdout) {
-    queue!(stdout, Show).unwrap();
-    disable_raw_mode().unwrap();
-    stdout.execute(LeaveAlternateScreen).unwrap();
+pub fn destroy(stdout: &mut std::io::Stdout) -> io::Result<()> {
+    queue!(stdout, Show)?;
+    disable_raw_mode()?;
+    stdout.execute(LeaveAlternateScreen)?;
+    Ok(())
 }
 
-pub fn flush(stdout: &mut std::io::Stdout) {
-    stdout.flush().unwrap();
+pub fn flush(stdout: &mut std::io::Stdout) -> io::Result<()> {
+    stdout.flush()?;
+    Ok(())
 }
 
 #[allow(dead_code)]
-pub fn clear_screen(stdout: &mut std::io::Stdout) {
-    queue!(stdout, Clear(ClearType::All)).ok();
+pub fn clear_screen(stdout: &mut std::io::Stdout) -> io::Result<()> {
+    queue!(stdout, Clear(ClearType::All))?;
+    Ok(())
 }
 
-pub fn output_screen_buffer(stdout: &mut std::io::Stdout, screen_buffer: &Buffer<u16>) {
-    queue!(stdout, MoveTo(1, 1)).unwrap();
+pub fn output_screen_buffer(
+    stdout: &mut std::io::Stdout,
+    screen_buffer: &Buffer<u16>,
+) -> io::Result<()> {
+    queue!(stdout, MoveTo(1, 1))?;
     for y in 0..screen_buffer.height {
         for x in 0..screen_buffer.width {
             queue!(
                 stdout,
                 SetBackgroundColor(Color::AnsiValue(screen_buffer[y][x] as u8)),
                 Print("  ")
-            )
-            .unwrap();
+            )?;
         }
-        queue!(stdout, MoveTo(1, (y + 1) as u16)).unwrap();
+        queue!(stdout, MoveTo(1, (y + 1) as u16))?;
     }
+    Ok(())
 }
 
 #[allow(dead_code)]
