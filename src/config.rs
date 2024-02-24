@@ -6,6 +6,8 @@ pub struct Config {
     pub screen_width: usize,
     pub screen_height: usize,
     pub background_color: [u8; 3],
+    pub use_dithering: bool,
+    pub use_true_color: bool,
     pub near_plane: f64,
     pub far_plane: f64,
     pub fov: f64,

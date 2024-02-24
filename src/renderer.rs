@@ -3,16 +3,14 @@ use nalgebra::{Matrix4, Point2, Point3, Vector3};
 use crate::buffer::Buffer;
 use crate::camera::Camera;
 use crate::geometry;
-use crate::math;
-use crate::terminal;
 use crate::world_objects::Light;
 
 pub fn render_geometry(
-    screen_buffer: &mut Buffer<u16>,
+    screen_buffer: &mut Buffer<[u8; 3]>,
     geometry: &Vec<geometry::Triangle3>,
     world_lights: &[Light],
     camera: &Camera,
-    ansi_background_color: u16,
+    background_color: [u8; 3],
 ) -> Vec<geometry::ProjectionResult> {
     let view_projection_matrix: Matrix4<f64> = camera.get_view_projection_matrix();
     let inverse_view_projection_matrix = view_projection_matrix.try_inverse().unwrap();
@@ -71,7 +69,7 @@ pub fn render_geometry(
         for x in 0..screen_width {
             let projection_result_index = projection_buffer[y][x];
             if projection_result_index == usize::MAX {
-                screen_buffer[y][x] = ansi_background_color;
+                screen_buffer[y][x] = background_color;
                 continue;
             }
             let projection_result = &cached_projection_results[projection_result_index];
@@ -87,19 +85,12 @@ pub fn render_geometry(
                 screen_height,
             );
 
-            let correct_color = |input: f64| -> u8 {
-                if input == 0.0 {
-                    return input as u8;
-                }
-                math::scale_range(input * light_intensity, 0.0, 255.0, 95.0, 255.0) as u8
-            };
-
             let color = projection_result.screen_triangle.color;
-            let r = correct_color(color.r as f64);
-            let g = correct_color(color.g as f64);
-            let b = correct_color(color.b as f64);
+            let r = ((color.r as f64) * light_intensity) as u8;
+            let g = ((color.g as f64) * light_intensity) as u8;
+            let b = ((color.b as f64) * light_intensity) as u8;
 
-            let use_dithering = true;
+            let use_dithering = false;
             if use_dithering {
                 let is_grey_scale = color.r == color.g && color.g == color.b;
                 let (dr, dg, db) = calculate_dithered_pixel_value(
@@ -111,10 +102,10 @@ pub fn render_geometry(
                     &mut dithering_errors,
                     is_grey_scale,
                 );
-                screen_buffer[y][x] = terminal::rgb_to_ansi256(dr, dg, db);
+                screen_buffer[y][x] = [dr, dg, db];
             } else {
-                //screen_buffer[y][x] = graphics::rgb_to_ansi256(color.r as u8, color.g as u8, color.b as u8);
-                screen_buffer[y][x] = terminal::rgb_to_ansi256(r, g, b);
+                //screen_buffer[y][x] = [color.r as u8, color.g as u8, color.b as u8];
+                screen_buffer[y][x] = [r, g, b];
             }
         }
     }

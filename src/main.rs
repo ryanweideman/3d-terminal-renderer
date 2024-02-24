@@ -28,11 +28,6 @@ fn main() -> io::Result<()> {
 
     let mut start_time = time::Instant::now();
     let delay_duration = time::Duration::from_millis((1000.0 / config.target_fps) as u64);
-    let ansi_background_color = terminal::rgb_to_ansi256(
-        config.background_color[0],
-        config.background_color[1],
-        config.background_color[2],
-    );
 
     let mut stdout = io::stdout();
     terminal::init(&mut stdout)?;
@@ -51,8 +46,8 @@ fn main() -> io::Result<()> {
         start_time = current_time;
 
         camera.update(&keyboard, delta_time);
-        let mut screen_buffer = Buffer::<u16>::new(
-            ansi_background_color,
+        let mut screen_buffer = Buffer::<[u8; 3]>::new(
+            config.background_color,
             config.screen_width,
             config.screen_height,
         );
@@ -70,11 +65,11 @@ fn main() -> io::Result<()> {
             &world_geometry,
             &lights,
             &camera,
-            ansi_background_color,
+            config.background_color,
         );
         let _processing_time_elapsed = start_time.elapsed();
 
-        terminal::output_screen_buffer(&mut stdout, &screen_buffer)?;
+        terminal::output_screen_buffer(&mut stdout, &screen_buffer, config.use_true_color)?;
         terminal::flush(&mut stdout)?;
 
         keyboard.clear_all_keys();

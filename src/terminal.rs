@@ -28,7 +28,7 @@ fn rgb_channel_to_ansi_index(v: u8) -> u8 {
     1 + (v - 95) / 40
 }
 
-pub fn rgb_to_ansi256(r: u8, g: u8, b: u8) -> u16 {
+pub fn rgb_to_ansi256(r: u8, g: u8, b: u8) -> u8 {
     let rc = rgb_channel_to_ansi_index(r);
     let gc = rgb_channel_to_ansi_index(g);
     let bc = rgb_channel_to_ansi_index(b);
@@ -38,7 +38,7 @@ pub fn rgb_to_ansi256(r: u8, g: u8, b: u8) -> u16 {
     //    return 232 + ((r as f64) * 0.09375) as u16;
     //}
 
-    (16 + 36 * rc + 6 * gc + bc).into()
+    16 + 36 * rc + 6 * gc + bc
 }
 
 pub fn init(stdout: &mut std::io::Stdout) -> io::Result<()> {
@@ -69,16 +69,23 @@ pub fn clear_screen(stdout: &mut std::io::Stdout) -> io::Result<()> {
 
 pub fn output_screen_buffer(
     stdout: &mut std::io::Stdout,
-    screen_buffer: &Buffer<u16>,
+    screen_buffer: &Buffer<[u8; 3]>,
+    use_true_color: bool,
 ) -> io::Result<()> {
     queue!(stdout, MoveTo(1, 1))?;
     for y in 0..screen_buffer.height {
         for x in 0..screen_buffer.width {
-            queue!(
-                stdout,
-                SetBackgroundColor(Color::AnsiValue(screen_buffer[y][x] as u8)),
-                Print("  ")
-            )?;
+            let r = screen_buffer[y][x][0];
+            let g = screen_buffer[y][x][1];
+            let b = screen_buffer[y][x][2];
+
+            let color = if use_true_color {
+                Color::Rgb { r, g, b }
+            } else {
+                Color::AnsiValue(rgb_to_ansi256(r, g, b))
+            };
+
+            queue!(stdout, SetBackgroundColor(color), Print("  "))?;
         }
         queue!(stdout, MoveTo(1, (y + 1) as u16))?;
     }
