@@ -6,6 +6,7 @@ pub struct Config {
     pub target_fps: f64,
     pub screen_width: usize,
     pub screen_height: usize,
+    pub background_color: [u8; 3],
     pub near_plane: f64,
     pub far_plane: f64,
     pub fov: f64,

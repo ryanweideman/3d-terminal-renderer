@@ -25,7 +25,11 @@ fn main() -> io::Result<()> {
 
     let mut start_time = time::Instant::now();
     let delay_duration = time::Duration::from_millis((1000.0 / config.target_fps) as u64);
-    let ansi_background_color = terminal::rgb_to_ansi256(100, 100, 100);
+    let ansi_background_color = terminal::rgb_to_ansi256(
+        config.background_color[0],
+        config.background_color[1],
+        config.background_color[2],
+    );
 
     let mut stdout = io::stdout();
     terminal::init(&mut stdout)?;
