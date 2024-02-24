@@ -1,28 +1,29 @@
 use crate::geometry::{Color, Model, Triangle3};
+use include_dir::Dir;
 use nalgebra::Point3;
 use serde::Deserialize;
 use std::collections::HashMap;
-use std::fs;
 
 pub struct ModelLoader {
     models: HashMap<String, Model>,
 }
 
 impl ModelLoader {
-    pub fn new(path: &str) -> Self {
+    pub fn new(dir: &Dir) -> Self {
         let mut models = HashMap::new();
 
-        let directory = fs::read_dir(path).expect("Failed to read directory");
-        for entry in directory {
-            let path = entry.expect("Failed to read directory entry").path();
-            if !path.is_file() || path.extension().and_then(|ext| ext.to_str()) != Some("json") {
-                continue;
+        for file in dir.files() {
+            if file.path().extension().and_then(|ext| ext.to_str()) == Some("json") {
+                let file_contents = file.contents_utf8().expect("Failed to read file contents");
+                let model_geometry = load_model(file_contents);
+                let file_name = file
+                    .path()
+                    .file_name()
+                    .and_then(|name| name.to_str())
+                    .unwrap();
+
+                models.insert(file_name.to_string(), model_geometry);
             }
-
-            let model_geometry = load_model(path.to_str().expect("REASON"));
-            let file_name = path.file_name().and_then(|name| name.to_str()).unwrap();
-
-            models.insert(file_name.to_string(), model_geometry);
         }
 
         ModelLoader { models }
@@ -46,12 +47,9 @@ struct Triangle {
     color: [u8; 3],
 }
 
-fn load_model(path: &str) -> Model {
-    let file_content =
-        fs::read_to_string(path).unwrap_or_else(|_| panic!("Failed to read file at path {}", path));
-
-    let geometry_data: GeometryData = serde_json::from_str(&file_content)
-        .unwrap_or_else(|_| panic!("Failed to deserialize json at path {}", path));
+fn load_model(json_string: &str) -> Model {
+    let geometry_data: GeometryData = serde_json::from_str(json_string)
+        .unwrap_or_else(|_| panic!("Failed to deserialize json {}", json_string));
 
     let model_geometry: Model = convert_geometry_data(&geometry_data);
 

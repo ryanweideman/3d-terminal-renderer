@@ -46,15 +46,33 @@ impl Keyboard {
                     self.pressed_keys.insert(Keys::C);
                 }
             }
-            KeyCode::Char('w') | KeyCode::Char('W') => { self.pressed_keys.insert(Keys::W); }
-            KeyCode::Char('s') | KeyCode::Char('S') => { self.pressed_keys.insert(Keys::S); }
-            KeyCode::Char('d') | KeyCode::Char('D') => { self.pressed_keys.insert(Keys::D); }
-            KeyCode::Char('a') | KeyCode::Char('A') => { self.pressed_keys.insert(Keys::A); }
-            KeyCode::Char(' ') => { self.pressed_keys.insert(Keys::Space); }
-            KeyCode::Left => { self.pressed_keys.insert(Keys::Left); }
-            KeyCode::Right => { self.pressed_keys.insert(Keys::Right); }
-            KeyCode::Up => { self.pressed_keys.insert(Keys::Up); }
-            KeyCode::Down => { self.pressed_keys.insert(Keys::Down); }
+            KeyCode::Char('w') | KeyCode::Char('W') => {
+                self.pressed_keys.insert(Keys::W);
+            }
+            KeyCode::Char('s') | KeyCode::Char('S') => {
+                self.pressed_keys.insert(Keys::S);
+            }
+            KeyCode::Char('d') | KeyCode::Char('D') => {
+                self.pressed_keys.insert(Keys::D);
+            }
+            KeyCode::Char('a') | KeyCode::Char('A') => {
+                self.pressed_keys.insert(Keys::A);
+            }
+            KeyCode::Char(' ') => {
+                self.pressed_keys.insert(Keys::Space);
+            }
+            KeyCode::Left => {
+                self.pressed_keys.insert(Keys::Left);
+            }
+            KeyCode::Right => {
+                self.pressed_keys.insert(Keys::Right);
+            }
+            KeyCode::Up => {
+                self.pressed_keys.insert(Keys::Up);
+            }
+            KeyCode::Down => {
+                self.pressed_keys.insert(Keys::Down);
+            }
             _ => {}
         }
     }

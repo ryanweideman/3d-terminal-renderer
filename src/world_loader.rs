@@ -3,7 +3,6 @@ use crate::model_loader::ModelLoader;
 use crate::world_objects;
 use nalgebra::{Matrix4, Point3, Rotation3, Unit, Vector3};
 use serde::Deserialize;
-use std::fs;
 
 #[derive(Deserialize, Debug)]
 #[allow(dead_code)]
@@ -58,14 +57,11 @@ enum JsonLight {
 }
 
 pub fn load_world<'a>(
-    world_path: &'a str,
+    json_string: &'a str,
     model_loader: &'a ModelLoader,
 ) -> (Vec<world_objects::Entity<'a>>, Vec<world_objects::Light>) {
-    let file_content = fs::read_to_string(world_path)
-        .unwrap_or_else(|_| panic!("Failed to read file at path {}", world_path));
-
-    let json_world_data: JsonWorldData = serde_json::from_str(&file_content)
-        .unwrap_or_else(|_| panic!("Failed to deserialize json at path {}", world_path));
+    let json_world_data: JsonWorldData = serde_json::from_str(json_string)
+        .unwrap_or_else(|_| panic!("Failed to deserialize json {}", json_string));
 
     let objects = json_world_data
         .objects

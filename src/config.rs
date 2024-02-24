@@ -1,5 +1,4 @@
 use serde::Deserialize;
-use std::fs;
 
 #[derive(Deserialize, Debug)]
 pub struct Config {
@@ -18,12 +17,9 @@ pub struct Config {
     pub camera_orbit_mode: bool,
 }
 
-pub fn load_config(path: &str) -> Config {
-    let file_content =
-        fs::read_to_string(path).unwrap_or_else(|_| panic!("Failed to read file at path {}", path));
-
-    let config: Config = serde_json::from_str(&file_content)
-        .unwrap_or_else(|_| panic!("Failed to deserialize json at path {}", path));
+pub fn load_config(json_string: &str) -> Config {
+    let config: Config = serde_json::from_str(json_string)
+        .unwrap_or_else(|_| panic!("Failed to deserialize json {}", json_string));
 
     config
 }

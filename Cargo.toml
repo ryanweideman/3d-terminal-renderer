@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 crossterm = "*"
 ctrlc = "*"
+include_dir = "*"
 nalgebra = "*"
 serde = { version = "*", features = ["derive"] }
 serde_json = "*"
