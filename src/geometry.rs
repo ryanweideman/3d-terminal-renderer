@@ -417,6 +417,28 @@ fn calculate_bounding_box(projected_triangle: &Triangle3) -> BoundingBox2 {
     }
 }
 
+pub fn interpolate_attributes_at_pixel(
+    p: &Point2<f64>,
+    projection_result: &ProjectionResult,
+) -> f64 {
+    let (p0, p1, p2) = projection_result.screen_triangle.vertices();
+    let (ndc_v0, ndc_v1, ndc_v2) = projection_result.ndc_triangle.vertices();
+
+    let total_area: f64 = p0.x * (p1.y - p2.y) + p1.x * (p2.y - p0.y) + p2.x * (p0.y - p1.y);
+    let lambda0: f64 = ((p1.y - p2.y) * (p.x - p2.x) + (p2.x - p1.x) * (p.y - p2.y)) / total_area;
+    let lambda1: f64 = ((p2.y - p0.y) * (p.x - p2.x) + (p0.x - p2.x) * (p.y - p2.y)) / total_area;
+    let lambda2: f64 = 1.0 - lambda0 - lambda1;
+
+    assert!(lambda0 + lambda1 + lambda2 < 1.00001 && lambda0 + lambda1 + lambda2 > 0.99999);
+
+    let iz0 = 1.0 / ndc_v0.z;
+    let iz1 = 1.0 / ndc_v1.z;
+    let iz2 = 1.0 / ndc_v2.z;
+
+    let z = 1.0 / (iz0 * lambda0 + iz1 * lambda1 + iz2 * lambda2);
+    z
+}
+
 pub fn project_triangle(
     input: &Triangle3,
     view_projection_matrix: &Matrix4<f64>,

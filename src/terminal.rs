@@ -1,18 +1,22 @@
 use std::time;
 
 use crossterm::{
-    cursor::MoveTo,
+    cursor::{Hide, MoveTo, Show},
     queue,
     style::{Color, Print, SetBackgroundColor},
-    terminal::Clear,
-    terminal::ClearType,
+    terminal::{
+        disable_raw_mode, enable_raw_mode, Clear, ClearType, EnterAlternateScreen,
+        LeaveAlternateScreen,
+    },
+    ExecutableCommand,
 };
+
+use std::io::Write;
 
 use crate::buffer::Buffer;
 use crate::geometry;
 
 use geometry::ProjectionResult;
-use nalgebra::Point2;
 
 fn rgb_channel_to_ansi_index(v: u8) -> u8 {
     // the ansi rgb values are on the scale 0-5
@@ -34,6 +38,25 @@ pub fn rgb_to_ansi256(r: u8, g: u8, b: u8) -> u16 {
     //}
 
     (16 + 36 * rc + 6 * gc + bc).into()
+}
+
+pub fn init(stdout: &mut std::io::Stdout) {
+    enable_raw_mode().expect("Could not enter terminal raw mode");
+
+    stdout
+        .execute(EnterAlternateScreen)
+        .expect("Could not enter terminal alternative mode");
+    queue!(stdout, Hide).unwrap();
+}
+
+pub fn destroy(stdout: &mut std::io::Stdout) {
+    queue!(stdout, Show).unwrap();
+    disable_raw_mode().unwrap();
+    stdout.execute(LeaveAlternateScreen).unwrap();
+}
+
+pub fn flush(stdout: &mut std::io::Stdout) {
+    stdout.flush().unwrap();
 }
 
 #[allow(dead_code)]
@@ -131,26 +154,4 @@ pub fn print_debug_info(
         ))
     )
     .unwrap();
-}
-
-pub fn interpolate_attributes_at_pixel(
-    p: &Point2<f64>,
-    projection_result: &ProjectionResult,
-) -> f64 {
-    let (p0, p1, p2) = projection_result.screen_triangle.vertices();
-    let (ndc_v0, ndc_v1, ndc_v2) = projection_result.ndc_triangle.vertices();
-
-    let total_area: f64 = p0.x * (p1.y - p2.y) + p1.x * (p2.y - p0.y) + p2.x * (p0.y - p1.y);
-    let lambda0: f64 = ((p1.y - p2.y) * (p.x - p2.x) + (p2.x - p1.x) * (p.y - p2.y)) / total_area;
-    let lambda1: f64 = ((p2.y - p0.y) * (p.x - p2.x) + (p0.x - p2.x) * (p.y - p2.y)) / total_area;
-    let lambda2: f64 = 1.0 - lambda0 - lambda1;
-
-    assert!(lambda0 + lambda1 + lambda2 < 1.00001 && lambda0 + lambda1 + lambda2 > 0.99999);
-
-    let iz0 = 1.0 / ndc_v0.z;
-    let iz1 = 1.0 / ndc_v1.z;
-    let iz2 = 1.0 / ndc_v2.z;
-
-    let z = 1.0 / (iz0 * lambda0 + iz1 * lambda1 + iz2 * lambda2);
-    z
 }

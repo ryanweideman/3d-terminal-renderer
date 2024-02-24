@@ -3,8 +3,8 @@ use nalgebra::{Matrix4, Point2, Point3, Vector3};
 use crate::buffer::Buffer;
 use crate::camera::Camera;
 use crate::geometry;
-use crate::graphics;
 use crate::math;
+use crate::terminal;
 use crate::world_objects::Light;
 
 pub fn render_geometry(
@@ -55,7 +55,7 @@ pub fn render_geometry(
                         continue;
                     }
 
-                    let z = graphics::interpolate_attributes_at_pixel(&pixel, &projection_result);
+                    let z = geometry::interpolate_attributes_at_pixel(&pixel, &projection_result);
 
                     // pixel in this triangle is the closest to the camera
                     if z < z_buffer[y][x] {
@@ -111,10 +111,10 @@ pub fn render_geometry(
                     &mut dithering_errors,
                     is_grey_scale,
                 );
-                screen_buffer[y][x] = graphics::rgb_to_ansi256(dr, dg, db);
+                screen_buffer[y][x] = terminal::rgb_to_ansi256(dr, dg, db);
             } else {
                 //screen_buffer[y][x] = graphics::rgb_to_ansi256(color.r as u8, color.g as u8, color.b as u8);
-                screen_buffer[y][x] = graphics::rgb_to_ansi256(r, g, b);
+                screen_buffer[y][x] = terminal::rgb_to_ansi256(r, g, b);
             }
         }
     }
