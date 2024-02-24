@@ -1,8 +1,9 @@
-use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyModifiers};
-
+use std::collections::HashSet;
 use std::time::Duration;
 
-#[derive(PartialEq)]
+use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyModifiers};
+
+#[derive(Eq, Hash, PartialEq)]
 pub enum Keys {
     W,
     A,
@@ -18,13 +19,13 @@ pub enum Keys {
 }
 
 pub struct Keyboard {
-    pub pressed_keys: Vec<Keys>,
+    pub pressed_keys: HashSet<Keys>,
 }
 
 impl Keyboard {
     pub fn new() -> Self {
         Self {
-            pressed_keys: Vec::new(),
+            pressed_keys: HashSet::new(),
         }
     }
 
@@ -40,20 +41,20 @@ impl Keyboard {
         match key_event.code {
             KeyCode::Char('c') | KeyCode::Char('C') => {
                 if key_event.modifiers.contains(KeyModifiers::CONTROL) {
-                    self.pressed_keys.push(Keys::CtrlC);
+                    self.pressed_keys.insert(Keys::CtrlC);
                 } else {
-                    self.pressed_keys.push(Keys::C);
+                    self.pressed_keys.insert(Keys::C);
                 }
             }
-            KeyCode::Char('w') | KeyCode::Char('W') => self.pressed_keys.push(Keys::W),
-            KeyCode::Char('s') | KeyCode::Char('S') => self.pressed_keys.push(Keys::S),
-            KeyCode::Char('d') | KeyCode::Char('D') => self.pressed_keys.push(Keys::D),
-            KeyCode::Char('a') | KeyCode::Char('A') => self.pressed_keys.push(Keys::A),
-            KeyCode::Char(' ') => self.pressed_keys.push(Keys::Space),
-            KeyCode::Left => self.pressed_keys.push(Keys::Left),
-            KeyCode::Right => self.pressed_keys.push(Keys::Right),
-            KeyCode::Up => self.pressed_keys.push(Keys::Up),
-            KeyCode::Down => self.pressed_keys.push(Keys::Down),
+            KeyCode::Char('w') | KeyCode::Char('W') => { self.pressed_keys.insert(Keys::W); }
+            KeyCode::Char('s') | KeyCode::Char('S') => { self.pressed_keys.insert(Keys::S); }
+            KeyCode::Char('d') | KeyCode::Char('D') => { self.pressed_keys.insert(Keys::D); }
+            KeyCode::Char('a') | KeyCode::Char('A') => { self.pressed_keys.insert(Keys::A); }
+            KeyCode::Char(' ') => { self.pressed_keys.insert(Keys::Space); }
+            KeyCode::Left => { self.pressed_keys.insert(Keys::Left); }
+            KeyCode::Right => { self.pressed_keys.insert(Keys::Right); }
+            KeyCode::Up => { self.pressed_keys.insert(Keys::Up); }
+            KeyCode::Down => { self.pressed_keys.insert(Keys::Down); }
             _ => {}
         }
     }
