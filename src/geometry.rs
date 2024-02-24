@@ -80,7 +80,7 @@ pub struct ProjectionResult {
 
 pub fn transform_entity_model(entity: &Entity) -> Vec<Triangle3> {
     let scale = entity.get_scale();
-    let rotation = Matrix4::from(entity.get_rotation().clone());
+    let rotation = Matrix4::from(entity.get_rotation());
     let translation = Matrix4::new_translation(&entity.get_origin().coords);
 
     let transform = translation * rotation * scale;
@@ -92,7 +92,7 @@ pub fn transform_entity_model(entity: &Entity) -> Vec<Triangle3> {
             let transformed_vertices = triangle
                 .vertices
                 .iter()
-                .map(|vertex| transform.transform_point(&vertex))
+                .map(|vertex| transform.transform_point(vertex))
                 .collect::<Vec<Point3<f64>>>();
 
             Triangle3 {
@@ -101,9 +101,7 @@ pub fn transform_entity_model(entity: &Entity) -> Vec<Triangle3> {
                     transformed_vertices[1],
                     transformed_vertices[2],
                 ],
-                color: entity
-                    .get_maybe_color()
-                    .unwrap_or_else(|| triangle.color.clone()),
+                color: entity.get_maybe_color().unwrap_or(triangle.color),
             }
         })
         .collect();
@@ -162,10 +160,10 @@ fn calculate_clip_space_plane_intersection(
     Point4::from(intersection)
 }
 
-fn clip_triangle_against_plane(plane: FrustumPlane, triangles: &Vec<Triangle4>) -> Vec<Triangle4> {
+fn clip_triangle_against_plane(plane: FrustumPlane, triangles: &[Triangle4]) -> Vec<Triangle4> {
     triangles
         .iter()
-        .map(|triangle| {
+        .flat_map(|triangle| {
             let vertices: Vec<(&Point4<f64>, bool)> = triangle
                 .vertices
                 .iter()
@@ -249,12 +247,11 @@ fn clip_triangle_against_plane(plane: FrustumPlane, triangles: &Vec<Triangle4>) 
                 }
             }
         })
-        .flat_map(|triangle| triangle)
         .collect()
 }
 
 fn clip_triangle_to_frustum(triangle: &Triangle4) -> Vec<Triangle4> {
-    let near_clipped_triangles = clip_triangle_against_plane(FrustumPlane::Near, &vec![*triangle]);
+    let near_clipped_triangles = clip_triangle_against_plane(FrustumPlane::Near, &[*triangle]);
     let far_clipped_triangles =
         clip_triangle_against_plane(FrustumPlane::Far, &near_clipped_triangles);
     let left_clipped_triangles =
@@ -263,10 +260,7 @@ fn clip_triangle_to_frustum(triangle: &Triangle4) -> Vec<Triangle4> {
         clip_triangle_against_plane(FrustumPlane::Right, &left_clipped_triangles);
     let bottom_clipped_triangles =
         clip_triangle_against_plane(FrustumPlane::Bottom, &right_clipped_triangles);
-    let top_clipped_triangles =
-        clip_triangle_against_plane(FrustumPlane::Top, &bottom_clipped_triangles);
-
-    top_clipped_triangles
+    clip_triangle_against_plane(FrustumPlane::Top, &bottom_clipped_triangles)
 }
 
 pub fn is_point_in_triangle(pt: &Point2<f64>, triangle: &Triangle3) -> bool {
@@ -410,10 +404,10 @@ fn calculate_bounding_box(projected_triangle: &Triangle3) -> BoundingBox2 {
         .max(projected_triangle.vertices[2].y);
 
     BoundingBox2 {
-        x_min: x_min,
-        y_min: y_min,
-        x_max: x_max,
-        y_max: y_max,
+        x_min,
+        y_min,
+        x_max,
+        y_max,
     }
 }
 
@@ -435,8 +429,8 @@ pub fn interpolate_attributes_at_pixel(
     let iz1 = 1.0 / ndc_v1.z;
     let iz2 = 1.0 / ndc_v2.z;
 
-    let z = 1.0 / (iz0 * lambda0 + iz1 * lambda1 + iz2 * lambda2);
-    z
+    // Interpolate z depth
+    1.0 / (iz0 * lambda0 + iz1 * lambda1 + iz2 * lambda2)
 }
 
 pub fn project_triangle(
@@ -447,10 +441,10 @@ pub fn project_triangle(
 ) -> Vec<ProjectionResult> {
     // Calculate the normal in world coordinates
     // TODO: calculate these when applying the model matrix
-    let normal = calculate_triangle_normal(&input);
+    let normal = calculate_triangle_normal(input);
 
     // Transform the world triangle coordinates to clip space
-    let clip_space_triangle = transform_world_space_to_clip_space(&input, &view_projection_matrix);
+    let clip_space_triangle = transform_world_space_to_clip_space(input, view_projection_matrix);
 
     // Clip the transformed triangles against the 6 frustum planes
     // Produces new triangle geometry if necessary
@@ -468,15 +462,13 @@ pub fn project_triangle(
             // Get bounding box of the projected triangle
             let bounding_box = calculate_bounding_box(&screen_triangle);
 
-            let result = ProjectionResult {
+            ProjectionResult {
                 clip_space_triangle: *clipped_triangle,
-                ndc_triangle: ndc_triangle,
-                screen_triangle: screen_triangle,
+                ndc_triangle,
+                screen_triangle,
                 screen_bounding_box: bounding_box,
-                normal: normal,
-            };
-
-            result
+                normal,
+            }
         })
         .collect()
 }

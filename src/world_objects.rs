@@ -9,9 +9,8 @@ pub enum Entity<'a> {
 
 impl<'a> Entity<'a> {
     pub fn update(&mut self, dt: f64) {
-        match self {
-            Entity::SpinningObject(object) => object.update(dt),
-            _ => {}
+        if let Entity::SpinningObject(object) = self {
+            object.update(dt)
         }
     }
 

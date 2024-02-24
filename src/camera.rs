@@ -41,13 +41,13 @@ impl Camera {
         )
         .to_homogeneous();
         Camera {
-            origin: origin,
+            origin,
             yaw: config.camera_yaw,
             pitch: config.camera_pitch,
             linear_speed: config.camera_linear_speed,
             angular_speed: config.camera_angular_speed,
             orbit_mode: config.camera_orbit_mode,
-            projection_matrix: projection_matrix,
+            projection_matrix,
         }
     }
 

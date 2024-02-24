@@ -10,7 +10,7 @@ use crate::world_objects::Light;
 pub fn render_geometry(
     screen_buffer: &mut Buffer<u16>,
     geometry: &Vec<geometry::Triangle3>,
-    world_lights: &Vec<Light>,
+    world_lights: &[Light],
     camera: &Camera,
     ansi_background_color: u16,
 ) -> Vec<geometry::ProjectionResult> {
@@ -55,7 +55,7 @@ pub fn render_geometry(
                         continue;
                     }
 
-                    let z = geometry::interpolate_attributes_at_pixel(&pixel, &projection_result);
+                    let z = geometry::interpolate_attributes_at_pixel(&pixel, projection_result);
 
                     // pixel in this triangle is the closest to the camera
                     if z < z_buffer[y][x] {
@@ -125,12 +125,12 @@ pub fn render_geometry(
 fn calculate_pixel_lighting(
     pixel: &Point3<f64>,
     normal: &Vector3<f64>,
-    world_lights: &Vec<Light>,
+    world_lights: &[Light],
     inverse_view_projection_matrix: &Matrix4<f64>,
     screen_width: usize,
     screen_height: usize,
 ) -> f64 {
-    let p_ndc = geometry::screen_to_ndc(&pixel, screen_width, screen_height).to_homogeneous();
+    let p_ndc = geometry::screen_to_ndc(pixel, screen_width, screen_height).to_homogeneous();
     let point_world_space_homogeneous = inverse_view_projection_matrix * p_ndc;
     let point_world_space = point_world_space_homogeneous.xyz() / point_world_space_homogeneous.w;
 
@@ -140,7 +140,7 @@ fn calculate_pixel_lighting(
             Light::PointLight(point_light) => {
                 let origin = point_light.get_origin();
                 let light_norm = (origin - point_world_space).coords.normalize();
-                let diffuse_intensity = light_norm.dot(&normal).max(0.0);
+                let diffuse_intensity = light_norm.dot(normal).max(0.0);
 
                 let distance = (origin - point_world_space).coords.magnitude();
                 let attenuation = 1.0

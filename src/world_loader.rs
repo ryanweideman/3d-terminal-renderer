@@ -78,7 +78,7 @@ pub fn load_world<'a>(
                 rotation_angle,
                 scale,
             } => world_objects::Entity::Square(world_objects::Square {
-                model: &model_loader.get_model(model),
+                model: model_loader.get_model(model),
                 origin: Point3::<f64>::new(origin[0], origin[1], origin[2]),
                 rotation: Rotation3::<f64>::from_axis_angle(
                     &Unit::new_normalize(Vector3::new(
@@ -99,7 +99,7 @@ pub fn load_world<'a>(
                 height,
                 color,
             } => world_objects::Entity::Rectangle(world_objects::Rectangle {
-                model: &model_loader.get_model(model),
+                model: model_loader.get_model(model),
                 origin: Point3::<f64>::new(origin[0], origin[1], origin[2]),
                 rotation: Rotation3::<f64>::from_axis_angle(
                     &Unit::new_normalize(Vector3::new(
@@ -120,7 +120,7 @@ pub fn load_world<'a>(
                 angular_velocity,
                 scale,
             } => world_objects::Entity::SpinningObject(world_objects::SpinningObject {
-                model: &model_loader.get_model(model),
+                model: model_loader.get_model(model),
                 origin: Point3::<f64>::new(origin[0], origin[1], origin[2]),
                 rotation_axis: Vector3::<f64>::new(
                     rotation_axis[0],

@@ -90,7 +90,7 @@ pub fn print_debug_info(
     stdout: &mut std::io::Stdout,
     total_time_elapsed: &time::Duration,
     _processed_time_elapsed: &time::Duration,
-    projection_results: &Vec<ProjectionResult>,
+    projection_results: &[ProjectionResult],
     screen_height: usize,
 ) {
     queue!(stdout, MoveTo(1, (screen_height) as u16)).unwrap();

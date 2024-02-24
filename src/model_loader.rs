@@ -80,5 +80,5 @@ fn convert_geometry_data(geometry_data: &GeometryData) -> Model {
         })
         .collect();
 
-    Model { geometry: geometry }
+    Model { geometry }
 }

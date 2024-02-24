@@ -30,11 +30,8 @@ impl Keyboard {
 
     pub fn update(&mut self) {
         if event::poll(Duration::from_millis(10)).expect("Failed to poll event") {
-            match event::read().expect("Failed to read event") {
-                Event::Key(key_event) => {
-                    self.process_key_event(key_event);
-                }
-                _ => {}
+            if let Event::Key(key_event) = event::read().expect("Failed to read event") {
+                self.process_key_event(key_event);
             }
         }
     }

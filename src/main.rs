@@ -55,8 +55,7 @@ fn main() -> io::Result<()> {
             .for_each(|entity| entity.update(delta_time));
         let world_geometry = entities
             .iter()
-            .map(|entity| geometry::transform_entity_model(&entity))
-            .flat_map(|v| v)
+            .flat_map(|entity| geometry::transform_entity_model(entity))
             .collect();
 
         let _projection_results = renderer::render_geometry(
