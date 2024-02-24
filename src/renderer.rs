@@ -113,11 +113,7 @@ pub fn render_geometry(
                 );
                 screen_buffer[y][x] = graphics::rgb_to_ansi256(dr, dg, db);
             } else {
-                /*
-                let r = color.r as u8;
-                let g = color.g as u8;
-                let b = color.b as u8;
-                */
+                //screen_buffer[y][x] = graphics::rgb_to_ansi256(color.r as u8, color.g as u8, color.b as u8);
                 screen_buffer[y][x] = graphics::rgb_to_ansi256(r, g, b);
             }
         }

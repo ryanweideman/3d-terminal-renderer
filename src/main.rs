@@ -1,6 +1,6 @@
 mod buffer;
 mod camera;
-mod constants;
+mod config;
 mod geometry;
 mod graphics;
 mod keyboard;
@@ -23,7 +23,6 @@ use std::io::Write;
 use std::time;
 
 use buffer::Buffer;
-use constants::{SCREEN_HEIGHT, SCREEN_WIDTH, TARGET_FPS};
 
 fn main() {
     enable_raw_mode().expect("Could not enter terminal raw mode");
@@ -33,14 +32,15 @@ fn main() {
         .expect("Could not enter terminal alternative mode");
     queue!(stdout, Hide).unwrap();
 
-    let mut camera = camera::Camera::new(Point3::new(0.0, 0.7, 3.0));
+    let config = config::load_config("config.json");
+    let mut camera = camera::Camera::new(&config);
     let mut keyboard = keyboard::Keyboard::new();
 
     let model_loader = model_loader::ModelLoader::new("models/");
     let (mut entities, lights) = world_loader::load_world("demo.json", &model_loader);
 
     let mut start_time = time::Instant::now();
-    let delay_duration = time::Duration::from_millis((1000.0 / TARGET_FPS) as u64);
+    let delay_duration = time::Duration::from_millis((1000.0 / config.target_fps) as u64);
     let ansi_background_color = graphics::rgb_to_ansi256(100, 100, 100);
 
     loop {
@@ -57,8 +57,11 @@ fn main() {
         start_time = current_time;
 
         camera.update(&keyboard, delta_time);
-        let mut screen_buffer =
-            Buffer::<u16>::new(ansi_background_color, SCREEN_WIDTH, SCREEN_HEIGHT);
+        let mut screen_buffer = Buffer::<u16>::new(
+            ansi_background_color,
+            config.screen_width,
+            config.screen_height,
+        );
 
         entities
             .iter_mut()
