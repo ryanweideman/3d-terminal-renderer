@@ -67,6 +67,11 @@ fn main() -> io::Result<()> {
             &camera,
             config.background_color,
         );
+
+        if config.use_dithering && !config.use_true_color {
+            renderer::apply_ansi_256_dithering(&mut screen_buffer);
+        }
+
         let _processing_time_elapsed = start_time.elapsed();
 
         terminal::output_screen_buffer(&mut stdout, &screen_buffer, config.use_true_color)?;

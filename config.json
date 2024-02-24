@@ -1,9 +1,9 @@
 {
     "target_fps": 20.0,
-    "screen_width": 100,
-    "screen_height": 75,
+    "screen_width": 80,
+    "screen_height": 60,
     "background_color": [100, 100, 100],
-    "use_dithering": true,
+    "use_dithering": false,
     "use_true_color": true,
     "near_plane": 0.1,
     "far_plane": 100.0,

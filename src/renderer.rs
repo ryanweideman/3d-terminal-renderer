@@ -20,9 +20,6 @@ pub fn render_geometry(
     let mut z_buffer = Buffer::<f64>::new(f64::MAX, screen_width, screen_height);
     let mut projection_buffer = Buffer::<usize>::new(usize::MAX, screen_width, screen_height);
 
-    let mut dithering_errors =
-        Buffer::<(i16, i16, i16)>::new((0, 0, 0), screen_width, screen_height);
-
     let mut cached_projection_results = Vec::with_capacity(geometry.len());
 
     for triangle in geometry {
@@ -90,23 +87,7 @@ pub fn render_geometry(
             let g = ((color.g as f64) * light_intensity) as u8;
             let b = ((color.b as f64) * light_intensity) as u8;
 
-            let use_dithering = false;
-            if use_dithering {
-                let is_grey_scale = color.r == color.g && color.g == color.b;
-                let (dr, dg, db) = calculate_dithered_pixel_value(
-                    x,
-                    y,
-                    r,
-                    g,
-                    b,
-                    &mut dithering_errors,
-                    is_grey_scale,
-                );
-                screen_buffer[y][x] = [dr, dg, db];
-            } else {
-                //screen_buffer[y][x] = [color.r as u8, color.g as u8, color.b as u8];
-                screen_buffer[y][x] = [r, g, b];
-            }
+            screen_buffer[y][x] = [r, g, b];
         }
     }
 
@@ -149,6 +130,25 @@ fn calculate_pixel_lighting(
     light_intensity
 }
 
+pub fn apply_ansi_256_dithering(screen_buffer: &mut Buffer<[u8; 3]>) {
+    let width = screen_buffer.width;
+    let height = screen_buffer.height;
+    let mut dithering_errors = Buffer::<(i16, i16, i16)>::new((0, 0, 0), width, height);
+    for y in 0..height {
+        for x in 0..width {
+            let r = screen_buffer[y][x][0];
+            let g = screen_buffer[y][x][1];
+            let b = screen_buffer[y][x][2];
+
+            // Calculates dithering for ansi color banding
+            let is_grey_scale = r == g && g == b;
+            let (dr, dg, db) =
+                calculate_dithered_pixel_value(x, y, r, g, b, &mut dithering_errors, is_grey_scale);
+            screen_buffer[y][x] = [dr, dg, db];
+        }
+    }
+}
+
 fn calculate_dithered_pixel_value(
     x: usize,
     y: usize,
@@ -162,6 +162,7 @@ fn calculate_dithered_pixel_value(
     let g: i16 = (g as i16) + dithering_errors[y][x].1;
     let b: i16 = (b as i16) + dithering_errors[y][x].2;
 
+    // Calculates error of casting to the nearest ansi color
     let calculate_error = |v: i16| -> i16 {
         let a = if v < 95 {
             return 0;
