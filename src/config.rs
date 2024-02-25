@@ -3,8 +3,7 @@ use serde::Deserialize;
 #[derive(Deserialize, Debug)]
 pub struct Config {
     pub target_fps: f64,
-    pub screen_width: usize,
-    pub screen_height: usize,
+    pub aspect_ratio: f64,
     pub background_color: [u8; 3],
     pub use_dithering: bool,
     pub use_true_color: bool,

@@ -63,7 +63,7 @@
     "lights": [
         {
             "type": "PointLight",
-            "origin": [0.0, 1.2, 0.3],
+            "origin": [0.0, 1.2, 1.5],
             "intensity": 2.0,
             "linear_attenuation": 0.1,
             "quadratic_attenuation": 0.3,
@@ -71,7 +71,7 @@
         },
         {
             "type": "AmbientLight",
-            "intensity": 0.2,
+            "intensity": 0.38,
             "color": [255, 255, 255]
         }
     ]

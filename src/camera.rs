@@ -32,9 +32,8 @@ impl Camera {
             config.camera_origin[1],
             config.camera_origin[2],
         );
-        let aspect_ratio = (config.screen_width as f64) / (config.screen_height as f64);
         let projection_matrix = Perspective3::new(
-            aspect_ratio,
+            config.aspect_ratio,
             config.fov,
             config.near_plane,
             config.far_plane,

@@ -1,10 +1,9 @@
 {
     "target_fps": 20.0,
-    "screen_width": 80,
-    "screen_height": 60,
+    "aspect_ratio": 1.333334, 
     "background_color": [100, 100, 100],
-    "use_dithering": false,
-    "use_true_color": true,
+    "use_dithering": true,
+    "use_true_color": false,
     "near_plane": 0.1,
     "far_plane": 100.0,
     "fov": 1.25,

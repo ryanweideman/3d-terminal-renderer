@@ -32,6 +32,8 @@ fn main() -> io::Result<()> {
     let mut stdout = io::stdout();
     terminal::init(&mut stdout)?;
 
+    let (mut width, mut height) = terminal::get_aspect_corrected_dimensions(config.aspect_ratio);
+
     loop {
         keyboard.update();
         if keyboard.is_ctrl_c_pressed() {
@@ -41,16 +43,19 @@ fn main() -> io::Result<()> {
         if start_time.elapsed() < delay_duration {
             continue;
         }
+
+        let (previous_width, previous_height) = (width, height);
+        (width, height) = terminal::get_aspect_corrected_dimensions(config.aspect_ratio);
+        if width != previous_width || height != previous_height {
+            terminal::clear_screen(&mut stdout)?;
+        }
+
         let current_time = time::Instant::now();
         let delta_time = current_time.duration_since(start_time).as_secs_f64();
         start_time = current_time;
 
         camera.update(&keyboard, delta_time);
-        let mut screen_buffer = Buffer::<[u8; 3]>::new(
-            config.background_color,
-            config.screen_width,
-            config.screen_height,
-        );
+        let mut screen_buffer = Buffer::<[u8; 3]>::new(config.background_color, width, height);
 
         entities
             .iter_mut()

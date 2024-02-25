@@ -22,7 +22,7 @@
         {
             "type": "SpinningObject",
             "model": "cube.json",
-            "origin": [1.06, -0.3, 1.06],
+            "origin": [1.3, -0.3, 0.75],
             "rotation_axis": [0.5, 0.0, 1.0],
             "rotation_angle": 0.0,
             "angular_velocity": -1.5,
@@ -31,7 +31,7 @@
         {
             "type": "SpinningObject",
             "model": "tetrahedron.json",
-            "origin": [-1.06, -0.3, 1.06],
+            "origin": [-1.3, -0.3, 0.75],
             "rotation_axis": [-1.0, -1.0, 0.0],
             "rotation_angle": 0.0,
             "angular_velocity": 3,
@@ -42,9 +42,9 @@
         {
             "type": "PointLight",
             "origin": [0.0, 0.7, 0.0],
-            "intensity": 3.0,
-            "linear_attenuation": 0.1,
-            "quadratic_attenuation": 0.1,
+            "intensity": 5.0,
+            "linear_attenuation": 0.05,
+            "quadratic_attenuation": 0.4,
             "color": [255, 255, 255]
         },
         {

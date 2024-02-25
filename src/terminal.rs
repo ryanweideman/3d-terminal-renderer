@@ -4,6 +4,7 @@ use crossterm::{
     cursor::{Hide, MoveTo, Show},
     queue,
     style::{Color, Print, SetBackgroundColor},
+    terminal,
     terminal::{
         disable_raw_mode, enable_raw_mode, Clear, ClearType, EnterAlternateScreen,
         LeaveAlternateScreen,
@@ -53,6 +54,8 @@ pub fn destroy(stdout: &mut std::io::Stdout) -> io::Result<()> {
     queue!(stdout, Show)?;
     disable_raw_mode()?;
     stdout.execute(LeaveAlternateScreen)?;
+    clear_screen(stdout)?;
+    flush(stdout)?;
     Ok(())
 }
 
@@ -63,8 +66,21 @@ pub fn flush(stdout: &mut std::io::Stdout) -> io::Result<()> {
 
 #[allow(dead_code)]
 pub fn clear_screen(stdout: &mut std::io::Stdout) -> io::Result<()> {
+    queue!(stdout, SetBackgroundColor(Color::Black))?;
     queue!(stdout, Clear(ClearType::All))?;
     Ok(())
+}
+
+pub fn get_aspect_corrected_dimensions(target_aspect_rato: f64) -> (usize, usize) {
+    let (columns, rows) = terminal::size().expect("Failed to get terminal size");
+    let width = (columns / 2 - 2) as usize;
+    let height = (rows - 2) as usize;
+
+    let aspect: f64 = (width as f64) / (height as f64);
+    if aspect > target_aspect_rato {
+        return (((height as f64) * target_aspect_rato) as usize, height);
+    }
+    (width, ((width as f64) / target_aspect_rato) as usize)
 }
 
 pub fn output_screen_buffer(
