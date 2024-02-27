@@ -35,7 +35,7 @@ impl Keyboard {
         // Process and clear the crossterm event buffer
         const MAX_POLL_COUNT: usize = 1000;
         for _ in 0..MAX_POLL_COUNT {
-            if event::poll(Duration::from_millis(0))? {
+            if event::poll(Duration::ZERO)? {
                 if let Event::Key(key_event) = event::read()? {
                     self.process_key_event(key_event);
                 }
