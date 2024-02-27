@@ -10,11 +10,12 @@ mod terminal;
 mod world_loader;
 mod world_objects;
 
-use include_dir::include_dir;
 use std::io;
 use std::time;
 
-use buffer::Buffer;
+use include_dir::include_dir;
+
+use terminal::Terminal;
 
 fn main() -> io::Result<()> {
     let config_path = include_str!("../config.json");
@@ -29,45 +30,35 @@ fn main() -> io::Result<()> {
     let mut start_time = time::Instant::now();
     let delay_duration = time::Duration::from_millis((1000.0 / config.target_fps) as u64);
 
+    let mut terminal = Terminal::new(
+        config.background_color,
+        config.aspect_ratio,
+        config.use_true_color,
+    );
     let mut stdout = io::stdout();
-    terminal::init(&mut stdout)?;
-
-    let (mut width, mut height) = terminal::get_aspect_corrected_dimensions(config.aspect_ratio);
+    terminal.init(&mut stdout)?;
 
     loop {
-        keyboard.update();
-        if keyboard.is_ctrl_c_pressed() {
-            break;
-        }
-
         if start_time.elapsed() < delay_duration {
             continue;
         }
-
-        let (previous_width, previous_height) = (width, height);
-        (width, height) = terminal::get_aspect_corrected_dimensions(config.aspect_ratio);
-        if width != previous_width || height != previous_height {
-            terminal::clear_screen(&mut stdout)?;
-        }
-
         let current_time = time::Instant::now();
         let delta_time = current_time.duration_since(start_time).as_secs_f64();
         start_time = current_time;
 
+        keyboard.update()?;
+        if keyboard.is_ctrl_c_pressed() {
+            break;
+        }
         camera.update(&keyboard, delta_time);
-        let mut screen_buffer = Buffer::<[u8; 3]>::new(config.background_color, width, height);
+        for entity in &mut entities {
+            entity.update(delta_time);
+        }
 
-        entities
-            .iter_mut()
-            .for_each(|entity| entity.update(delta_time));
-        let world_geometry = entities
-            .iter()
-            .flat_map(|entity| geometry::transform_entity_model(entity))
-            .collect();
-
-        let _projection_results = renderer::render_geometry(
+        let mut screen_buffer = terminal.get_mutable_screen_buffer(&mut stdout);
+        renderer::render_scene(
             &mut screen_buffer,
-            &world_geometry,
+            &entities,
             &lights,
             &camera,
             config.background_color,
@@ -77,15 +68,9 @@ fn main() -> io::Result<()> {
             renderer::apply_ansi_256_dithering(&mut screen_buffer);
         }
 
-        let _processing_time_elapsed = start_time.elapsed();
-
-        terminal::output_screen_buffer(&mut stdout, &screen_buffer, config.use_true_color)?;
-        terminal::flush(&mut stdout)?;
-
-        keyboard.clear_all_keys();
-        let _total_time_elapsed = start_time.elapsed();
+        terminal.output_screen_buffer(&mut stdout)?;
     }
 
-    terminal::destroy(&mut stdout)?;
+    terminal.destroy(&mut stdout)?;
     Ok(())
 }

@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use std::io;
 use std::time::Duration;
 
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyModifiers};
@@ -29,12 +30,18 @@ impl Keyboard {
         }
     }
 
-    pub fn update(&mut self) {
-        if event::poll(Duration::from_millis(10)).expect("Failed to poll event") {
-            if let Event::Key(key_event) = event::read().expect("Failed to read event") {
-                self.process_key_event(key_event);
+    pub fn update(&mut self) -> io::Result<()> {
+        self.pressed_keys.clear();
+        // Process and clear the crossterm event buffer
+        const MAX_POLL_COUNT: usize = 1000;
+        for _ in 0..MAX_POLL_COUNT {
+            if event::poll(Duration::from_millis(0))? {
+                if let Event::Key(key_event) = event::read()? {
+                    self.process_key_event(key_event);
+                }
             }
         }
+        Ok(())
     }
 
     fn process_key_event(&mut self, key_event: KeyEvent) {
@@ -75,10 +82,6 @@ impl Keyboard {
             }
             _ => {}
         }
-    }
-
-    pub fn clear_all_keys(&mut self) {
-        self.pressed_keys.clear();
     }
 
     pub fn is_ctrl_c_pressed(&self) -> bool {

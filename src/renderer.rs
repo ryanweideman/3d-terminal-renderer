@@ -3,11 +3,11 @@ use nalgebra::{Matrix4, Point2, Point3, Vector3};
 use crate::buffer::Buffer;
 use crate::camera::Camera;
 use crate::geometry;
-use crate::world_objects::Light;
+use crate::world_objects::{Entity, Light};
 
-pub fn render_geometry(
+pub fn render_scene(
     screen_buffer: &mut Buffer<[u8; 3]>,
-    geometry: &Vec<geometry::Triangle3>,
+    entities: &Vec<Entity>,
     world_lights: &[Light],
     camera: &Camera,
     background_color: [u8; 3],
@@ -20,12 +20,18 @@ pub fn render_geometry(
     let mut z_buffer = Buffer::<f64>::new(f64::MAX, screen_width, screen_height);
     let mut projection_buffer = Buffer::<usize>::new(usize::MAX, screen_width, screen_height);
 
+    // Transform entity models to the world coordinate system
+    let geometry: Vec<geometry::Triangle3> = entities
+        .iter()
+        .flat_map(|entity| geometry::transform_entity_model(entity))
+        .collect();
+
     let mut cached_projection_results = Vec::with_capacity(geometry.len());
 
     for triangle in geometry {
         // world cords -> camera coords -> ndc -> screen coords
         let projection_results = geometry::project_triangle(
-            triangle,
+            &triangle,
             &view_projection_matrix,
             screen_width,
             screen_height,

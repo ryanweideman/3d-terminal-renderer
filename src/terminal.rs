@@ -20,6 +20,93 @@ use crate::geometry;
 
 use geometry::ProjectionResult;
 
+pub struct Terminal {
+    width: usize,
+    height: usize,
+    default_color: [u8; 3],
+    use_true_color: bool,
+    aspect_ratio: f64,
+    screen_buffer: Option<Buffer<[u8; 3]>>,
+}
+
+impl Terminal {
+    pub fn new(default_color: [u8; 3], aspect_ratio: f64, use_true_color: bool) -> Self {
+        Self {
+            width: 0,
+            height: 0,
+            default_color,
+            use_true_color,
+            aspect_ratio,
+            screen_buffer: None,
+        }
+    }
+
+    pub fn init(&self, stdout: &mut std::io::Stdout) -> io::Result<()> {
+        enable_raw_mode()?;
+
+        stdout.execute(EnterAlternateScreen)?;
+        queue!(stdout, Hide)?;
+        Ok(())
+    }
+
+    pub fn get_mutable_screen_buffer(
+        &mut self,
+        stdout: &mut std::io::Stdout,
+    ) -> &mut Buffer<[u8; 3]> {
+        let (new_width, new_height) = get_aspect_corrected_dimensions(self.aspect_ratio);
+        if new_width != self.width || new_height != self.height || self.screen_buffer.is_none() {
+            clear_screen(stdout).ok();
+            self.width = new_width;
+            self.height = new_height;
+            self.screen_buffer = Some(Buffer::<[u8; 3]>::new(
+                self.default_color,
+                self.width,
+                self.height,
+            ));
+        }
+
+        self.screen_buffer.as_mut().unwrap()
+    }
+
+    pub fn output_screen_buffer(&self, stdout: &mut std::io::Stdout) -> io::Result<()> {
+        queue!(stdout, MoveTo(1, 1))?;
+        let screen_buffer = self.screen_buffer.as_ref().unwrap();
+        for y in 0..self.height {
+            for x in 0..self.width {
+                let r = screen_buffer[y][x][0];
+                let g = screen_buffer[y][x][1];
+                let b = screen_buffer[y][x][2];
+
+                let color = if self.use_true_color {
+                    Color::Rgb { r, g, b }
+                } else {
+                    Color::AnsiValue(rgb_to_ansi256(r, g, b))
+                };
+
+                queue!(stdout, SetBackgroundColor(color), Print("  "))?;
+            }
+            queue!(stdout, MoveTo(1, (y + 1) as u16))?;
+        }
+        flush(stdout)?;
+        Ok(())
+    }
+
+    pub fn destroy(&self, stdout: &mut std::io::Stdout) -> io::Result<()> {
+        queue!(stdout, Show)?;
+        disable_raw_mode()?;
+        stdout.execute(LeaveAlternateScreen)?;
+        clear_screen(stdout)?;
+        flush(stdout)?;
+        Ok(())
+    }
+}
+
+impl Drop for Terminal {
+    fn drop(&mut self) {
+        disable_raw_mode().unwrap();
+    }
+}
+
 fn rgb_channel_to_ansi_index(v: u8) -> u8 {
     // the ansi rgb values are on the scale 0-5
     // 0-95 map to 0, 95-255 map to 1-5
@@ -42,36 +129,19 @@ pub fn rgb_to_ansi256(r: u8, g: u8, b: u8) -> u8 {
     16 + 36 * rc + 6 * gc + bc
 }
 
-pub fn init(stdout: &mut std::io::Stdout) -> io::Result<()> {
-    enable_raw_mode()?;
-
-    stdout.execute(EnterAlternateScreen)?;
-    queue!(stdout, Hide)?;
-    Ok(())
-}
-
-pub fn destroy(stdout: &mut std::io::Stdout) -> io::Result<()> {
-    queue!(stdout, Show)?;
-    disable_raw_mode()?;
-    stdout.execute(LeaveAlternateScreen)?;
-    clear_screen(stdout)?;
-    flush(stdout)?;
-    Ok(())
-}
-
-pub fn flush(stdout: &mut std::io::Stdout) -> io::Result<()> {
+fn flush(stdout: &mut std::io::Stdout) -> io::Result<()> {
     stdout.flush()?;
     Ok(())
 }
 
-#[allow(dead_code)]
-pub fn clear_screen(stdout: &mut std::io::Stdout) -> io::Result<()> {
+fn clear_screen(stdout: &mut std::io::Stdout) -> io::Result<()> {
     queue!(stdout, SetBackgroundColor(Color::Black))?;
     queue!(stdout, Clear(ClearType::All))?;
+    stdout.flush()?;
     Ok(())
 }
 
-pub fn get_aspect_corrected_dimensions(target_aspect_rato: f64) -> (usize, usize) {
+fn get_aspect_corrected_dimensions(target_aspect_rato: f64) -> (usize, usize) {
     let (columns, rows) = terminal::size().expect("Failed to get terminal size");
     let width = (columns / 2 - 2) as usize;
     let height = (rows - 2) as usize;
@@ -81,31 +151,6 @@ pub fn get_aspect_corrected_dimensions(target_aspect_rato: f64) -> (usize, usize
         return (((height as f64) * target_aspect_rato) as usize, height);
     }
     (width, ((width as f64) / target_aspect_rato) as usize)
-}
-
-pub fn output_screen_buffer(
-    stdout: &mut std::io::Stdout,
-    screen_buffer: &Buffer<[u8; 3]>,
-    use_true_color: bool,
-) -> io::Result<()> {
-    queue!(stdout, MoveTo(1, 1))?;
-    for y in 0..screen_buffer.height {
-        for x in 0..screen_buffer.width {
-            let r = screen_buffer[y][x][0];
-            let g = screen_buffer[y][x][1];
-            let b = screen_buffer[y][x][2];
-
-            let color = if use_true_color {
-                Color::Rgb { r, g, b }
-            } else {
-                Color::AnsiValue(rgb_to_ansi256(r, g, b))
-            };
-
-            queue!(stdout, SetBackgroundColor(color), Print("  "))?;
-        }
-        queue!(stdout, MoveTo(1, (y + 1) as u16))?;
-    }
-    Ok(())
 }
 
 #[allow(dead_code)]
