@@ -41,7 +41,7 @@ fn main() -> io::Result<()> {
             std::thread::sleep(delay_duration - start_time.elapsed());
         }
         let current_time = time::Instant::now();
-        let delta_time = current_time.duration_since(start_time).as_secs_f64();
+        let delta_time = (current_time - start_time).as_secs_f64();
         start_time = current_time;
 
         // Update terminal, camera, and scene entities
