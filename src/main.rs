@@ -38,7 +38,7 @@ fn main() -> io::Result<()> {
 
     loop {
         if start_time.elapsed() < delay_duration {
-            continue;
+            std::thread::sleep(delay_duration - start_time.elapsed());
         }
         let current_time = time::Instant::now();
         let delta_time = current_time.duration_since(start_time).as_secs_f64();
