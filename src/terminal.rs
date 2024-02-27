@@ -22,6 +22,7 @@ use crate::keyboard::{Keyboard, Keys};
 use geometry::ProjectionResult;
 
 pub struct Terminal {
+    stdout: io::Stdout,
     width: usize,
     height: usize,
     default_color: [u8; 3],
@@ -34,6 +35,7 @@ pub struct Terminal {
 impl Terminal {
     pub fn new(default_color: [u8; 3], aspect_ratio: f64, use_true_color: bool) -> Self {
         Self {
+            stdout: io::stdout(),
             width: 0,
             height: 0,
             default_color,
@@ -44,11 +46,11 @@ impl Terminal {
         }
     }
 
-    pub fn init(&self, stdout: &mut std::io::Stdout) -> io::Result<()> {
+    pub fn init(&mut self) -> io::Result<()> {
         enable_raw_mode()?;
 
-        stdout.execute(EnterAlternateScreen)?;
-        queue!(stdout, Hide)?;
+        self.stdout.execute(EnterAlternateScreen)?;
+        queue!(self.stdout, Hide)?;
         Ok(())
     }
 
@@ -65,13 +67,10 @@ impl Terminal {
         self.keyboard.pressed_keys.contains(&Keys::CtrlC)
     }
 
-    pub fn get_mutable_screen_buffer_reference(
-        &mut self,
-        stdout: &mut std::io::Stdout,
-    ) -> &mut Buffer<[u8; 3]> {
+    pub fn get_mutable_screen_buffer_reference(&mut self) -> &mut Buffer<[u8; 3]> {
         let (new_width, new_height) = get_aspect_corrected_dimensions(self.aspect_ratio);
         if new_width != self.width || new_height != self.height || self.screen_buffer.is_none() {
-            clear_screen(stdout).ok();
+            clear_screen(&mut self.stdout).ok();
             self.width = new_width;
             self.height = new_height;
             self.screen_buffer = Some(Buffer::<[u8; 3]>::new(
@@ -84,8 +83,8 @@ impl Terminal {
         self.screen_buffer.as_mut().unwrap()
     }
 
-    pub fn output_screen_buffer(&self, stdout: &mut std::io::Stdout) -> io::Result<()> {
-        queue!(stdout, MoveTo(1, 1))?;
+    pub fn output_screen_buffer(&mut self) -> io::Result<()> {
+        queue!(self.stdout, MoveTo(1, 1))?;
         let screen_buffer = self.screen_buffer.as_ref().unwrap();
         for y in 0..self.height {
             for x in 0..self.width {
@@ -99,20 +98,19 @@ impl Terminal {
                     Color::AnsiValue(rgb_to_ansi256(r, g, b))
                 };
 
-                queue!(stdout, SetBackgroundColor(color), Print("  "))?;
+                queue!(self.stdout, SetBackgroundColor(color), Print("  "))?;
             }
-            queue!(stdout, MoveTo(1, (y + 1) as u16))?;
+            queue!(self.stdout, MoveTo(1, (y + 1) as u16))?;
         }
-        flush(stdout)?;
+        flush(&mut self.stdout)?;
         Ok(())
     }
 
-    pub fn destroy(&self, stdout: &mut std::io::Stdout) -> io::Result<()> {
-        queue!(stdout, Show)?;
+    pub fn destroy(&mut self) -> io::Result<()> {
+        queue!(self.stdout, Show)?;
         disable_raw_mode()?;
-        stdout.execute(LeaveAlternateScreen)?;
-        clear_screen(stdout)?;
-        flush(stdout)?;
+        self.stdout.execute(LeaveAlternateScreen)?;
+        clear_screen(&mut self.stdout)?;
         Ok(())
     }
 }

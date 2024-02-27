@@ -34,8 +34,7 @@ fn main() -> io::Result<()> {
         config.aspect_ratio,
         config.use_true_color,
     );
-    let mut stdout = io::stdout();
-    terminal.init(&mut stdout)?;
+    terminal.init()?;
 
     loop {
         if start_time.elapsed() < delay_duration {
@@ -55,7 +54,7 @@ fn main() -> io::Result<()> {
             entity.update(delta_time);
         }
 
-        let screen_buffer = terminal.get_mutable_screen_buffer_reference(&mut stdout);
+        let screen_buffer = terminal.get_mutable_screen_buffer_reference();
 
         // Renders the scene to the screen_buffer
         renderer::render_scene(
@@ -70,9 +69,9 @@ fn main() -> io::Result<()> {
             renderer::apply_ansi_256_dithering(screen_buffer);
         }
 
-        terminal.output_screen_buffer(&mut stdout)?;
+        terminal.output_screen_buffer()?;
     }
 
-    terminal.destroy(&mut stdout)?;
+    terminal.destroy()?;
     Ok(())
 }
