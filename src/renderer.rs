@@ -28,6 +28,7 @@ pub fn render_scene(
 
     let mut cached_projection_results = Vec::with_capacity(geometry.len());
 
+    // Vertex shader / processing
     for triangle in geometry {
         // world cords -> camera coords -> ndc -> screen coords
         let projection_results = geometry::project_triangle(
@@ -68,6 +69,7 @@ pub fn render_scene(
         }
     }
 
+    // Pixel shader / deferred lighting pass
     for y in 0..screen_height {
         for x in 0..screen_width {
             let projection_result_index = projection_buffer[y][x];

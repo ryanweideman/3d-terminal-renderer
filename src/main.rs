@@ -45,6 +45,7 @@ fn main() -> io::Result<()> {
         let delta_time = current_time.duration_since(start_time).as_secs_f64();
         start_time = current_time;
 
+        // Update terminal, camera, and scene entities
         terminal.update()?;
         if terminal.is_ctrl_c_pressed() {
             break;
@@ -55,6 +56,8 @@ fn main() -> io::Result<()> {
         }
 
         let screen_buffer = terminal.get_mutable_screen_buffer_reference(&mut stdout);
+
+        // Renders the scene to the screen_buffer
         renderer::render_scene(
             screen_buffer,
             &entities,
