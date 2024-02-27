@@ -27,7 +27,7 @@ fn main() -> io::Result<()> {
         world_loader::load_world(include_str!("../demo.json"), &model_loader);
 
     let mut start_time = time::Instant::now();
-    let delay_duration = time::Duration::from_millis((1000.0 / config.target_fps) as u64);
+    let delay_duration = time::Duration::from_secs_f64(1.0 / config.target_fps);
 
     let mut terminal = Terminal::new(
         config.background_color,
