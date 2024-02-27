@@ -2,7 +2,7 @@ use nalgebra::{Matrix4, Perspective3, Point3, Rotation3, Vector3};
 use std::f64::consts::PI;
 
 use crate::config::Config;
-use crate::keyboard::{Keyboard, Keys};
+use crate::keyboard::Keys;
 
 pub struct Camera {
     origin: Point3<f64>,
@@ -67,16 +67,16 @@ impl Camera {
         self.projection_matrix * view_matrix
     }
 
-    pub fn update(&mut self, keyboard: &Keyboard, delta_time: f64) {
+    pub fn update(&mut self, pressed_keys: &[Keys], delta_time: f64) {
         let mut velocity = Vector3::new(0.0, 0.0, 0.0);
         let mut yaw_velocity: f64 = 0.0;
         let mut pitch_velocity: f64 = 0.0;
 
-        if !keyboard.pressed_keys.is_empty() {
+        if !pressed_keys.is_empty() {
             self.orbit_mode = false;
         }
 
-        keyboard.pressed_keys.iter().for_each(|key| match key {
+        pressed_keys.iter().for_each(|key| match key {
             Keys::W => velocity += Vector3::new(0.0, 0.0, -self.linear_speed),
             Keys::A => velocity += Vector3::new(-self.linear_speed, 0.0, 0.0),
             Keys::S => velocity += Vector3::new(0.0, 0.0, self.linear_speed),

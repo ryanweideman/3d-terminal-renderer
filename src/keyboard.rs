@@ -4,7 +4,7 @@ use std::time::Duration;
 
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyModifiers};
 
-#[derive(Eq, Hash, PartialEq)]
+#[derive(Clone, Eq, Hash, PartialEq)]
 pub enum Keys {
     W,
     A,
@@ -82,9 +82,5 @@ impl Keyboard {
             }
             _ => {}
         }
-    }
-
-    pub fn is_ctrl_c_pressed(&self) -> bool {
-        self.pressed_keys.contains(&Keys::CtrlC)
     }
 }

@@ -7,7 +7,7 @@ use crate::world_objects::{Entity, Light};
 
 pub fn render_scene(
     screen_buffer: &mut Buffer<[u8; 3]>,
-    entities: &Vec<Entity>,
+    entities: &[Entity],
     world_lights: &[Light],
     camera: &Camera,
     background_color: [u8; 3],

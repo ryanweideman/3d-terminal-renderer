@@ -21,7 +21,6 @@ fn main() -> io::Result<()> {
     let config_path = include_str!("../config.json");
     let config = config::load_config(config_path);
     let mut camera = camera::Camera::new(&config);
-    let mut keyboard = keyboard::Keyboard::new();
 
     let model_loader = model_loader::ModelLoader::new(&include_dir!("models/"));
     let (mut entities, lights) =
@@ -46,18 +45,18 @@ fn main() -> io::Result<()> {
         let delta_time = current_time.duration_since(start_time).as_secs_f64();
         start_time = current_time;
 
-        keyboard.update()?;
-        if keyboard.is_ctrl_c_pressed() {
+        terminal.update()?;
+        if terminal.is_ctrl_c_pressed() {
             break;
         }
-        camera.update(&keyboard, delta_time);
+        camera.update(&terminal.get_key_presses(), delta_time);
         for entity in &mut entities {
             entity.update(delta_time);
         }
 
-        let mut screen_buffer = terminal.get_mutable_screen_buffer(&mut stdout);
+        let screen_buffer = terminal.get_mutable_screen_buffer_reference(&mut stdout);
         renderer::render_scene(
-            &mut screen_buffer,
+            screen_buffer,
             &entities,
             &lights,
             &camera,
@@ -65,7 +64,7 @@ fn main() -> io::Result<()> {
         );
 
         if config.use_dithering && !config.use_true_color {
-            renderer::apply_ansi_256_dithering(&mut screen_buffer);
+            renderer::apply_ansi_256_dithering(screen_buffer);
         }
 
         terminal.output_screen_buffer(&mut stdout)?;

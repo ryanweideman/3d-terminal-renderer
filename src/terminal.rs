@@ -17,6 +17,7 @@ use std::io::Write;
 
 use crate::buffer::Buffer;
 use crate::geometry;
+use crate::keyboard::{Keyboard, Keys};
 
 use geometry::ProjectionResult;
 
@@ -27,6 +28,7 @@ pub struct Terminal {
     use_true_color: bool,
     aspect_ratio: f64,
     screen_buffer: Option<Buffer<[u8; 3]>>,
+    keyboard: Keyboard,
 }
 
 impl Terminal {
@@ -38,6 +40,7 @@ impl Terminal {
             use_true_color,
             aspect_ratio,
             screen_buffer: None,
+            keyboard: Keyboard::new(),
         }
     }
 
@@ -49,7 +52,20 @@ impl Terminal {
         Ok(())
     }
 
-    pub fn get_mutable_screen_buffer(
+    pub fn update(&mut self) -> io::Result<()> {
+        self.keyboard.update()?;
+        Ok(())
+    }
+
+    pub fn get_key_presses(&self) -> Vec<Keys> {
+        Vec::from_iter(self.keyboard.pressed_keys.clone())
+    }
+
+    pub fn is_ctrl_c_pressed(&self) -> bool {
+        self.keyboard.pressed_keys.contains(&Keys::CtrlC)
+    }
+
+    pub fn get_mutable_screen_buffer_reference(
         &mut self,
         stdout: &mut std::io::Stdout,
     ) -> &mut Buffer<[u8; 3]> {
