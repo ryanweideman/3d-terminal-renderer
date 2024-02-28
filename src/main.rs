@@ -40,9 +40,8 @@ fn main() -> io::Result<()> {
         if start_time.elapsed() < delay_duration {
             std::thread::sleep(delay_duration - start_time.elapsed());
         }
-        let current_time = time::Instant::now();
-        let delta_time = (current_time - start_time).as_secs_f64();
-        start_time = current_time;
+        let delta_time = start_time.elapsed().as_secs_f64();
+        start_time = time::Instant::now();
 
         // Update terminal, camera, and scene entities
         terminal.update()?;
@@ -54,9 +53,8 @@ fn main() -> io::Result<()> {
             entity.update(delta_time);
         }
 
-        let screen_buffer = terminal.get_mutable_screen_buffer_reference();
-
         // Renders the scene to the screen_buffer
+        let screen_buffer = terminal.get_mutable_screen_buffer_reference();
         renderer::render_scene(
             screen_buffer,
             &entities,
