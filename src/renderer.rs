@@ -9,7 +9,7 @@ pub fn render_scene(
     screen_buffer: &mut Buffer<[u8; 3]>,
     entities: &[Entity],
     world_lights: &[Light],
-    camera: &dyn Camera,
+    camera: &Camera,
     background_color: [u8; 3],
 ) -> Vec<geometry::ProjectionResult> {
     let view_projection_matrix: Matrix4<f64> = camera.get_view_projection_matrix();
