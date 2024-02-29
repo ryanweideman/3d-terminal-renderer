@@ -1,9 +1,9 @@
-use nalgebra::{Matrix4, Perspective3, Point3, Rotation3, Vector3};
+use nalgebra::{Matrix4, Perspective3, Point3, Rotation3, Orthographic3, Vector3};
 use std::f64::consts::PI;
 
 use crate::config::Config;
 use crate::keyboard::Keys;
-
+/*
 pub struct Camera {
     origin: Point3<f64>,
     yaw: f64,
@@ -12,7 +12,48 @@ pub struct Camera {
     angular_speed: f64,
     orbit_mode: bool,
     projection_matrix: Matrix4<f64>,
+}*/
+
+pub trait Camera {
+    fn get_view_projection_matrix(&self) -> Matrix4<f64>;
+    fn update(&mut self, delta_time: f64);
 }
+
+pub struct StaticPerspectiveCamera {
+    origin: Point3<f64>,
+    yaw: f64,
+    pitch: f64,
+    projection_matrix: Matrix4<f64>,
+}
+
+impl StaticPerspectiveCamera {
+    pub fn new(origin: &Point3<f64>, yaw: f64, pitch: f64, aspect_ratio: f64, fov: f64, near_plane: f64, far_plane: f64) -> Self {
+        let projection_matrix = Perspective3::new(
+            aspect_ratio,
+            fov,
+            near_plane,
+            far_plane,
+        )
+        .to_homogeneous();
+        StaticPerspectiveCamera {
+            origin: *origin,
+            yaw,
+            pitch,
+            projection_matrix,
+        }
+    }
+}
+
+impl Camera for StaticPerspectiveCamera {
+    fn get_view_projection_matrix(&self) -> Matrix4<f64> {
+        get_view_projection_matrix(&self.projection_matrix, self.origin, self.yaw, self.pitch)
+    }
+
+    fn update(&mut self, delta_time: f64) {
+
+    }
+}
+
 
 /*
     Perspective3 produces a symmetric frustum identical to that used by OpenGL
@@ -25,6 +66,7 @@ pub struct Camera {
 
     where f = 1 / tan(fov / 2)
 */
+/*
 impl Camera {
     pub fn new(config: &Config) -> Self {
         let origin = Point3::new(
@@ -32,11 +74,22 @@ impl Camera {
             config.camera_origin[1],
             config.camera_origin[2],
         );
+        /*
         let projection_matrix = Perspective3::new(
             config.aspect_ratio,
             config.fov,
             config.near_plane,
             config.far_plane,
+        )
+        .to_homogeneous();
+                */
+        let projection_matrix = Orthographic3::new(
+            -3.0,
+            3.0,
+            -3.0,
+            3.0,
+            config.near_plane,
+            config.far_plane
         )
         .to_homogeneous();
         Camera {
@@ -107,4 +160,26 @@ impl Camera {
             self.origin += rotation * velocity * delta_time;
         }
     }
+}
+*/
+fn get_view_projection_matrix(
+    projection_matrix: &Matrix4<f64>,     
+    origin: Point3<f64>,
+    yaw: f64,
+    pitch: f64,) -> Matrix4<f64> {
+
+    let direction = Vector3::new(
+        yaw.cos() * pitch.cos(),
+        pitch.sin(),
+        yaw.sin() * pitch.cos(),
+    );
+
+    let global_up = Vector3::new(0.0, 1.0, 0.0);
+
+    let right = direction.cross(&global_up).normalize();
+    let up = right.cross(&direction);
+
+    let view_matrix = Matrix4::look_at_rh(&origin, &(origin + direction), &up);
+
+    projection_matrix * view_matrix
 }
