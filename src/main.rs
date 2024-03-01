@@ -24,7 +24,7 @@ fn main() -> io::Result<()> {
     let config_path = include_str!("../config.json");
     let config = config::load_config(config_path);
 
-    let mut camera = camera::StaticPerspectiveCameraBuilder::new()
+    let mut camera = camera::ControllablePerspectiveCameraBuilder::new()
         .origin(Point3::new(0.0, 0.7, 3.0))
         .yaw(-std::f64::consts::PI / 2.0)
         .pitch(-0.4)
@@ -56,7 +56,7 @@ fn main() -> io::Result<()> {
         if terminal.is_ctrl_c_pressed() {
             break;
         }
-        //camera.update(&terminal.get_key_presses(), delta_time);
+        camera.update(delta_time, &terminal.get_key_presses());
         for entity in &mut entities {
             entity.update(delta_time);
         }
