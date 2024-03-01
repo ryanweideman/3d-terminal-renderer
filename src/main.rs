@@ -57,7 +57,6 @@ fn main() -> io::Result<()> {
             break;
         }
         //camera.update(&terminal.get_key_presses(), delta_time);
-        camera.update(delta_time);
         for entity in &mut entities {
             entity.update(delta_time);
         }

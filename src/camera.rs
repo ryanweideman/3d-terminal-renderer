@@ -16,7 +16,6 @@ pub struct Camera {
 
 pub trait Camera {
     fn get_view_projection_matrix(&self) -> Matrix4<f64>;
-    fn update(&mut self, delta_time: f64);
 }
 
 pub struct StaticPerspectiveCamera {
@@ -62,8 +61,6 @@ impl Camera for StaticPerspectiveCamera {
     fn get_view_projection_matrix(&self) -> Matrix4<f64> {
         get_view_projection_matrix(&self.projection_matrix, self.origin, self.yaw, self.pitch)
     }
-
-    fn update(&mut self, delta_time: f64) {}
 }
 
 pub struct StaticPerspectiveCameraBuilder {
