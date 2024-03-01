@@ -14,7 +14,7 @@ use std::io;
 use std::time;
 
 use include_dir::include_dir;
-use nalgebra::{Point3};
+use nalgebra::Point3;
 
 use camera::Camera;
 
@@ -23,8 +23,12 @@ use terminal::Terminal;
 fn main() -> io::Result<()> {
     let config_path = include_str!("../config.json");
     let config = config::load_config(config_path);
-    //let mut camera = camera::Camera::new(&config);
-    let mut camera = camera::StaticPerspectiveCamera::new(&Point3::new(0.0, 0.7, 3.0), -1.57, -0.4, 1.6, 1.25, 0.1, 100.0);
+
+    let mut camera = camera::StaticPerspectiveCameraBuilder::new()
+        .origin(Point3::new(0.0, 0.7, 3.0))
+        .yaw(-std::f64::consts::PI / 2.0)
+        .pitch(-0.4)
+        .build();
 
     let model_loader = model_loader::ModelLoader::new(&include_dir!("models/"));
     let (mut entities, lights) =
@@ -52,7 +56,7 @@ fn main() -> io::Result<()> {
         if terminal.is_ctrl_c_pressed() {
             break;
         }
-        //camera.update(&terminal.get_key_presses(), delta_time);        
+        //camera.update(&terminal.get_key_presses(), delta_time);
         camera.update(delta_time);
         for entity in &mut entities {
             entity.update(delta_time);

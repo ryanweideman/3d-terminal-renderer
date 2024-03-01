@@ -1,4 +1,4 @@
-use nalgebra::{Matrix4, Perspective3, Point3, Rotation3, Orthographic3, Vector3};
+use nalgebra::{Matrix4, Orthographic3, Perspective3, Point3, Rotation3, Vector3};
 use std::f64::consts::PI;
 
 use crate::config::Config;
@@ -26,17 +26,31 @@ pub struct StaticPerspectiveCamera {
     projection_matrix: Matrix4<f64>,
 }
 
+/*
+    Perspective3 produces a symmetric frustum identical to that used by OpenGL
+    Perspective matrix :
+
+    |  f / aspect  0                              0                                 0  |
+    |  0           f                              0                                 0  |
+    |  0           0   -(far + near) / (far - near)    -2 * far * near / (far - near)  |
+    |  0           0                             -1                                 0  |
+
+    where f = 1 / tan(fov / 2)
+*/
 impl StaticPerspectiveCamera {
-    pub fn new(origin: &Point3<f64>, yaw: f64, pitch: f64, aspect_ratio: f64, fov: f64, near_plane: f64, far_plane: f64) -> Self {
-        let projection_matrix = Perspective3::new(
-            aspect_ratio,
-            fov,
-            near_plane,
-            far_plane,
-        )
-        .to_homogeneous();
+    pub fn new(
+        origin: Point3<f64>,
+        yaw: f64,
+        pitch: f64,
+        aspect_ratio: f64,
+        fov: f64,
+        near_plane: f64,
+        far_plane: f64,
+    ) -> Self {
+        let projection_matrix =
+            Perspective3::new(aspect_ratio, fov, near_plane, far_plane).to_homogeneous();
         StaticPerspectiveCamera {
-            origin: *origin,
+            origin: origin,
             yaw,
             pitch,
             projection_matrix,
@@ -49,23 +63,88 @@ impl Camera for StaticPerspectiveCamera {
         get_view_projection_matrix(&self.projection_matrix, self.origin, self.yaw, self.pitch)
     }
 
-    fn update(&mut self, delta_time: f64) {
+    fn update(&mut self, delta_time: f64) {}
+}
 
+pub struct StaticPerspectiveCameraBuilder {
+    origin: Point3<f64>,
+    yaw: f64,
+    pitch: f64,
+    aspect_ratio: f64,
+    fov: f64,
+    near_plane: f64,
+    far_plane: f64,
+}
+
+impl StaticPerspectiveCameraBuilder {
+    pub fn new() -> Self {
+        Self {
+            origin: Point3::new(0.0, 0.0, 0.0),
+            yaw: -std::f64::consts::PI / 2.0,
+            pitch: -0.4,
+            fov: 1.25,
+            aspect_ratio: 1.6,
+            near_plane: 0.1,
+            far_plane: 100.0,
+        }
+    }
+
+    #[allow(unused)]
+    pub fn origin(&mut self, origin: Point3<f64>) -> &mut Self {
+        self.origin = origin;
+        self
+    }
+
+    #[allow(unused)]
+    pub fn yaw(&mut self, yaw: f64) -> &mut Self {
+        self.yaw = yaw;
+        self
+    }
+
+    #[allow(unused)]
+    pub fn pitch(&mut self, pitch: f64) -> &mut Self {
+        self.pitch = pitch;
+        self
+    }
+
+    #[allow(unused)]
+    pub fn aspect_ratio(&mut self, aspect_ratio: f64) -> &mut Self {
+        self.aspect_ratio = aspect_ratio;
+        self
+    }
+
+    #[allow(unused)]
+    pub fn fov(&mut self, fov: f64) -> &mut Self {
+        self.fov = fov;
+        self
+    }
+
+    #[allow(unused)]
+    pub fn near_plane(&mut self, near_plane: f64) -> &mut Self {
+        self.near_plane = near_plane;
+        self
+    }
+
+    #[allow(unused)]
+    pub fn far_plane(&mut self, far_plane: f64) -> &mut Self {
+        self.far_plane = far_plane;
+        self
+    }
+
+    #[allow(unused)]
+    pub fn build(&mut self) -> StaticPerspectiveCamera {
+        StaticPerspectiveCamera::new(
+            self.origin,
+            self.yaw,
+            self.pitch,
+            self.aspect_ratio,
+            self.fov,
+            self.near_plane,
+            self.far_plane,
+        )
     }
 }
 
-
-/*
-    Perspective3 produces a symmetric frustum identical to that used by OpenGL
-    Perspective matrix :
-
-    |  f / aspect  0                              0                                 0  |
-    |  0           f                              0                                 0  |
-    |  0           0   -(far + near) / (far - near)    -2 * far * near / (far - near)  |
-    |  0           0                             -1                                 0  |
-
-    where f = 1 / tan(fov / 2)
-*/
 /*
 impl Camera {
     pub fn new(config: &Config) -> Self {
@@ -163,11 +242,11 @@ impl Camera {
 }
 */
 fn get_view_projection_matrix(
-    projection_matrix: &Matrix4<f64>,     
+    projection_matrix: &Matrix4<f64>,
     origin: Point3<f64>,
     yaw: f64,
-    pitch: f64,) -> Matrix4<f64> {
-
+    pitch: f64,
+) -> Matrix4<f64> {
     let direction = Vector3::new(
         yaw.cos() * pitch.cos(),
         pitch.sin(),
