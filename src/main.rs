@@ -1,43 +1,28 @@
-mod buffer;
-mod camera;
-mod config;
-mod geometry;
-mod keyboard;
-mod math;
-mod model_loader;
-mod renderer;
-mod terminal;
-mod world_loader;
-mod world_objects;
-
 use std::io;
 use std::time;
 
 use include_dir::include_dir;
 use nalgebra::Point3;
 
-use camera::Camera;
-
-use terminal::Terminal;
+use lib_terminal_renderer::camera;
+use lib_terminal_renderer::camera::Camera;
+use lib_terminal_renderer::model_loader::ModelLoader;
+use lib_terminal_renderer::terminal::Terminal;
+use lib_terminal_renderer::world_loader;
+use lib_terminal_renderer::renderer;
+use lib_terminal_renderer::config;
 
 fn main() -> io::Result<()> {
     let config_path = include_str!("../config.json");
     let config = config::load_config(config_path);
-    /*
+
     let mut camera = camera::ControllablePerspectiveCameraBuilder::new()
         .origin(Point3::new(0.0, 0.7, 3.0))
         .yaw(-std::f64::consts::PI / 2.0)
         .pitch(-0.4)
         .build();
-        */
 
-    let mut camera = camera::OrbitingPerspectiveCameraBuilder::new()
-        .origin(Point3::new(0.0, 0.7, 3.0))
-        .yaw(-std::f64::consts::PI / 2.0)
-        .pitch(-0.4)
-        .build();
-
-    let model_loader = model_loader::ModelLoader::new(&include_dir!("models/"));
+    let model_loader = ModelLoader::new(&include_dir!("models/"));
     let (mut entities, lights) =
         world_loader::load_world(include_str!("../demo.json"), &model_loader);
 
@@ -63,9 +48,7 @@ fn main() -> io::Result<()> {
         if terminal.is_ctrl_c_pressed() {
             break;
         }
-        //camera.update(delta_time, &terminal.get_key_presses());
-        camera.update(delta_time);
-
+        camera.update(delta_time, &terminal.get_key_presses());
         for entity in &mut entities {
             entity.update(delta_time);
         }
