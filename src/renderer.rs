@@ -3,7 +3,8 @@ use nalgebra::{Matrix4, Point2, Point3, Vector3};
 use crate::buffer::Buffer;
 use crate::camera::Camera;
 use crate::geometry;
-use crate::world_objects::{Entity, Light};
+use crate::entity::Entity;
+use crate::light::Light;
 
 pub fn render_scene(
     screen_buffer: &mut Buffer<[u8; 3]>,

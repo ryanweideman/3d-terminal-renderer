@@ -1,6 +1,6 @@
 use nalgebra::{Matrix4, Point2, Point3, Point4, Vector3};
 
-use crate::world_objects::Entity;
+use crate::entity::Entity;
 
 //use rand::Rng;
 

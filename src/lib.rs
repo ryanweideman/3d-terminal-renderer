@@ -8,4 +8,5 @@ pub mod model_loader;
 pub mod renderer;
 pub mod terminal;
 pub mod world_loader;
-pub mod world_objects;
+pub mod entity;
+pub mod light;
