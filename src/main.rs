@@ -5,20 +5,23 @@ use include_dir::include_dir;
 use nalgebra::Point3;
 
 use lib_terminal_renderer::camera;
-use lib_terminal_renderer::config;
 use lib_terminal_renderer::model_loader::ModelLoader;
 use lib_terminal_renderer::renderer;
 use lib_terminal_renderer::terminal::Terminal;
 use lib_terminal_renderer::world_loader;
 
-fn main() -> io::Result<()> {
-    let config_path = include_str!("../config.json");
-    let config = config::load_config(config_path);
+const BACKGROUND_COLOR: [u8; 3] = [100, 100, 100];
+const TARGET_FPS: usize = 20;
+const ASPECT_RATIO: f64 = 1.6;
+const USE_TRUE_COLOR: bool = true;
+const USE_DITHERING: bool = false;
 
+fn main() -> io::Result<()> {
     let mut camera = camera::ControllablePerspectiveCameraBuilder::new()
         .origin(Point3::new(0.0, 0.7, 3.0))
         .yaw(-std::f64::consts::PI / 2.0)
         .pitch(-0.4)
+        .aspect_ratio(ASPECT_RATIO)
         .build();
 
     let model_loader = ModelLoader::new(&include_dir!("models/"));
@@ -26,13 +29,9 @@ fn main() -> io::Result<()> {
         world_loader::load_world(include_str!("../demo.json"), &model_loader);
 
     let mut start_time = time::Instant::now();
-    let delay_duration = time::Duration::from_secs_f64(1.0 / config.target_fps);
+    let delay_duration = time::Duration::from_secs_f64(1.0 / TARGET_FPS as f64);
 
-    let mut terminal = Terminal::new(
-        config.background_color,
-        config.aspect_ratio,
-        config.use_true_color,
-    );
+    let mut terminal = Terminal::new(BACKGROUND_COLOR, ASPECT_RATIO, USE_TRUE_COLOR);
     terminal.init()?;
 
     loop {
@@ -54,15 +53,9 @@ fn main() -> io::Result<()> {
 
         // Renders the scene to the screen_buffer
         let screen_buffer = terminal.get_mutable_screen_buffer_reference();
-        renderer::render_scene(
-            screen_buffer,
-            &entities,
-            &lights,
-            &camera,
-            config.background_color,
-        );
+        renderer::render_scene(screen_buffer, &entities, &lights, &camera, BACKGROUND_COLOR);
 
-        if config.use_dithering && !config.use_true_color {
+        if USE_DITHERING && !USE_TRUE_COLOR {
             renderer::apply_ansi_256_dithering(screen_buffer);
         }
 

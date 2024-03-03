@@ -1,10 +1,8 @@
 pub mod buffer;
 pub mod camera;
-pub mod config;
+pub mod entity;
 pub mod geometry;
 pub mod keyboard;
-//pub mod math;
-pub mod entity;
 pub mod light;
 pub mod model_loader;
 pub mod renderer;
