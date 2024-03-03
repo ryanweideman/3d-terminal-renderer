@@ -8,7 +8,7 @@ use lib_terminal_renderer::camera;
 use lib_terminal_renderer::model_loader::ModelLoader;
 use lib_terminal_renderer::renderer;
 use lib_terminal_renderer::terminal::Terminal;
-use lib_terminal_renderer::world_loader;
+use lib_terminal_renderer::scene_loader;
 
 const BACKGROUND_COLOR: [u8; 3] = [100, 100, 100];
 const TARGET_FPS: usize = 20;
@@ -26,7 +26,7 @@ fn main() -> io::Result<()> {
 
     let model_loader = ModelLoader::new(&include_dir!("models/"));
     let (mut entities, lights) =
-        world_loader::load_world(include_str!("../demo.json"), &model_loader);
+        scene_loader::load_scene(include_str!("../demo.json"), &model_loader);
 
     let mut start_time = time::Instant::now();
     let delay_duration = time::Duration::from_secs_f64(1.0 / TARGET_FPS as f64);
@@ -35,9 +35,9 @@ fn main() -> io::Result<()> {
     terminal.init()?;
 
     loop {
-        if start_time.elapsed() < delay_duration {
-            std::thread::sleep(delay_duration - start_time.elapsed());
-        }
+        // Sleep until the next loop time if needed
+        std::thread::sleep(delay_duration.saturating_sub(start_time.elapsed()));
+
         let delta_time = start_time.elapsed().as_secs_f64();
         start_time = time::Instant::now();
 

@@ -57,7 +57,7 @@ enum JsonLight {
     },
 }
 
-pub fn load_world<'a>(
+pub fn load_scene<'a>(
     json_string: &'a str,
     model_loader: &'a ModelLoader,
 ) -> (Vec<entity::Entity<'a>>, Vec<light::Light>) {

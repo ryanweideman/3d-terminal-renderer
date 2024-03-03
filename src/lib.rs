@@ -6,5 +6,5 @@ pub mod keyboard;
 pub mod light;
 pub mod model_loader;
 pub mod renderer;
+pub mod scene_loader;
 pub mod terminal;
-pub mod world_loader;
