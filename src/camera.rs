@@ -1,18 +1,9 @@
-use nalgebra::{Matrix4, Orthographic3, Perspective3, Point3, Rotation3, Vector3};
+#![allow(clippy::too_many_arguments)]
+
+use nalgebra::{Matrix4, Perspective3, Point3, Rotation3, Vector3};
 use std::f64::consts::PI;
 
-use crate::config::Config;
 use crate::keyboard::Keys;
-/*
-pub struct Camera {
-    origin: Point3<f64>,
-    yaw: f64,
-    pitch: f64,
-    linear_speed: f64,
-    angular_speed: f64,
-    orbit_mode: bool,
-    projection_matrix: Matrix4<f64>,
-}*/
 
 pub trait Camera {
     fn get_view_projection_matrix(&self) -> Matrix4<f64>;
@@ -49,7 +40,7 @@ impl StaticPerspectiveCamera {
         let projection_matrix =
             Perspective3::new(aspect_ratio, fov, near_plane, far_plane).to_homogeneous();
         StaticPerspectiveCamera {
-            origin: origin,
+            origin,
             yaw,
             pitch,
             projection_matrix,
@@ -71,6 +62,12 @@ pub struct StaticPerspectiveCameraBuilder {
     fov: f64,
     near_plane: f64,
     far_plane: f64,
+}
+
+impl Default for StaticPerspectiveCameraBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl StaticPerspectiveCameraBuilder {
@@ -166,7 +163,7 @@ impl ControllablePerspectiveCamera {
         let projection_matrix =
             Perspective3::new(aspect_ratio, fov, near_plane, far_plane).to_homogeneous();
         ControllablePerspectiveCamera {
-            origin: origin,
+            origin,
             yaw,
             pitch,
             linear_speed,
@@ -219,6 +216,12 @@ pub struct ControllablePerspectiveCameraBuilder {
     far_plane: f64,
     linear_speed: f64,
     angular_speed: f64,
+}
+
+impl Default for ControllablePerspectiveCameraBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl ControllablePerspectiveCameraBuilder {
@@ -310,7 +313,6 @@ pub struct OrbitingPerspectiveCamera {
     origin: Point3<f64>,
     yaw: f64,
     pitch: f64,
-    linear_speed: f64,
     angular_speed: f64,
     projection_matrix: Matrix4<f64>,
 }
@@ -324,16 +326,14 @@ impl OrbitingPerspectiveCamera {
         fov: f64,
         near_plane: f64,
         far_plane: f64,
-        linear_speed: f64,
         angular_speed: f64,
     ) -> Self {
         let projection_matrix =
             Perspective3::new(aspect_ratio, fov, near_plane, far_plane).to_homogeneous();
         OrbitingPerspectiveCamera {
-            origin: origin,
+            origin,
             yaw,
             pitch,
-            linear_speed,
             angular_speed,
             projection_matrix,
         }
@@ -364,8 +364,13 @@ pub struct OrbitingPerspectiveCameraBuilder {
     fov: f64,
     near_plane: f64,
     far_plane: f64,
-    linear_speed: f64,
     angular_speed: f64,
+}
+
+impl Default for OrbitingPerspectiveCameraBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl OrbitingPerspectiveCameraBuilder {
@@ -378,7 +383,6 @@ impl OrbitingPerspectiveCameraBuilder {
             aspect_ratio: 1.6,
             near_plane: 0.1,
             far_plane: 100.0,
-            linear_speed: 1.5,
             angular_speed: 1.0,
         }
     }
@@ -426,12 +430,6 @@ impl OrbitingPerspectiveCameraBuilder {
     }
 
     #[allow(unused)]
-    pub fn linear_speed(&mut self, linear_speed: f64) -> &mut Self {
-        self.linear_speed = linear_speed;
-        self
-    }
-
-    #[allow(unused)]
     pub fn angular_speed(&mut self, angular_speed: f64) -> &mut Self {
         self.angular_speed = angular_speed;
         self
@@ -447,7 +445,6 @@ impl OrbitingPerspectiveCameraBuilder {
             self.fov,
             self.near_plane,
             self.far_plane,
-            self.linear_speed,
             self.angular_speed,
         )
     }

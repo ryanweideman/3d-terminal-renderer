@@ -5,12 +5,11 @@ use include_dir::include_dir;
 use nalgebra::Point3;
 
 use lib_terminal_renderer::camera;
-use lib_terminal_renderer::camera::Camera;
+use lib_terminal_renderer::config;
 use lib_terminal_renderer::model_loader::ModelLoader;
+use lib_terminal_renderer::renderer;
 use lib_terminal_renderer::terminal::Terminal;
 use lib_terminal_renderer::world_loader;
-use lib_terminal_renderer::renderer;
-use lib_terminal_renderer::config;
 
 fn main() -> io::Result<()> {
     let config_path = include_str!("../config.json");

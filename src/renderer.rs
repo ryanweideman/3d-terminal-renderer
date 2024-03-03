@@ -2,8 +2,8 @@ use nalgebra::{Matrix4, Point2, Point3, Vector3};
 
 use crate::buffer::Buffer;
 use crate::camera::Camera;
-use crate::geometry;
 use crate::entity::Entity;
+use crate::geometry;
 use crate::light::Light;
 
 pub fn render_scene(

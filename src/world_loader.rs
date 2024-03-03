@@ -1,7 +1,7 @@
-use crate::geometry::Color;
-use crate::model_loader::ModelLoader;
 use crate::entity;
+use crate::geometry::Color;
 use crate::light;
+use crate::model_loader::ModelLoader;
 use nalgebra::{Matrix4, Point3, Rotation3, Unit, Vector3};
 use serde::Deserialize;
 
