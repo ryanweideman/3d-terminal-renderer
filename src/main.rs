@@ -4,11 +4,11 @@ use std::time;
 use include_dir::include_dir;
 use nalgebra::Point3;
 
-use lib_terminal_renderer::camera;
+use lib_terminal_renderer::camera::controllable_perspective_camera::ControllablePerspectiveCameraBuilder;
 use lib_terminal_renderer::model_loader::ModelLoader;
 use lib_terminal_renderer::renderer;
-use lib_terminal_renderer::terminal::Terminal;
 use lib_terminal_renderer::scene_loader;
+use lib_terminal_renderer::terminal::Terminal;
 
 const BACKGROUND_COLOR: [u8; 3] = [100, 100, 100];
 const TARGET_FPS: usize = 20;
@@ -17,7 +17,7 @@ const USE_TRUE_COLOR: bool = true;
 const USE_DITHERING: bool = false;
 
 fn main() -> io::Result<()> {
-    let mut camera = camera::ControllablePerspectiveCameraBuilder::new()
+    let mut camera = ControllablePerspectiveCameraBuilder::new()
         .origin(Point3::new(0.0, 0.7, 3.0))
         .yaw(-std::f64::consts::PI / 2.0)
         .pitch(-0.4)
