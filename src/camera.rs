@@ -4,9 +4,17 @@ pub trait Camera {
     fn get_view_projection_matrix(&self) -> Matrix4<f64>;
 }
 
-pub mod controllable_perspective_camera;
-pub mod orbiting_perspective_camera;
-pub mod static_perspective_camera;
+mod controllable_perspective_camera;
+pub use controllable_perspective_camera::ControllablePerspectiveCamera;
+pub use controllable_perspective_camera::ControllablePerspectiveCameraBuilder;
+
+mod orbiting_perspective_camera;
+pub use orbiting_perspective_camera::OrbitingPerspectiveCamera;
+pub use orbiting_perspective_camera::OrbitingPerspectiveCameraBuilder;
+
+mod static_perspective_camera;
+pub use static_perspective_camera::StaticPerspectiveCamera;
+pub use static_perspective_camera::StaticPerspectiveCameraBuilder;
 
 pub(crate) fn get_view_projection_matrix(
     projection_matrix: &Matrix4<f64>,

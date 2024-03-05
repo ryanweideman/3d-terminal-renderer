@@ -4,7 +4,7 @@ use std::time;
 use include_dir::include_dir;
 use nalgebra::Point3;
 
-use lib_terminal_renderer::camera::controllable_perspective_camera::ControllablePerspectiveCameraBuilder;
+use lib_terminal_renderer::camera::ControllablePerspectiveCameraBuilder;
 use lib_terminal_renderer::model_loader::ModelLoader;
 use lib_terminal_renderer::renderer;
 use lib_terminal_renderer::scene_loader;
