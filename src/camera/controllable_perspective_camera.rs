@@ -5,7 +5,7 @@ use std::f64::consts::PI;
 use nalgebra::{Matrix4, Perspective3, Point3, Rotation3, Vector3};
 
 use crate::camera::Camera;
-use crate::keyboard::Keys;
+use crate::terminal::keyboard::Keys;
 
 pub struct ControllablePerspectiveCamera {
     origin: Point3<f64>,

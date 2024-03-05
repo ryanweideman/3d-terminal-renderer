@@ -2,7 +2,6 @@ pub mod buffer;
 pub mod camera;
 pub mod entity;
 pub mod geometry;
-pub mod keyboard;
 pub mod light;
 pub mod model_loader;
 pub mod renderer;

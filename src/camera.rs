@@ -20,7 +20,7 @@ pub(crate) fn get_view_projection_matrix(
         yaw.sin() * pitch.cos(),
     );
 
-    let global_up = Vector3::new(0.0, 1.0, 0.0);
+    let global_up = Vector3::y_axis();
 
     let right = direction.cross(&global_up).normalize();
     let up = right.cross(&direction);

@@ -1,3 +1,5 @@
+use std::io;
+use std::io::Write;
 use std::time;
 
 use crossterm::{
@@ -12,14 +14,11 @@ use crossterm::{
     ExecutableCommand,
 };
 
-use std::io;
-use std::io::Write;
-
 use crate::buffer::Buffer;
-use crate::geometry;
-use crate::keyboard::{Keyboard, Keys};
+use crate::geometry::ProjectionResult;
+use crate::terminal::keyboard::{Keyboard, Keys};
 
-use geometry::ProjectionResult;
+pub mod keyboard;
 
 pub struct Terminal {
     stdout: io::Stdout,
@@ -186,53 +185,6 @@ pub fn print_debug_info(
     )
     .unwrap();
     queue!(stdout, MoveTo(1, (screen_height + 1) as u16)).unwrap();
-    /*
-    queue!(
-        stdout,
-        SetBackgroundColor(Color::AnsiValue(0)),
-        Print(format!("processing time elapsed ms: {:3.0}", processed_time_elapsed.as_secs_f64() * 1000.0))
-    ).unwrap();
-    queue!(stdout, MoveTo(1, (SCREEN_HEIGHT + 2) as u16)).unwrap();
-    */
-    /*
-    for i in 0..projection_results.len() {
-        let result = projection_results[i];
-        let (c0, c1, c2) = result.camera_frame_triangle.vertices();
-        let (cl0, cl1, cl2) = result.clip_space_triangle.vertices();
-        let (n0, n1, n2) = result.ndc_triangle.vertices();
-
-        queue!(stdout, MoveTo(1, (SCREEN_HEIGHT + i*4) as u16)).unwrap();
-        queue!(
-            stdout,
-            SetBackgroundColor(Color::AnsiValue(0)),
-            Print(format!(
-                "camera [{:.2} {:.2} {:.2}] [{:.2} {:.2} {:.2}] [{:.2} {:.2} {:.2}]",
-                c0.x, c0.y, c0.z, c1.x, c1.y, c1.z, c2.x, c2.y, c2.z
-            ))
-        ).unwrap();
-
-        queue!(stdout, MoveTo(1, (SCREEN_HEIGHT + i*4 + 1) as u16)).unwrap();
-        queue!(
-            stdout,
-            SetBackgroundColor(Color::AnsiValue(0)),
-            Print(format!(
-                "clip   [{:.2} {:.2} {:.2} {:.2}] [{:.2} {:.2} {:.2} {:.2}] [{:.2} {:.2} {:.2} {:.2}]",
-                cl0.x, cl0.y, cl0.z, cl0.w, cl1.x, cl1.y, cl1.z, cl1.w, cl2.x, cl2.y, cl2.z, cl2.w
-            ))
-        ).unwrap();
-
-        queue!(stdout, MoveTo(1, (SCREEN_HEIGHT + i*4 + 2) as u16)).unwrap();
-        queue!(
-            stdout,
-            SetBackgroundColor(Color::AnsiValue(0)),
-            Print(format!(
-                "ndc    [{:.2} {:.2} {:.2}] [{:.2} {:.2} {:.2}] [{:.2} {:.2} {:.2}]",
-                n0.x, n0.y, n0.z, n1.x, n1.y, n1.z, n2.x, n2.y, n2.z
-            ))
-        ).unwrap();
-    }
-    */
-
     queue!(
         stdout,
         SetBackgroundColor(Color::AnsiValue(0)),
