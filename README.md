@@ -1,5 +1,8 @@
 # rust-terminal-rasterizer
 
+# homebrew-8bit-cpu
+[![build](https://github.com/ryanweideman/rust-terminal-rasterizer/actions/workflows/ci.yml/badge.svg)](https://github.com/ryanweideman/rust-terminal-rasterizer/actions/workflows/ci.yml)
+
 A simple 3d graphics engine that renders directly to the terminal
 
 ## Features
