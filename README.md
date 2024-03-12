@@ -2,7 +2,7 @@
 
 [![build](https://github.com/ryanweideman/rust-terminal-rasterizer/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/ryanweideman/rust-terminal-rasterizer/actions/workflows/build.yml)
 
-A simple 3d graphics engine that renders directly to the terminal
+A simple 3d graphics engine built in Rust that renders directly to the terminal.
 
 ## Features
 - CPU-only rasterization-based 3D graphics pipeline
