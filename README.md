@@ -1,4 +1,4 @@
-# rust-terminal-rasterizer
+# 3d-terminal-renderer
 
 [![build](https://github.com/ryanweideman/rust-terminal-rasterizer/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/ryanweideman/rust-terminal-rasterizer/actions/workflows/build.yml)
 
