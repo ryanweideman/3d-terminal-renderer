@@ -15,4 +15,4 @@ A simple 3d graphics engine built in Rust that renders directly to the terminal.
 - Model and Scene JSON loading systems
 - Cross-Platform support
 
-<img src="/media/demo.gif" width="80%"/>
+<img src="/media/demo.gif" width="100%"/>
