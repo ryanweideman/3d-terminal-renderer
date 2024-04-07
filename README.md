@@ -51,7 +51,7 @@ Scene objects and lighting can be configured in ```demo.json```, like as follows
 ```
 
 ## Custom Models
-Custom models can be included in the ```models``` directory. Models geometry is specified in a simple JSON based format:
+Custom models can be included in the ```models``` directory. Model geometry is specified in a simple JSON based format:
 ```
 {
     "geometry": [
