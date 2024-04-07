@@ -16,3 +16,53 @@ A simple 3d graphics engine built in Rust that renders directly to the terminal.
 - Cross-Platform support
 
 <img src="/media/demo.gif" width="100%"/>
+
+## Scene Customization
+Scene objects and lighting can be configured in ```demo.json```, like as follows:
+```
+{
+    "objects": [
+        {
+            "type": "SpinningObject",
+            "model": "cube.json",
+            "origin": [1.3, -0.3, 0.75],
+            "rotation_axis": [0.5, 0.0, 1.0],
+            "rotation_angle": 0.0,
+            "angular_velocity": -1.5,
+            "scale": 0.9
+        }
+    ],
+    "lights": [
+        {
+            "type": "PointLight",
+            "origin": [0.0, 0.7, 0.0],
+            "intensity": 5.0,
+            "linear_attenuation": 0.05,
+            "quadratic_attenuation": 0.4,
+            "color": [255, 255, 255]
+        },
+        {
+            "type": "AmbientLight",
+            "intensity": 0.38,
+            "color": [255, 255, 255]
+        }
+    ]
+}
+```
+
+## Custom Models
+Custom models can be included in the ```models``` directory. Models geometry is specified in a simple JSON based format:
+```
+{
+    "geometry": [
+      {
+        "vertices": [
+          [-0.5, -0.5, 0.5],
+          [0.5, -0.5, 0.5],
+          [0.5, 0.5, 0.5]
+        ],
+        "color": [255, 0, 0]
+      }
+    ]
+}
+```
