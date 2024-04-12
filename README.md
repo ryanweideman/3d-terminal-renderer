@@ -51,15 +51,23 @@ Scene objects and lighting can be configured in ```demo.json```, like as follows
 ```
 
 ## Custom Models
-Custom models can be included in the ```models``` directory. Model geometry is specified in a simple JSON based format:
+Custom models can be included in the ```models``` directory. Model geometry is specified in a simple JSON based format. Here's an example model of a square composed of two red triangles:
 ```
 {
     "geometry": [
       {
         "vertices": [
-          [-0.5, -0.5, 0.5],
-          [0.5, -0.5, 0.5],
-          [0.5, 0.5, 0.5]
+          [-0.5, -0.5, 0.0],
+          [0.5, -0.5, 0.0],
+          [0.5, 0.5, 0.0]
+        ],
+        "color": [255, 0, 0]
+      },
+      {
+        "vertices": [
+          [-0.5, -0.5, 0.0],
+          [0.5, 0.5, 0.0],
+          [-0.5, 0.5, 0.0]
         ],
         "color": [255, 0, 0]
       }
