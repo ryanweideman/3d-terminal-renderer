@@ -7,7 +7,7 @@ A simple 3d graphics engine built in Rust that renders directly to the terminal.
 ## Features
 - CPU-only rasterization-based 3D graphics pipeline
 - Lighting
-- True Color 24bit mode or Ansi 8bit color mode, with optional dithering to reduce color banding
+- True Color 24bit mode or Ansi 8bit color mode, with optional dithering to reduce color banding.  
 - Controllable camera (WASD & arrow keys)
   - OS key sensitivity may need to be adjusted for best experience
 - Adaptive resolution on termimal window resize
@@ -27,6 +27,9 @@ Or, build an executable optimized for your platform and share with your friends!
 cargo build --release
 ```
 The resulting executable can be found in ```3d-terminal-renderer/target/release```
+
+## True Color
+Some terminals may not have support for 24-bit true color mode. The standard 8-bit ANSI terminal colors can be enabled with this [hardcoded toggle](https://github.com/ryanweideman/3d-terminal-renderer/blob/main/src/main.rs#L16).
 
 ## Scene Customization
 Scene objects and lighting can be configured in ```demo.json```, like as follows:
