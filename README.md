@@ -26,7 +26,7 @@ Or, build an executable optimized for your platform and share with your friends!
 ```
 cargo build --release
 ```
-The resulting executable can be found in 3d-terminal-renderer/target/release
+The resulting executable can be found in ```3d-terminal-renderer/target/release```
 
 ## Scene Customization
 Scene objects and lighting can be configured in ```demo.json```, like as follows:
