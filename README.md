@@ -17,6 +17,17 @@ A simple 3d graphics engine built in Rust that renders directly to the terminal.
 
 <img src="/media/demo.gif" width="100%"/>
 
+## Install
+Simply clone the project and run with cargo!
+```
+cargo run
+```
+Or, build an executable optimized for your platform and share with your friends!
+```
+cargo build --release
+```
+The resulting executable can be found in 3d-terminal-renderer/target/release
+
 ## Scene Customization
 Scene objects and lighting can be configured in ```demo.json```, like as follows:
 ```
