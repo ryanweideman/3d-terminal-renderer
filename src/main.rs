@@ -16,6 +16,9 @@ const ASPECT_RATIO: f64 = 1.6;
 const USE_TRUE_COLOR: bool = true;
 const USE_DITHERING: bool = false;
 
+const SCENE_FILE: &str = include_str!("../scenes/demo.json");
+const MODEL_DIR: include_dir::Dir = include_dir!("models/");
+
 fn main() -> io::Result<()> {
     let mut camera = ControllablePerspectiveCameraBuilder::new()
         .origin(Point3::new(0.0, 0.7, 3.0))
@@ -24,9 +27,9 @@ fn main() -> io::Result<()> {
         .aspect_ratio(ASPECT_RATIO)
         .build();
 
-    let model_loader = ModelLoader::new(&include_dir!("models/"));
+    let model_loader = ModelLoader::new(&MODEL_DIR);
     let (mut entities, lights) =
-        scene_loader::load_scene(include_str!("../demo.json"), &model_loader);
+        scene_loader::load_scene(SCENE_FILE, &model_loader);
 
     let mut start_time = time::Instant::now();
     let delay_duration = time::Duration::from_secs_f64(1.0 / TARGET_FPS as f64);
