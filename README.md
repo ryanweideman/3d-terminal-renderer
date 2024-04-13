@@ -33,7 +33,7 @@ The resulting executable can be found in ```3d-terminal-renderer/target/release`
 Some terminals may not have support for 24-bit true color mode. The standard 8-bit ANSI terminal colors can be enabled with this [hardcoded toggle](https://github.com/ryanweideman/3d-terminal-renderer/blob/main/src/main.rs#L16).
 
 ## Scene Customization
-Scene objects and lighting can be configured in ```demo.json```, like as follows:
+Scene objects and lighting can be create in a scene JSON file in the ```scenes``` directory and configured [here](https://github.com/ryanweideman/3d-terminal-renderer/blob/main/src/main.rs#L19). Scenes are specified using a JSON format like as follows:
 ```
 {
     "objects": [
