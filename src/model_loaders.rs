@@ -6,3 +6,6 @@ pub trait ModelLoader {
 
 mod json_model_loader;
 pub use json_model_loader::JsonModelLoader;
+
+mod obj_model_loader;
+pub use obj_model_loader::ObjModelLoader;
