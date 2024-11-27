@@ -5,7 +5,7 @@ use include_dir::include_dir;
 use nalgebra::Point3;
 
 use lib_terminal_renderer::camera::ControllablePerspectiveCameraBuilder;
-use lib_terminal_renderer::model_loader::ModelLoader;
+use lib_terminal_renderer::model_loaders::JsonModelLoader;
 use lib_terminal_renderer::renderer;
 use lib_terminal_renderer::scene_loader;
 use lib_terminal_renderer::terminal::Terminal;
@@ -27,7 +27,7 @@ fn main() -> io::Result<()> {
         .aspect_ratio(ASPECT_RATIO)
         .build();
 
-    let model_loader = ModelLoader::new(&MODEL_DIR);
+    let model_loader = JsonModelLoader::new(&MODEL_DIR);
     let (mut entities, lights) =
         scene_loader::load_scene(SCENE_FILE, &model_loader);
 

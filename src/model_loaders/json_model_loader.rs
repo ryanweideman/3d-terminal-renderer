@@ -4,11 +4,11 @@ use nalgebra::Point3;
 use serde::Deserialize;
 use std::collections::HashMap;
 
-pub struct ModelLoader {
+pub struct JsonModelLoader {
     models: HashMap<String, Model>,
 }
 
-impl ModelLoader {
+impl JsonModelLoader {
     pub fn new(dir: &Dir) -> Self {
         let mut models = HashMap::new();
 
@@ -26,7 +26,7 @@ impl ModelLoader {
             }
         }
 
-        ModelLoader { models }
+        JsonModelLoader { models }
     }
 
     pub fn get_model(&self, model_name: &str) -> &Model {
