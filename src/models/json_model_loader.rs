@@ -1,44 +1,7 @@
 use crate::geometry::{Color, Model, Triangle3};
-use crate::model_loaders::ModelLoader;
 
-use include_dir::Dir;
 use nalgebra::Point3;
 use serde::Deserialize;
-use std::collections::HashMap;
-
-pub struct JsonModelLoader {
-    models: HashMap<String, Model>,
-}
-
-impl ModelLoader for JsonModelLoader {
-    fn get_model(&self, model_name: &str) -> &Model {
-        self.models
-            .get(model_name)
-            .unwrap_or_else(|| panic!("Could not get model of name {}", model_name))
-    }
-}
-
-impl JsonModelLoader {
-    pub fn new(dir: &Dir) -> Self {
-        let mut models = HashMap::new();
-
-        for file in dir.files() {
-            if file.path().extension().and_then(|ext| ext.to_str()) == Some("json") {
-                let file_contents = file.contents_utf8().expect("Failed to read file contents");
-                let model_geometry = load_model(file_contents);
-                let file_name = file
-                    .path()
-                    .file_name()
-                    .and_then(|name| name.to_str())
-                    .unwrap();
-
-                models.insert(file_name.to_string(), model_geometry);
-            }
-        }
-
-        JsonModelLoader { models }
-    }
-}
 
 #[derive(Deserialize, Debug)]
 struct GeometryData {
@@ -51,7 +14,7 @@ struct Triangle {
     color: [u8; 3],
 }
 
-fn load_model(json_string: &str) -> Model {
+pub fn load_model(json_string: &str) -> Model {
     let geometry_data: GeometryData = serde_json::from_str(json_string)
         .unwrap_or_else(|_| panic!("Failed to deserialize json {}", json_string));
 

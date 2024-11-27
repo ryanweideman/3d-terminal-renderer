@@ -5,7 +5,7 @@ use include_dir::include_dir;
 use nalgebra::Point3;
 
 use lib_terminal_renderer::camera::ControllablePerspectiveCameraBuilder;
-use lib_terminal_renderer::model_loaders::JsonModelLoader;
+use lib_terminal_renderer::models::ModelStore;
 use lib_terminal_renderer::renderer;
 use lib_terminal_renderer::scene_loader;
 use lib_terminal_renderer::terminal::Terminal;
@@ -27,9 +27,11 @@ fn main() -> io::Result<()> {
         .aspect_ratio(ASPECT_RATIO)
         .build();
 
-    let model_loader = JsonModelLoader::new(&MODEL_DIR);
+    let mut model_store = ModelStore::new(&MODEL_DIR);
+    model_store.init();
+
     let (mut entities, lights) =
-        scene_loader::load_scene(SCENE_FILE, &model_loader);
+        scene_loader::load_scene(SCENE_FILE, &model_store);
 
     let mut start_time = time::Instant::now();
     let delay_duration = time::Duration::from_secs_f64(1.0 / TARGET_FPS as f64);

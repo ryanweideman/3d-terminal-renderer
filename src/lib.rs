@@ -3,7 +3,7 @@ pub mod camera;
 pub mod entity;
 pub mod geometry;
 pub mod light;
-pub mod model_loaders;
+pub mod models;
 pub mod renderer;
 pub mod scene_loader;
 pub mod terminal;

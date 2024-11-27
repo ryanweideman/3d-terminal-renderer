@@ -1,7 +1,7 @@
 use crate::entity;
 use crate::geometry::Color;
 use crate::light;
-use crate::model_loaders::ModelLoader;
+use crate::models::ModelStore;
 use nalgebra::{Matrix4, Point3, Rotation3, Unit, Vector3};
 use serde::Deserialize;
 
@@ -59,7 +59,7 @@ enum JsonLight {
 
 pub fn load_scene<'a>(
     json_string: &'a str,
-    model_loader: &'a impl ModelLoader,
+    model_store: &'a ModelStore,
 ) -> (Vec<entity::Entity<'a>>, Vec<light::Light>) {
     let json_world_data: JsonWorldData = serde_json::from_str(json_string)
         .unwrap_or_else(|_| panic!("Failed to deserialize json {}", json_string));
@@ -75,7 +75,7 @@ pub fn load_scene<'a>(
                 rotation_angle,
                 scale,
             } => entity::Entity::Square(entity::Square {
-                model: model_loader.get_model(model),
+                model: model_store.get_model(model),
                 origin: Point3::<f64>::new(origin[0], origin[1], origin[2]),
                 rotation: Rotation3::<f64>::from_axis_angle(
                     &Unit::new_normalize(Vector3::new(
@@ -96,7 +96,7 @@ pub fn load_scene<'a>(
                 height,
                 color,
             } => entity::Entity::Rectangle(entity::Rectangle {
-                model: model_loader.get_model(model),
+                model: model_store.get_model(model),
                 origin: Point3::<f64>::new(origin[0], origin[1], origin[2]),
                 rotation: Rotation3::<f64>::from_axis_angle(
                     &Unit::new_normalize(Vector3::new(
@@ -117,7 +117,7 @@ pub fn load_scene<'a>(
                 angular_velocity,
                 scale,
             } => entity::Entity::SpinningObject(entity::SpinningObject {
-                model: model_loader.get_model(model),
+                model: model_store.get_model(model),
                 origin: Point3::<f64>::new(origin[0], origin[1], origin[2]),
                 rotation_axis: Vector3::<f64>::new(
                     rotation_axis[0],
