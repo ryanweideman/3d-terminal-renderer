@@ -1,4 +1,6 @@
 use crate::geometry::{Color, Model, Triangle3};
+use crate::model_loaders::ModelLoader;
+
 use include_dir::Dir;
 use nalgebra::Point3;
 use serde::Deserialize;
@@ -6,6 +8,14 @@ use std::collections::HashMap;
 
 pub struct JsonModelLoader {
     models: HashMap<String, Model>,
+}
+
+impl ModelLoader for JsonModelLoader {
+    fn get_model(&self, model_name: &str) -> &Model {
+        self.models
+            .get(model_name)
+            .unwrap_or_else(|| panic!("Could not get model of name {}", model_name))
+    }
 }
 
 impl JsonModelLoader {
@@ -27,12 +37,6 @@ impl JsonModelLoader {
         }
 
         JsonModelLoader { models }
-    }
-
-    pub fn get_model(&self, model_name: &str) -> &Model {
-        self.models
-            .get(model_name)
-            .unwrap_or_else(|| panic!("Could not get model of name {}", model_name))
     }
 }
 

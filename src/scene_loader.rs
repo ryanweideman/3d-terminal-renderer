@@ -1,7 +1,7 @@
 use crate::entity;
 use crate::geometry::Color;
 use crate::light;
-use crate::model_loaders::JsonModelLoader;
+use crate::model_loaders::ModelLoader;
 use nalgebra::{Matrix4, Point3, Rotation3, Unit, Vector3};
 use serde::Deserialize;
 
@@ -59,7 +59,7 @@ enum JsonLight {
 
 pub fn load_scene<'a>(
     json_string: &'a str,
-    model_loader: &'a JsonModelLoader,
+    model_loader: &'a impl ModelLoader,
 ) -> (Vec<entity::Entity<'a>>, Vec<light::Light>) {
     let json_world_data: JsonWorldData = serde_json::from_str(json_string)
         .unwrap_or_else(|_| panic!("Failed to deserialize json {}", json_string));
