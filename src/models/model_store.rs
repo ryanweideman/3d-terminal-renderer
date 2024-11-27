@@ -1,5 +1,6 @@
 use crate::geometry::Model;
 use crate::models::json_model_loader;
+use crate::models::obj_model_loader;
 
 use include_dir::Dir;
 use std::collections::HashMap;
@@ -11,9 +12,9 @@ pub struct ModelStore<'a> {
 
 impl<'a> ModelStore<'a> {
     pub fn new(dir: &'a Dir<'a>) -> Self {
-        ModelStore { 
+        ModelStore {
             models: HashMap::new(),
-            dir
+            dir,
         }
     }
 
@@ -21,23 +22,25 @@ impl<'a> ModelStore<'a> {
         for file in self.dir.files() {
             let path = file.path();
 
-            let file_type = path
-                .extension()
-                .and_then(|ext| ext.to_str());
+            let file_type = path.extension().and_then(|ext| ext.to_str());
             let file_name = path
                 .file_name()
                 .and_then(|name| name.to_str())
-                .unwrap();
+                .unwrap()
+                .to_string();
             let file_contents = file.contents_utf8().expect("Failed to read file contents");
 
             match file_type {
                 Some("json") => {
                     let model_geometry = json_model_loader::load_model(file_contents);
-                    self.models.insert(file_name.to_string(), model_geometry);
-                },
-                Some("obj") => {},
-                Some(_other) => {},
-                None => {},
+                    self.models.insert(file_name, model_geometry);
+                }
+                Some("obj") => {
+                    let model_geometry = obj_model_loader::load_model(file_contents);
+                    self.models.insert(file_name, model_geometry);
+                }
+                Some(_other) => {}
+                None => {}
             }
         }
     }
