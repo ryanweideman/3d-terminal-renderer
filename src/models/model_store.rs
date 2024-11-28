@@ -1,5 +1,7 @@
 use crate::geometry::Model;
 use crate::models::json_model_loader;
+use crate::models::mtl_loader;
+use crate::models::mtl_loader::Material;
 use crate::models::obj_model_loader;
 
 use include_dir::Dir;
@@ -37,7 +39,23 @@ impl<'a> ModelStore<'a> {
                     .insert(info.file_name.to_string(), model_geometry);
             });
 
-        // Process obj files second
+        // Process mtl files second
+        let materials: HashMap<String, HashMap<String, Material>> = self
+            .dir
+            .files()
+            .flat_map(|file| get_file_info(file))
+            .filter(|info| info.file_type == "mtl")
+            .map(|info| {
+                (
+                    info.file_name.to_string(),
+                    mtl_loader::parse_materials(info.file_contents),
+                )
+            })
+            .collect();
+
+        println!("materials {:#?}", materials);
+
+        // Process obj files third
         self.dir
             .files()
             .flat_map(|file| get_file_info(file))

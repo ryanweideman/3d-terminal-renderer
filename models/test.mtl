@@ -1,0 +1,19 @@
+# Cube.mtl
+
+newmtl Red
+Kd 1.0 0.0 0.0
+
+newmtl Green
+Kd 0.0 1.0 0.0
+
+newmtl Blue
+Kd 0.0 0.0 1.0
+
+newmtl Yellow
+Kd 1.0 1.0 0.0
+
+newmtl Magenta
+Kd 1.0 0.0 1.0
+
+newmtl Cyan
+Kd 0.0 1.0 1.0
