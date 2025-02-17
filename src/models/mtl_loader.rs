@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Material {
-    name: String,
-    kd: Option<(f32, f32, f32)>,
+    pub name: String,
+    pub kd: Option<(f32, f32, f32)>,
 }
 
 pub fn parse_materials(file_contents: &str) -> HashMap<String, Material> {

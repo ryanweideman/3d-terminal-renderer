@@ -1,0 +1,28 @@
+{
+    "objects": [
+        {
+            "type": "SpinningObject",
+            "model": "formic.json",
+            "origin": [0.0, 0.0, 15],
+            "rotation_axis": [0.0, 1.0, 0.0],
+            "rotation_angle": -1.57,
+            "angular_velocity": 1.5,
+            "scale": 2.0
+        }
+    ],
+    "lights": [
+        {
+            "type": "PointLight",
+            "origin": [0.0, 10.0, 0.0],
+            "intensity": 5.0,
+            "linear_attenuation": 0.0,
+            "quadratic_attenuation": 0.0,
+            "color": [255, 255, 255]
+        },
+        {
+            "type": "AmbientLight",
+            "intensity": 0.38,
+            "color": [255, 255, 255]
+        }
+    ]
+}

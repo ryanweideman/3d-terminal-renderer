@@ -4,6 +4,7 @@ use crate::entity::Entity;
 
 //use rand::Rng;
 
+#[derive(Debug)]
 pub struct Model {
     pub geometry: Vec<Triangle3>,
 }

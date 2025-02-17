@@ -103,12 +103,12 @@ impl ControllablePerspectiveCameraBuilder {
             origin: Point3::new(0.0, 0.0, 0.0),
             yaw: -std::f64::consts::PI / 2.0,
             pitch: -0.4,
-            fov: 1.25,
-            aspect_ratio: 1.6,
-            near_plane: 0.1,
-            far_plane: 100.0,
-            linear_speed: 1.5,
-            angular_speed: 1.0,
+            fov: 1.0,
+            aspect_ratio: 0.4,
+            near_plane: 0.01,
+            far_plane: 1000.0,
+            linear_speed: 10.0,
+            angular_speed: 2.0,
         }
     }
 
