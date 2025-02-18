@@ -16,7 +16,7 @@ const ASPECT_RATIO: f64 = 2.0; // 1.6
 const USE_TRUE_COLOR: bool = true;
 const USE_DITHERING: bool = false;
 
-const SCENE_FILE: &str = include_str!("../scenes/test.json");
+const SCENE_FILE: &str = include_str!("../scenes/demo.json");
 const MODEL_DIR: include_dir::Dir = include_dir!("models/");
 
 fn main() -> io::Result<()> {

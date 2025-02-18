@@ -112,7 +112,6 @@ fn parse_face<'a>(
             (kd.0 * 255.0).round() as u8, 
             (kd.1 * 255.0).round() as u8, 
             (kd.2 * 255.0).round() as u8)
-    //}).unwrap_or(Color::new(100, 0, 0));
     }).unwrap_or(rcolor_1);
 
     Some(Triangle3 {

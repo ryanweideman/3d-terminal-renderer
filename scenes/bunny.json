@@ -2,10 +2,10 @@
     "objects": [
         {
             "type": "SpinningObject",
-            "model": "formic.json",
-            "origin": [0.0, 0.0, 15],
+            "model": "bunny.obj",
+            "origin": [0.0, -100.0, -125],
             "rotation_axis": [0.0, 1.0, 0.0],
-            "rotation_angle": -1.57,
+            "rotation_angle": -1.570796,
             "angular_velocity": 1.5,
             "scale": 2.0
         }

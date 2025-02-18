@@ -11,8 +11,6 @@ pub fn parse_materials(file_contents: &str) -> HashMap<String, Material> {
 
     let mut current_material: Option<Material> = None;
 
-    println!("test");
-
     for line in file_contents.lines() {
         let line = line.trim();
 

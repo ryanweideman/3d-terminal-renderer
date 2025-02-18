@@ -65,13 +65,13 @@ impl<'a> ModelStore<'a> {
             .filter(|info| info.file_type == "obj")
             .for_each(|info| {
                 let model_geometry = obj_model_loader::load_model(info.file_contents, &material_store);
-                println!("{:#?}", model_geometry);
+                //println!("{:#?}", model_geometry);
                 self.models
                     .insert(info.file_name.to_string(), model_geometry);
             });
 
         //println!("{:#?}", material_store);
-        println!("{:#?}", self.models);
+        //println!("{:#?}", self.models);
 
     }
 
