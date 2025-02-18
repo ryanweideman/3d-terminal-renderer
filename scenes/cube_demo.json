@@ -1,0 +1,28 @@
+{
+    "objects": [
+        {
+            "type": "SpinningObject",
+            "model": "cube.obj",
+            "origin": [0.0, -4.0, -7],
+            "rotation_axis": [0.7, 0.7, 0.7],
+            "rotation_angle": -1.570796,
+            "angular_velocity": 1.5,
+            "scale": 2.0
+        }
+    ],
+    "lights": [
+        {
+            "type": "PointLight",
+            "origin": [0.0, 0.7, 0.0],
+            "intensity": 5.0,
+            "linear_attenuation": 0.05,
+            "quadratic_attenuation": 0.4,
+            "color": [255, 255, 255]
+        },
+        {
+            "type": "AmbientLight",
+            "intensity": 0.38,
+            "color": [255, 255, 255]
+        }
+    ]
+}
