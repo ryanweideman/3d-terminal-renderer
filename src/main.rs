@@ -30,8 +30,7 @@ fn main() -> io::Result<()> {
     let mut model_store = ModelStore::new(&MODEL_DIR);
     model_store.init();
 
-    let (mut entities, lights) =
-        scene_loader::load_scene(SCENE_FILE, &model_store);
+    let (mut entities, lights) = scene_loader::load_scene(SCENE_FILE, &model_store);
 
     let mut start_time = time::Instant::now();
     let delay_duration = time::Duration::from_secs_f64(1.0 / TARGET_FPS as f64);
@@ -68,6 +67,6 @@ fn main() -> io::Result<()> {
     }
 
     terminal.destroy()?;
-    
+
     Ok(())
 }

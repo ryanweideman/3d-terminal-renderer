@@ -15,7 +15,7 @@
             "type": "PointLight",
             "origin": [0.0, 10.0, 0.0],
             "intensity": 5.0,
-            "linear_attenuation": 0.0,
+            "linear_attenuation": 0.05,
             "quadratic_attenuation": 0.0,
             "color": [255, 255, 255]
         },

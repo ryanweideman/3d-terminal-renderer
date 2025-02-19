@@ -3,7 +3,7 @@
         {
             "type": "SpinningObject",
             "model": "cube.obj",
-            "origin": [0.0, -4.0, -7],
+            "origin": [0.0, 0.0, 0.0],
             "rotation_axis": [0.7, 0.7, 0.7],
             "rotation_angle": -1.570796,
             "angular_velocity": 1.5,
@@ -13,10 +13,10 @@
     "lights": [
         {
             "type": "PointLight",
-            "origin": [0.0, 0.7, 0.0],
+            "origin": [0.0, 10.0, 0.0],
             "intensity": 5.0,
-            "linear_attenuation": 0.05,
-            "quadratic_attenuation": 0.4,
+            "linear_attenuation": 0.0,
+            "quadratic_attenuation": 0.0,
             "color": [255, 255, 255]
         },
         {

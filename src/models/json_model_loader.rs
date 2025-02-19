@@ -1,4 +1,5 @@
 use crate::geometry::{Color, Model, Triangle3};
+use nalgebra::Vector3;
 
 use nalgebra::Point3;
 use serde::Deserialize;
@@ -30,6 +31,8 @@ fn convert_geometry_data(geometry_data: &GeometryData) -> Model {
         .map(|triangle| {
             let vertices = triangle.vertices;
             let color = triangle.color;
+            let normal = calculate_triangle_normal(triangle);
+
             Triangle3 {
                 vertices: [
                     Point3::new(vertices[0][0], vertices[0][1], vertices[0][2]),
@@ -41,9 +44,18 @@ fn convert_geometry_data(geometry_data: &GeometryData) -> Model {
                     g: color[1],
                     b: color[2],
                 },
+                normal: normal,
             }
         })
         .collect();
 
     Model { geometry }
+}
+
+fn calculate_triangle_normal(triangle: &Triangle) -> Vector3<f64> {
+    let v0 = Point3::from(triangle.vertices[0]);
+    let v1 = Point3::from(triangle.vertices[1]);
+    let v2 = Point3::from(triangle.vertices[2]);
+
+    (v1 - v0).cross(&(v2 - v0)).normalize()
 }

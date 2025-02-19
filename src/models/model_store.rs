@@ -15,7 +15,7 @@ pub struct ModelStore<'a> {
 
 #[derive(Debug)]
 pub struct MaterialStore {
-    materials: HashMap<String, HashMap<String, Material>>
+    materials: HashMap<String, HashMap<String, Material>>,
 }
 
 struct FileInfo<'b> {
@@ -51,10 +51,12 @@ impl<'a> ModelStore<'a> {
             .files()
             .flat_map(|file| get_file_info(file))
             .filter(|info| info.file_type == "mtl")
-            .for_each(|info| 
+            .for_each(|info| {
                 material_store.put(
-                    &info.file_name, 
-                    &mtl_loader::parse_materials(info.file_contents)));
+                    &info.file_name,
+                    &mtl_loader::parse_materials(info.file_contents),
+                )
+            });
 
         //println!("materials {:#?}", materials);
 
@@ -64,7 +66,8 @@ impl<'a> ModelStore<'a> {
             .flat_map(|file| get_file_info(file))
             .filter(|info| info.file_type == "obj")
             .for_each(|info| {
-                let model_geometry = obj_model_loader::load_model(info.file_contents, &material_store);
+                let model_geometry =
+                    obj_model_loader::load_model(info.file_contents, &material_store);
                 //println!("{:#?}", model_geometry);
                 self.models
                     .insert(info.file_name.to_string(), model_geometry);
@@ -72,7 +75,6 @@ impl<'a> ModelStore<'a> {
 
         //println!("{:#?}", material_store);
         //println!("{:#?}", self.models);
-
     }
 
     pub fn get_model(&self, model_name: &str) -> &Model {
