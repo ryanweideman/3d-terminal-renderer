@@ -24,9 +24,9 @@
     "lights": [
         {
             "type": "PointLight",
-            "origin": [0.0, 10.0, 0.0],
-            "intensity": 30.0,
-            "linear_attenuation": 0.02,
+            "origin": [0.0, 10.0, 10.0],
+            "intensity": 40.0,
+            "linear_attenuation": 0.05,
             "quadratic_attenuation": 0.4,
             "color": [255, 255, 255]
         },
