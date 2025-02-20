@@ -34,6 +34,7 @@ enum JsonObject {
     SpinningObject {
         model: String,
         origin: [f64; 3],
+        rotation: [f64; 3],
         rotation_axis: [f64; 3],
         rotation_angle: f64,
         angular_velocity: f64,
@@ -112,6 +113,7 @@ pub fn load_scene<'a>(
             JsonObject::SpinningObject {
                 model,
                 origin,
+                rotation,
                 rotation_axis,
                 rotation_angle,
                 angular_velocity,
@@ -119,6 +121,7 @@ pub fn load_scene<'a>(
             } => entity::Entity::SpinningObject(entity::SpinningObject {
                 model: model_store.get_model(model),
                 origin: Point3::<f64>::new(origin[0], origin[1], origin[2]),
+                rotation: Rotation3::from_euler_angles(rotation[0], rotation[1], rotation[2]),
                 rotation_axis: Vector3::<f64>::new(
                     rotation_axis[0],
                     rotation_axis[1],

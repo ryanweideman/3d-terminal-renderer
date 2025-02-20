@@ -58,8 +58,6 @@ impl<'a> ModelStore<'a> {
                 )
             });
 
-        //println!("materials {:#?}", materials);
-
         // Process obj files third
         self.dir
             .files()

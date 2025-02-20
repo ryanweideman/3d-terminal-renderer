@@ -25,14 +25,18 @@ impl<'a> Entity<'a> {
     pub fn get_rotation(&self) -> Rotation3<f64> {
         match self {
             Entity::Square(square) => square.rotation,
-            Entity::SpinningObject(object) => Rotation3::from_axis_angle(
-                &Unit::new_normalize(Vector3::new(
-                    object.rotation_axis[0],
-                    object.rotation_axis[1],
-                    object.rotation_axis[2],
-                )),
-                object.rotation_angle,
-            ),
+            Entity::SpinningObject(object) => {
+                let axis_rotation = Rotation3::from_axis_angle(
+                    &Unit::new_normalize(Vector3::new(
+                        object.rotation_axis[0],
+                        object.rotation_axis[1],
+                        object.rotation_axis[2],
+                    )),
+                    object.rotation_angle,
+                );
+
+                return axis_rotation * object.rotation;
+            }
             Entity::Rectangle(rectangle) => rectangle.rotation,
         }
     }
@@ -94,6 +98,7 @@ pub struct Rectangle<'a> {
 pub struct SpinningObject<'a> {
     pub model: &'a Model,
     pub origin: Point3<f64>,
+    pub rotation: Rotation3<f64>,
     pub rotation_axis: Vector3<f64>,
     pub rotation_angle: f64,
     pub rotation_velocity: f64,

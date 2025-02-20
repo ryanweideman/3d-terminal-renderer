@@ -2,12 +2,12 @@
     "objects": [
         {
             "type": "SpinningObject",
-            "model": "cube.obj",
-            "origin": [0.0, -0.15, 1.0],
+            "model": "Car.obj",
+            "origin": [0.0, -0.3, 1.0],
             "rotation": [0.0, 0.0, 0.0],
-            "rotation_axis": [0.7, 0.7, 0.0],
-            "rotation_angle": -1.570796,
-            "angular_velocity": 1.5,
+            "rotation_axis": [0.0, 1.0, 0.0],
+            "rotation_angle": 0.0,
+            "angular_velocity": 1.0,
             "scale": 0.5
         },
         {
@@ -18,7 +18,7 @@
             "rotation_angle": -1.57079632679,
             "width": 200.0,
             "height": 200.0,
-            "color": [255, 255, 255]
+            "color": [14, 71, 15]
         }
     ],
     "lights": [

@@ -2,13 +2,13 @@
     "objects": [
         {
             "type": "SpinningObject",
-            "model": "cube.obj",
-            "origin": [0.0, -0.15, 1.0],
-            "rotation": [0.0, 0.0, 0.0],
-            "rotation_axis": [0.7, 0.7, 0.0],
-            "rotation_angle": -1.570796,
-            "angular_velocity": 1.5,
-            "scale": 0.5
+            "model": "teapot.obj",
+            "origin": [0.0, -1.0, 0.75],
+            "rotation": [-1.57, 0.0, 0.0],
+            "rotation_axis": [0.0, 1.0, 0.0],
+            "rotation_angle": -1.57,
+            "angular_velocity": 0.2,
+            "scale": 0.05
         },
         {
             "type": "Rectangle",
@@ -24,7 +24,7 @@
     "lights": [
         {
             "type": "PointLight",
-            "origin": [0.0, 10.0, 0.0],
+            "origin": [0.0, 10.0, 5.0],
             "intensity": 30.0,
             "linear_attenuation": 0.02,
             "quadratic_attenuation": 0.4,
@@ -32,7 +32,7 @@
         },
         {
             "type": "AmbientLight",
-            "intensity": 0.38,
+            "intensity": 0.1,
             "color": [255, 255, 255]
         }
     ]

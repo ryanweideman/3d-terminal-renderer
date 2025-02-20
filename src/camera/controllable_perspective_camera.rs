@@ -107,8 +107,8 @@ impl ControllablePerspectiveCameraBuilder {
             aspect_ratio: 0.4,
             near_plane: 0.01,
             far_plane: 1000.0,
-            linear_speed: 10.0,
-            angular_speed: 2.0,
+            linear_speed: 1.0,
+            angular_speed: 0.2,
         }
     }
 
