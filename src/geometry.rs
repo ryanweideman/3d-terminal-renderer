@@ -4,6 +4,7 @@ use crate::entity::Entity;
 
 //use rand::Rng;
 
+#[derive(Debug)]
 pub struct Model {
     pub geometry: Vec<Triangle3>,
 }
@@ -25,6 +26,7 @@ impl Color {
 pub struct Triangle3 {
     pub vertices: [Point3<f64>; 3],
     pub color: Color,
+    pub normal: Vector3<f64>,
 }
 
 impl Triangle3 {
@@ -37,6 +39,7 @@ impl Triangle3 {
 pub struct Triangle4 {
     pub vertices: [Point4<f64>; 3],
     pub color: Color,
+    pub normal: Vector3<f64>,
 }
 
 impl Triangle4 {
@@ -45,7 +48,7 @@ impl Triangle4 {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub struct BoundingBox2 {
     pub x_min: f64,
     pub y_min: f64,
@@ -68,7 +71,7 @@ impl BoundingBox2 {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub struct ProjectionResult {
     pub normal: Vector3<f64>,
     pub clip_space_triangle: Triangle4,
@@ -80,6 +83,7 @@ pub struct ProjectionResult {
 pub fn transform_entity_model(entity: &Entity) -> Vec<Triangle3> {
     let scale = entity.get_scale();
     let rotation = Matrix4::from(entity.get_rotation());
+    let rotation_matrix = rotation.fixed_view::<3, 3>(0, 0);
     let translation = Matrix4::new_translation(&entity.get_origin().coords);
 
     let transform = translation * rotation * scale;
@@ -94,6 +98,8 @@ pub fn transform_entity_model(entity: &Entity) -> Vec<Triangle3> {
                 .map(|vertex| transform.transform_point(vertex))
                 .collect::<Vec<Point3<f64>>>();
 
+            let transformed_normal = (rotation_matrix * triangle.normal).normalize();
+
             Triangle3 {
                 vertices: [
                     transformed_vertices[0],
@@ -101,6 +107,7 @@ pub fn transform_entity_model(entity: &Entity) -> Vec<Triangle3> {
                     transformed_vertices[2],
                 ],
                 color: entity.get_maybe_color().unwrap_or(triangle.color),
+                normal: transformed_normal,
             }
         })
         .collect();
@@ -213,10 +220,12 @@ fn clip_triangle_against_plane(plane: FrustumPlane, triangles: &[Triangle4]) -> 
                         Triangle4 {
                             vertices: [*a.0, *b.0, i2],
                             color: rcolor_1,
+                            normal: triangle.normal,
                         },
                         Triangle4 {
                             vertices: [*a.0, i2, i1],
                             color: rcolor_2,
+                            normal: triangle.normal,
                         },
                     ]
                 }
@@ -228,10 +237,12 @@ fn clip_triangle_against_plane(plane: FrustumPlane, triangles: &[Triangle4]) -> 
                         Triangle4 {
                             vertices: [*a.0, i1, *c.0],
                             color: rcolor_1,
+                            normal: triangle.normal,
                         },
                         Triangle4 {
                             vertices: [*c.0, i1, i2],
                             color: rcolor_2,
+                            normal: triangle.normal,
                         },
                     ]
                 }
@@ -242,6 +253,7 @@ fn clip_triangle_against_plane(plane: FrustumPlane, triangles: &[Triangle4]) -> 
                     vec![Triangle4 {
                         vertices: [*a.0, i1, i2],
                         color: rcolor_2,
+                        normal: triangle.normal,
                     }]
                 }
             }
@@ -303,6 +315,7 @@ fn transform_triangle_to_camera_coords(
     Triangle3 {
         vertices: [camera_v0, camera_v1, camera_v2],
         color: triangle.color,
+        normal: triangle.normal,
     }
 }
 
@@ -320,6 +333,7 @@ fn camera_coordinates_to_clip_space(
     Triangle4 {
         vertices: [v0, v1, v2],
         color: camera_triangle.color,
+        normal: camera_triangle.normal,
     }
 }
 
@@ -336,6 +350,7 @@ fn transform_world_space_to_clip_space(
     Triangle4 {
         vertices: [v0, v1, v2],
         color: world_triangle.color,
+        normal: world_triangle.normal,
     }
 }
 
@@ -347,6 +362,7 @@ fn clips_space_to_ndc(clip_space_triangle: &Triangle4) -> Triangle3 {
     Triangle3 {
         vertices: [v0, v1, v2],
         color: clip_space_triangle.color,
+        normal: clip_space_triangle.normal,
     }
 }
 
@@ -364,6 +380,7 @@ fn ndc_to_screen(ndc_triangle: &Triangle3, screen_width: usize, screen_height: u
     Triangle3 {
         vertices: [v0, v1, v2],
         color: ndc_triangle.color,
+        normal: ndc_triangle.normal,
     }
 }
 
@@ -377,11 +394,6 @@ pub fn screen_to_ndc(
     let z_ndc = screen.z;
 
     Point3::new(x_ndc, y_ndc, z_ndc)
-}
-
-fn calculate_triangle_normal(triangle: &Triangle3) -> Vector3<f64> {
-    let (v0, v1, v2) = triangle.vertices();
-    (v1 - v0).cross(&(v2 - v0)).normalize()
 }
 
 fn calculate_bounding_box(projected_triangle: &Triangle3) -> BoundingBox2 {
@@ -438,10 +450,6 @@ pub fn project_triangle(
     screen_width: usize,
     screen_height: usize,
 ) -> Vec<ProjectionResult> {
-    // Calculate the normal in world coordinates
-    // TODO: calculate these when applying the model matrix
-    let normal = calculate_triangle_normal(input);
-
     // Transform the world triangle coordinates to clip space
     let clip_space_triangle = transform_world_space_to_clip_space(input, view_projection_matrix);
 
@@ -466,7 +474,7 @@ pub fn project_triangle(
                 ndc_triangle,
                 screen_triangle,
                 screen_bounding_box: bounding_box,
-                normal,
+                normal: input.normal,
             }
         })
         .collect()

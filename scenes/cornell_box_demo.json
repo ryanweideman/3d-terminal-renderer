@@ -54,6 +54,7 @@
             "type": "SpinningObject",
             "model": "cube.json",
             "origin": [0.0, -0.3, -0.3],
+            "rotation": [0.0, 0.0, 0.0],
             "rotation_axis": [1.7, 3.0, 0.0],
             "rotation_angle": 0.0,
             "angular_velocity": -0.95,

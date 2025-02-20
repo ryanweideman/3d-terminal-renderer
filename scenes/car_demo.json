@@ -1,0 +1,39 @@
+{
+    "objects": [
+        {
+            "type": "SpinningObject",
+            "model": "Car.obj",
+            "origin": [0.0, -0.3, 1.0],
+            "rotation": [0.0, 0.0, 0.0],
+            "rotation_axis": [0.0, 1.0, 0.0],
+            "rotation_angle": 0.0,
+            "angular_velocity": 1.0,
+            "scale": 0.5
+        },
+        {
+            "type": "Rectangle",
+            "model": "square.json",
+            "origin": [0, -1.0, 0.0],
+            "rotation_axis": [1.0, 0.0, 0.0],
+            "rotation_angle": -1.57079632679,
+            "width": 200.0,
+            "height": 200.0,
+            "color": [14, 71, 15]
+        }
+    ],
+    "lights": [
+        {
+            "type": "PointLight",
+            "origin": [0.0, 10.0, 10.0],
+            "intensity": 40.0,
+            "linear_attenuation": 0.05,
+            "quadratic_attenuation": 0.4,
+            "color": [255, 255, 255]
+        },
+        {
+            "type": "AmbientLight",
+            "intensity": 0.38,
+            "color": [255, 255, 255]
+        }
+    ]
+}
