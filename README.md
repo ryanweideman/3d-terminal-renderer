@@ -15,7 +15,8 @@ A simple 3d graphics engine built in Rust that renders directly to the terminal.
   - Decrease the terminal's font size to increase the resolution!
 - Model and Scene JSON loading systems
 - Cross-Platform support
-
+  
+<img src="/media/car.gif" width="100%"/>
 <img src="/media/demo.gif" width="100%"/>
 
 ## Install
