@@ -17,8 +17,8 @@ A simple 3d graphics engine built in Rust that renders directly to the terminal.
 - Simple JSON based scene loading system
 - Cross-Platform support
 
-<img src="/media/car.gif" width="70%"/>
-<img src="/media/demo.gif" width="70%"/>
+<img src="/media/car.gif" width="85%"/>
+<img src="/media/demo.gif" width="85%"/>
 
 ## Install
 Simply clone the project and run with cargo!
