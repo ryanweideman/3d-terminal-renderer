@@ -13,7 +13,8 @@ A simple 3d graphics engine built in Rust that renders directly to the terminal.
   - Adjust your OS keyboard sensitivity settings for smooth controls
 - Adaptive resolution on termimal window resize
   - Decrease the terminal's font size to increase the resolution!
-- Model and Scene JSON loading systems
+- Support for Obj and mtl model files, and custom json format based models
+- Simple JSON based scene loading system
 - Cross-Platform support
 
 <img src="/media/car.gif" width="70%"/>
